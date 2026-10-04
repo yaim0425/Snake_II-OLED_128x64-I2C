@@ -1,7 +1,7 @@
-# Snake II — ESP32-S3
+# Snake_II-OLED_128x64-I2C — ESP32-S3
 
-Proyecto: Snake II (estilo Nokia) para placa ESP32-S3 con Arduino IDE.
-Programación orientada a objetos: cada clase en su archivo `.h` y `.cpp`.
+Proyecto: Snake_II-OLED_128x64-I2C (Snake II, estilo Nokia) para placa ESP32-S3 con
+Arduino IDE. Programación orientada a objetos: cada clase en su archivo `.h` y `.cpp`.
 
 ---
 
@@ -28,15 +28,15 @@ Para no empezar desde cero, **copiar y pegar tal cual** el siguiente bloque en l
 nueva sesión (no hay que escribir nada más):
 
 ```
-Trabaja en el proyecto Snake II (ESP32-S3, Arduino IDE) ubicado en
-D:\Documents\ESP32S3\Snake_II.
+Trabaja en el proyecto Snake_II-OLED_128x64-I2C (ESP32-S3, Arduino IDE) ubicado en
+D:\Documents\ESP32S3\Snake_II-OLED_128x64-I2C.
 ```
 
 ---
 
 ## 1. Estado actual del proyecto
 
-En desarrollo. `Snake_II.ino` es el **wiring**: define los servicios globales
+En desarrollo. `Snake_II-OLED_128x64-I2C.ino` es el **wiring**: define los servicios globales
 (`Display`, `Buttons`, `Sound` — `Globals.h`) y crea el `Engine`, que **posee las
 ventanas** (`Boot`, `Legend`, `Menu`, `MenuDifficulty`, `MenuSound`,
 `MenuCredits`, `Game`) como miembros. Las
@@ -96,17 +96,17 @@ constantes compartidas viven en `Config.h` (pines, geometría, dificultad, versi
 
 ## 3. Estructura de archivos
 
-Directorio: `D:\Documents\ESP32S3\Snake_II`
+Directorio: `D:\Documents\ESP32S3\Snake_II-OLED_128x64-I2C`
 
 | Archivo | Contenido |
 |---------|-----------|
 | `Display.h` / `Display.cpp` | Clase `Display` (control del OLED). Completa. |
 | `Config.h` | Constantes compartidas del proyecto (namespace `Config`, sección 19): pines (`Config::Pin`: botones, buzzer, SDA/SCL), geometría y regiones de la pantalla (`Config::Screen`: 128×64, celda 8, dirección I2C, Header/Body) y límites de la dificultad (`Config::Difficulty`: MIN_LEVEL/MAX_LEVEL/DEFAULT_LEVEL) y la versión del firmware (`Config::Version`: VERSION/RELEASE_DATE, la usa el pie del menú). Solo lo verdaderamente compartido; el resto es `static constexpr` en su clase. Sin `#define` para valores (constantes con tipo y ámbito). |
-| `Globals.h` | Declara `extern` los **servicios globales**: `Display display;`, `Buttons buttons;` y `Sound sound;` (definidos en `Snake_II.ino`, sección 20). **No** declara el `Buzzer` (es interno de `Sound`). No define las ventanas: esas viven dentro de `Engine`. |
+| `Globals.h` | Declara `extern` los **servicios globales**: `Display display;`, `Buttons buttons;` y `Sound sound;` (definidos en `Snake_II-OLED_128x64-I2C.ino`, sección 20). **No** declara el `Buzzer` (es interno de `Sound`). No define las ventanas: esas viven dentro de `Engine`. |
 | `Buttons.h` / `Buttons.cpp` | Clase `Buttons` (lectura con debounce, `pressed`/`released`). Completa. |
 | `Boot.h` / `Boot.cpp` | Clase `Boot` (animación de arranque: dos bandas completas —TITULO 0..15, CUERPO 16..63— de líneas verticales de 3 px que se desplazan en sentidos opuestos, con rebalse por el borde; dura `TOTAL_MS` y se termina con cualquier botón). Completa. |
-| `Legend.h` / `Legend.cpp` | Clase `Legend` (panel de botones: pad MOVE a la izquierda con 4 flechas, 4 rombos completos de ACTION a la derecha en las posiciones de un pad que parpadean MUY rápido uno a la vez en ciclo lento —rombo fijo `HOLD_MS`, parpadeo `BLINK_PERIOD=100 ms`— y texto centrado en el pie con la función del rombo activo: Back, Select / Pause, None, None; cualquier botón la cierra con un sonido según el botón pulsado: MOVE = CLICK, ACTION_UP = BACK, ACTION_RIGHT = CONFIRM). Completa. |
-| `Scroller.h` / `Scroller.cpp` | Clase `Scroller` (scroller de 1 bit: una sola banda, texto como array de `int8_t` donde cada byte = 1 columna de 8 px; fondo siempre blanco y texto negro; `setTexto()` calcula el límite de caracteres según el tamaño y trunca silenciosamente; usada por `Menu` con 1 instancia y por `MenuCredits` con 2 instancias sincronizadas). Completa. |
+| `Legend.h` / `Legend.cpp` | Clase `Legend` (panel de botones: pad MOVE a la izquierda con 4 flechas, 4 rombos completos de ACTION a la derecha en las posiciones de un pad que parpadean MUY rápido uno a la vez en ciclo lento —rombo fijo `HOLD_MS`, parpadeo `BLINK_PERIOD=100 ms`— y texto de la función del rombo activo en el pie (Back, Select / Pause, None, None), compuesto y mostrado con su propio `Scroller` para que **entre deslizándose** al cambiar de rombo; cualquier botón la cierra con un sonido según el botón pulsado: MOVE = CLICK, ACTION_UP = BACK, ACTION_RIGHT = CONFIRM). Completa. |
+| `Scroller.h` / `Scroller.cpp` | Clase `Scroller` (scroller de 1 bit: una sola banda, texto como array de `int8_t` donde cada byte = 1 columna de 8 px; fondo siempre negro y texto blanco; `setTexto()` compone el texto centrado, fija el alto de la franja y la fila donde se imprimirá, calcula el límite de caracteres según el tamaño y trunca silenciosamente; `update()` avanza 1 px cada 4 ms mientras `print()` la vuelca rellenando la banda; usada por `Menu` con 1 instancia —su transición está desactivada—, por `MenuCredits` con 2 instancias sincronizadas y por `Legend` con 1 instancia para el texto del pie). Completa. |
 | `Menu.h` / `Menu.cpp` | Clase `Menu` (menú con scroller de 1 bit —1 banda del `Scroller` compartido— y rombos de posición). Completa. **Ya no edita nada**: "Difficulty" y "Sound" son ventanas propias (sección 10.3); el `Menu` solo navega y compone, y devuelve la opción confirmada para que el `Engine` abra la que toque. Añade `restoreDiamondBand()` (repinta solo la banda 45..53 y la línea del pie) para volver de esos selectores sin `clear()`. |
 | `MenuDifficulty.h` / `MenuDifficulty.cpp` | Clase `MenuDifficulty` (selector de nivel 1..10, `< N >`, con repetición al mantener presionado; al mantener, solo queda fija la flecha del botón activo). Completa. Ventana hermana: vive sobre el `Menu` ya dibujado, sustituye solo la banda de rombos (45..53) y no hace `clear()`. Guarda el nivel confirmado (`difficulty()`), que el `Engine` pasa a `Game::setDifficulty`. |
 | `MenuSound.h` / `MenuSound.cpp` | Clase `MenuSound` (selector On/Off con una flecha en el lado del destino, sobre la misma banda). Completa. Ventana hermana con la misma banda y el mismo regreso que `MenuDifficulty`; el valor real se aplica al global `Sound` con `setEnabled`. |
@@ -115,7 +115,7 @@ Directorio: `D:\Documents\ESP32S3\Snake_II`
 | `Food.h` / `Food.cpp` | Clase `Food` (alimento del tablero, extraído de `Game`): estado (posición, presencia, tipo normal/especial), generación en celdas libres (`spawn`, que consulta la ocupación al tablero vía `Game::occupied`), dibujo del rombo (normal) o del sprite `SPECIAL_FOOD` (especial) —la celda la toma de `Config::Screen::CELL`, no declara una propia— y el temporizador de la comida especial. Completa. |
 | `Snake.h` / `Snake.cpp` | Clase `Snake` (lógica pura de la serpiente, extraída de `Game`): buffer circular de segmentos, dirección commitida + giro pendiente (sin reversa directa), paso con wrap, colisión, comer/crecer y elección de sprites de las partes. **Sin `Display`/`Sound`/`Food`**: `Game` coordina el ritmo, el alimento, los sonidos y el dibujo. Completa. |
 | `Engine.h` / `Engine.cpp` | Clase `Engine` (despachador de ventanas, antes `App`). **No anida las ventanas** pero las **posee como miembros** (`_boot`, `_menu`, `_menuDifficulty`, `_menuSound`, `_menuCredits`, `_game`, `_legend`): su estado interno decide qué ventana corre y cuándo cambiar (`changeState()`, que llama al `begin()` de la ventana entrante). Los `begin()` de las ventanas se lanzan desde `setup()` vía `engine.begin()`. `changeState()` admite un `beginWindow = false` para volver al menú desde `MenuDifficulty`/`MenuSound` sin repintar la página entera. Completa. |
-| `Snake_II.ino` | Enlace de dependencias (wiring). Define los **servicios globales** (`display`, `buttons`, `sound`) y crea `Engine engine;` (que posee las ventanas). `Sound` se construye con el pin: `Sound sound(Config::Pin::BUZZER);` (el `Buzzer` es suyo). `setup()` llama `display.begin()`, `buttons.begin()`, `sound.begin()` (que inicializa su `Buzzer` interno) y `engine.begin()`; `loop()` hace la **única lectura de botones del frame** (`buttons.read()`) y llama `engine.update()`, `engine.print()`, `sound.update()` y `display.show()`. |
+| `Snake_II-OLED_128x64-I2C.ino` | Enlace de dependencias (wiring). Define los **servicios globales** (`display`, `buttons`, `sound`) y crea `Engine engine;` (que posee las ventanas). `Sound` se construye con el pin: `Sound sound(Config::Pin::BUZZER);` (el `Buzzer` es suyo). `setup()` llama `display.begin()`, `buttons.begin()`, `sound.begin()` (que inicializa su `Buzzer` interno) y `engine.begin()`; `loop()` hace la **única lectura de botones del frame** (`buttons.read()`) y llama `engine.update()`, `engine.print()`, `sound.update()` y `display.show()`. |
 | `Buzzer.h` / `Buzzer.cpp` | Clase `Buzzer` (capa de hardware de sonido: un tono no bloqueante vía LEDC). **No es un servicio global**: la posee `Sound` por valor (sección 10.2). Completa. |
 | `Sound.h` / `Sound.cpp` | Classe `Sound` (secuencias de los efectos del juego sobre su `Buzzer` interno —miembro por valor, inicializado en `begin()`—, con `setEnabled` para silenciar). Completa. |
 | `Sprite.h` | Namespace `Sprite` (tabla de sprites de la serpiente, estilo Nokia: cola, cuerpo, curvas, cabeza cerrada/abierta y panza; sprites de 4×4 px + sprite de la comida especial de 8×4 px + el logo del arranque `LOGO` de 80×48 px, leído con `Sprite::logoPixel(x, y)`, sección 15). Solo datos (header-only, sin `.cpp`). Adaptada al estilo del proyecto. |
@@ -259,11 +259,11 @@ size=3 -> texto 18x24    -> cuadro  (18+6) x (24+2) = 24x26
 - **El ancho de texto usa `strlen` (bytes):** con caracteres UTF-8 (á, é, ñ) el ancho
   sería incorrecto. Actualmente se usan solo ASCII.
 - **Posición de texto devuelta:** siempre la *esquina superior-izquierda* del área del texto.
-- **Clase `Display` encapsula** el OLED; el juego que estaba en `Snake_II.ino` usaba
+- **Clase `Display` encapsula** el OLED; el juego que estaba en `Snake_II-OLED_128x64-I2C.ino` usaba
   `Adafruit_SSD1306` directamente (orden: `Screen`). Al integrar, migrar al objeto `Display`.
 - **Pie de archivo "Fin":** todos los archivos fuente (`.h`/`.cpp`) terminan con el
   bloque de comentario `// ===…` + `// Fin` + `// ===…` (con una línea en blanco antes
-  y sin salto de línea final), igual que `Snake_II.ino`.
+  y sin salto de línea final), igual que `Snake_II-OLED_128x64-I2C.ino`.
 - **Idioma del código: inglés.** Los identificadores son en inglés (clases, métodos,
   variables, constantes y enums; p. ej. `Menu::Option` = `OPT_NEW`/`OPT_CONTINUE`/
   `OPT_DIFFICULTY`/`OPT_SOUND`/`OPT_CREDITS`, `Config::Difficulty::MIN_LEVEL/MAX_LEVEL/DEFAULT_LEVEL` y
@@ -272,7 +272,7 @@ size=3 -> texto 18x24    -> cuadro  (18+6) x (24+2) = 24x26
   se mantienen en español (convención del proyecto).
 - **Servicios globales, ventanas internas:** `Display`, `Buttons` y `Sound` son los
   únicos **globales** (`Globals.h`: `extern`, definidos en
-  `Snake_II.ino`; el orden de construcción ya no importa porque cada servicio se
+  `Snake_II-OLED_128x64-I2C.ino`; el orden de construcción ya no importa porque cada servicio se
   inicializa en su `begin()` desde `setup()`, y así `Scroller`/`Food`
   pueden consultar `display.getWidth()` al construir `Engine`). El `Buzzer` **no**
   es global: lo contiene `Sound` por valor. Las **ventanas no son
@@ -289,10 +289,10 @@ Ubicación: `Buttons.h` / `Buttons.cpp`. Basada en el diseño de `GameInput` (re
 ### Pines (orden del enum)
 
 Los pines de los botones viven en `Config::Pin::BUTTONS` (sección 19),
-`Snake_II.ino` los pasa al constructor:
+`Snake_II-OLED_128x64-I2C.ino` los pasa al constructor:
 
 ```cpp
-Buttons buttons(Config::Pin::BUTTONS);   // en Snake_II.ino
+Buttons buttons(Config::Pin::BUTTONS);   // en Snake_II-OLED_128x64-I2C.ino
 ```
 
 ### Enum
@@ -365,8 +365,8 @@ un literal en la firma.
 | `void begin()` | Restablece el estado de la animación y del parpadeo. **No resetea la selección**: conserva la opción elegida antes de salir del menú (las ventanas son hermanas persistentes; al volver al menú se muestra la misma opción que se tenía, no siempre "New"). Pone `_redraw`, que hace el `clear()` completo + `firstPrint()`. |
 | `void setOptions(textos, conteo)` | Fija la lista y la cantidad de opciones (1..`MAX_OPTIONS`=8). El menú (textos y rombos) se adapta al conteo. |
 | `void setContinueAvailable(bool)` | **Muestra/oculta la opción "Continue"** según haya partida en curso que reanudar. `true` = lista de 5 opciones (New, Continue, Dificultad, Sound, Créditos); `false` = lista de 4 (New, Dificultad, Sound, Créditos). Estado inicial: `false` (al arrancar no hay partida). Quién lo decide: el `Engine` al volver del juego solo pasa `true` si la partida sigue en curso **y** tiene puntos (`!gameOver && score() > 0`). Cambia la lista interna (como `setOptions`) conservando la selección y adaptándola a la nueva cantidad. |
-| `void update()` | Lee botones, navega con `MOVE_RIGHT`/`MOVE_LEFT` y anima el deslizamiento lateral; log en Serial al cambiar de opción; toca `SFX_CLICK` al navegar. Nada más: "Difficulty" y "Sound" ya no se editan aquí, el `Engine` abre sus ventanas. |
-| `void print()` | Dibuja título, cuadro fijo con la opción deslizante, rombos de posición y pie (Best + versión). La banda de la opción se vuelca con `Scroller::blit`, que **en reposo es un no-op** (dirty flag del `Scroller`: solo pinta si hay algo nuevo, ver sección 14). Si vuelve de `MenuDifficulty`/`MenuSound` repinta solo la banda de rombos (ver `restoreDiamondBand`). |
+| `void update()` | Lee botones y navega con `MOVE_RIGHT`/`MOVE_LEFT`; log en Serial al cambiar de opción; toca `SFX_CLICK` al navegar. Nada más: "Difficulty" y "Sound" ya no se editan aquí, el `Engine` abre sus ventanas. **El deslizamiento está desactivado en esta versión**: `startSlide()` está comentado en `navigate()` y hay un `if (true) return;` que salta `_scroller.update()`, así que el vuelo lateral no se ejecuta (la opción se recompone centrada). |
+| `void print()` | Dibuja título, cuadro fijo con la opción deslizante, rombos de posición y pie (Best + versión). La banda de la opción se vuelca con `Scroller::print()`, que **en reposo es un no-op** (bandera `_done`: solo pinta si hay algo nuevo, ver sección 14). Si vuelve de `MenuDifficulty`/`MenuSound` repinta solo la banda de rombos (ver `restoreDiamondBand`). |
 | `int8_t selected()` | Índice de la opción seleccionada. |
 | `int8_t confirm()` | Devuelve la opción seleccionada si se confirma con `ACTION_RIGHT` (pulse recién presionado), o `-1`. **Devuelve las cinco opciones lógicas** (incluidas `OPT_DIFFICULTY` y `OPT_SOUND`): es el `Engine` quien abre la ventana que corresponda. Es el "activar opción" del menú. |
 | `void setBestScore(uint16_t)` | Actualiza el puntaje máximo mostrado. |
@@ -435,16 +435,18 @@ sin "Continue". Cantidad real máxima `MAX_OPTIONS = 8`.
   nombre 6x8). Cada opción se compone **antes** de mostrarse en un **array de
   `int8_t`** (cada byte = 1 columna de 8 px, `1` = glifo, `0` = fondo)
   **centrada**, mediante `setTexto()` que dibuja el texto en un canvas
-  auxiliar y extrae las columnas. La franja es siempre **fondo blanco y texto
-  negro**. Al navegar `MOVE_RIGHT` la tira entra por la **derecha** (se mueve
+  auxiliar y extrae las columnas. La franja es siempre **fondo negro y texto
+  blanco**. Al navegar `MOVE_RIGHT` la tira entra por la **derecha** (se mueve
   hacia la izquierda); con `MOVE_LEFT` por la **izquierda**. Arranca **fuera
-  de pantalla** y avanza **una columna por cada `ANIM_TICK` ms** (`animate`,
+  de pantalla** y avanza **una columna por cada `ANIM_TICK` ms** (`update`,
   acumulado por tiempo; vuelo total ≈ `128 × 4 ms ≈ 0,5 s`). Si se navega a
   mitad de la animación, la banda conserva lo que había y la nueva tira se
   superpone (pueden verse varias opciones a la vez). Todas las opciones quedan
   con el **mismo ancho de 128 px** (espacios vacíos incluidos). Con la tira ya
-  centrada y sin navegar, `blit()` **no repinta la banda** (dirty flag del
-  `Scroller`, sección 14): queda tal cual en la pantalla.
+  centrada y sin navegar, `print()` **no repinta la banda** (bandera `_done` del
+  `Scroller`, sección 14): queda tal cual en la pantalla. **En `Menu` esta
+  transición está desactivada** (`startSlide()` comentado y `update()` con
+  `if (true) return;`), así que la opción aparece centrada, sin vuelo.
 - **Rombos de posición:** banda `45..53`, pegada a la línea separadora en la `54`
   (antes de la fila del pie, `DIA_TOP = 45`). Solo el **seleccionado** es un **rombo simétrico
   completo** de 9 filas (dibujado con dos `fillTriangle`, como el alimento del
@@ -534,9 +536,9 @@ Sin parámetros: usa los servicios globales `Display`, `Buttons` y `Sound`
 
 | Método | Descripción |
 |--------|-------------|
-| `void begin()` | Reinicia la ventana: apaga el flag de salida, rombo activo = `Btn1`. |
-| `void update()` | Lee botones y avanza el ciclo. **El sonido depende del botón presionado** (`done() = true`): `MOVE_*` (navegación) = `SFX_CLICK`, `ACTION_UP` (Back) = `SFX_BACK`, `ACTION_RIGHT` (Select / Pause) = `SFX_CONFIRM`, `ACTION_DOWN`/`ACTION_LEFT` (None) = `SFX_CLICK`. El rombo activo cambia cada `DWELL_MS`. |
-| `void print()` | Dibuja el pad MOVE, los 4 rombos de ACTION y el texto centrado del pie. |
+| `void begin()` | Reinicia la ventana: apaga el flag de salida, rombo activo = `Btn1`, y **compone el texto del pie ya centrado** (`_scrollerPie.setTexto(...)`, sin vuelo: el deslizamiento es para los cambios de rombo posteriores). |
+| `void update()` | Lee botones y avanza el ciclo. **El sonido depende del botón presionado** (`done() = true`): `MOVE_*` (navegación) = `SFX_CLICK`, `ACTION_UP` (Back) = `SFX_BACK`, `ACTION_RIGHT` (Select / Pause) = `SFX_CONFIRM`, `ACTION_DOWN`/`ACTION_LEFT` (None) = `SFX_CLICK`. El rombo activo cambia cada `DWELL_MS`. **Si el texto del pie sigue entrando** (`_scrollerPie.update()` devuelve `true`), el ciclo se **congela**: no se suelta el rombo fijo ni arranca su parpadeo hasta que la franja termina de entrar. |
+| `void print()` | Dibuja el pad MOVE, los 4 rombos de ACTION, el texto del pie (vuelo del `Scroller`) y lanza la recomposición del texto al cambiar de rombo (`nextBtn()`). |
 | `bool done()` | `true` cuando se pidió ir al menú. `Engine` solo cambia de estado; **la Legend ya reprodujo su sonido** (Engine no toca `SFX_BACK` en esta transición). |
 
 ### Dibujo (leyenda de botones)
@@ -557,7 +559,17 @@ Sin parámetros: usa los servicios globales `Display`, `Buttons` y `Sound`
   `PIE_LINE_ROW=54` y texto en `PIE_TOP=57` con la función del rombo activo:
   `Btn1` (↑ = `ACTION_UP`): **"Back"**, `Btn2` (→ = `ACTION_RIGHT`):
   **"Select / Pause"**, `Btn3` (↓ = `ACTION_DOWN`): **"None"**, `Btn4` (← =
-  `ACTION_LEFT`): **"None"**.
+  `ACTION_LEFT`): **"None"**. **Entra deslizándose** al cambiar de rombo (ver
+  abajo).
+- **Texto del pie con `Scroller`:** la franja la lleva una instancia propia
+  `_scrollerPie` (8 px, `printY = Config::Screen::FOOT_TOP`, `TEXT_6x8`), no un
+  `drawText` directo. Al entrar se compone **centrada y sin vuelo**
+  (`setTexto()`); al cambiar de rombo, `nextBtn()` compone el texto nuevo y lo
+  mete en vuelo con `startSlide(true)` (**entra por la derecha**, siguiendo el
+  avance `Btn1 → Btn4`). El texto nuevo **tapa** al anterior a medida que entra
+  (el `Scroller` rellena la banda antes de volcar). Mientras la franja se mueve,
+  el ciclo de rombos **se congela** (`_scrollerPie.update() && ...`): el texto no
+  se queda a medio entrar cuando el rombo avanza al `HOLD` o al parpadeo.
 - **Salida:** cualquier botón cierra la leyenda (`done()`) con su sonido según el
   botón. `Engine` solo la muestra al arranque (después del `Boot`); ya no se repite
   al volver al menú.
@@ -565,10 +577,11 @@ Sin parámetros: usa los servicios globales `Display`, `Buttons` y `Sound`
   ACTION son **estáticos** (se dibujan una sola vez al entrar, tras el `clear()`
   completo). Por frame solo se borra/redibuja la **zona del rombo activo**
   (cuadro 9x9 alrededor de su centro, para el parpadeo) y el **texto del pie**
-  (banda `54..63`) únicamente cuando cambia el rombo activo. Al cambiar el rombo
-  activo, el que **deja de serlo** se restaura completo (`drawDiamond(..., true)`):
-  si el cambio lo pilla en su **fase oculta de parpadeo**, su zona quedó borrada y
-  nadie la volvería a dibujar (evita rombos desaparecidos).
+  (banda `FOOT_LINE`..63) únicamente cuando cambia el rombo activo, a través del
+  `Scroller`. Al cambiar el rombo activo, el que **deja de serlo** se restaura
+  completo (`drawDiamond(..., true)`): si el cambio lo pilla en su **fase oculta
+  de parpadeo**, su zona quedó borrada y nadie la volvería a dibujar (evita rombos
+  desaparecidos).
 
 ---
 
@@ -582,7 +595,7 @@ congela. Usa LEDC del núcleo ESP32 (Core 3.x), como el `GameBuzzer` original.
 **No es un servicio global:** es propiedad exclusiva de `Sound`, que lo contiene
 como **miembro por valor** (`Buzzer _buzzer;`) y lo construye con el pin recibido.
 Solo `Sound` lo usa: no hay `extern Buzzer` en `Globals.h` ni instancia global en
-`Snake_II.ino`, y su `begin()` lo llama `Sound::begin()`. La API es pública dentro
+`Snake_II-OLED_128x64-I2C.ino`, y su `begin()` lo llama `Sound::begin()`. La API es pública dentro
 de `Buzzer`, pero está encapsulada por la estructura de `Sound`.
 
 ### Constructor
@@ -670,7 +683,7 @@ Los tonos siguen la paleta del `GameBuzzer` original.
 | `void stop()` | Corta el efecto en curso y silencia. |
 | `bool playing()` | `true` mientras suena un efecto. |
 
-En `Snake_II.ino`: `Sound sound(Config::Pin::BUZZER);` (instancia única del
+En `Snake_II-OLED_128x64-I2C.ino`: `Sound sound(Config::Pin::BUZZER);` (instancia única del
 servicio global; el `Buzzer` que contiene se inicializa con `sound.begin()` en
 `setup()` y `sound.update()` se llama en `loop()`).
 
@@ -756,7 +769,7 @@ Engine();
 ```
 
 Sin parámetros: los servicios (`Display`, `Buttons`, `Sound`) los consume como
-globales (sección 20) y las ventanas son sus propios miembros. En `Snake_II.ino`
+globales (sección 20) y las ventanas son sus propios miembros. En `Snake_II-OLED_128x64-I2C.ino`
 los globales se definen **antes** de `Engine engine;`, así los constructores de
 los miembros (p. ej. `Scroller`/`Food` que consultan `display.getWidth()`) ven
 los globales ya construidos (misma TU, orden de definición).
@@ -802,13 +815,13 @@ enum class State : uint8_t {
 | Estado | Ventana | Notas |
 |--------|---------|-------|
 | `BOOT` | `Boot` | Animación de arranque (franjas). Al terminar (`done()`) pasa a `LEGEND`. Cualquier botón la termina. |
-| `LEGEND` | `Legend` | Panel de botones: pad MOVE con 4 flechas + 4 rombos completos de ACTION en las posiciones de un pad que parpadean MUY rápido uno a la vez (ciclo lento) con la función del rombo activo centrada en el pie. Cualquier botón la cierra → menú (suena el efecto según el botón —CLICK/BACK/CONFIRM—; `Engine` no añade `SFX_BACK`). Solo se muestra tras el arranque. |
+| `LEGEND` | `Legend` | Panel de botones: pad MOVE con 4 flechas + 4 rombos completos de ACTION en las posiciones de un pad que parpadean MUY rápido uno a la vez (ciclo lento) con la función del rombo activo en el pie, que entra deslizándose al cambiar de rombo (`Scroller` propio) y congela el ciclo mientras se mueve. Cualquier botón la cierra → menú (suena el efecto según el botón —CLICK/BACK/CONFIRM—; `Engine` no añade `SFX_BACK`). Solo se muestra tras el arranque. |
 | `MENU` | `Menu` | Confirma con `ACTION_RIGHT` (`confirm()`). |
 | `NEW` | `Game` | Nueva partida: `setDifficulty(_menuDifficulty.difficulty())` + `begin(true)`. Arranca con el conteo regresivo 3-2-1 (un `SFX_TICK` por dígito). Al salir (`done()`) suena `SFX_BACK`, el `Engine` sincroniza el récord (`menu.setBestScore(game.bestScore())`), **oculta/muestra "Continue" al volver** (`menu.setContinueAvailable(resumable)`, donde `resumable = !game.isGameOver() && game.score() > 0`: partida en curso **y** con puntos), deja la selección del menú en `Continue` si `resumable`, o en `New` en caso contrario (`menu.setSelected(...)`) y pasa a `MENU`. |
 | `CONTINUE` | `Game` | Reanudar la partida anterior (`begin(false)`): queda en pausa y se retoma con `ACTION_RIGHT` (Btn2, "Select / Pause") o `ACTION_LEFT`; si no hay partida en curso arranca una nueva. Al salir (`done()`) igual que `NEW`. |
 | `MENU_DIFFICULTY` | `MenuDifficulty` | Selector de nivel 1..10 **sobre el `Menu` ya dibujado**: sustituye solo la banda de rombos (45..53) por `< N >`, sin `clear()`. `MOVE_LEFT`/`MOVE_RIGHT` editan con repetición (`SFX_CLICK` por paso), `ACTION_RIGHT` aplica y `ACTION_UP` cancela. Al salir (`done()`) el `Engine` llama `menu.restoreDiamondBand()` y hace `changeState(MENU, false)`: **no** vuelve a llamar `Menu::begin()` (que haría `clear()`), solo repinta esa banda. El nivel queda en `MenuDifficulty::_difficulty` (sección 10.3). |
 | `MENU_SOUND` | `MenuSound` | Selector On/Off **sobre el `Menu` ya dibujado**, misma banda y mismo regreso que `MENU_DIFFICULTY`. `MOVE_LEFT` apaga / `MOVE_RIGHT` enciende (`SFX_CLICK`), `ACTION_RIGHT` aplica con `sound.setEnabled()` (y `SFX_CONFIRM` solo si queda encendido), `ACTION_UP` cancela. El valor real vive en el servicio `Sound`, no en la ventana. |
-| `MENU_CREDITS` | `MenuCredits` | 3 entradas navegables con `MOVE_LEFT`/`MOVE_RIGHT` y transición lateral (rol tamaño 2 **seleccionado con cuadro de borde a borde** y centrado en el alto restante del Body; nombre tamaño 1 plano en el pie). La transición usa el **mismo `Scroller` que el menú** pero con **2 bandas sincronizadas** (`BAND_HEIGHTS = {16, 8}` = altos de rol 12x16 y nombre 6x8): cada banda tiene su **propia tira** de 128x16 (el rol en `SLOT_ROLE`, el nombre en `SLOT_NAME`), que se compone **solo al entrar y al navegar** (`loadEntry` → `Scroller::compose`); `drawBand(slot, y, fg, bg)` vuelca su **canvas persistente** con sus colores y la tira se sobrescribe **columna a columna** con sus fondos, así la entrada anterior se mantiene hasta que la nueva la cubre (superposición al navegar rápido). El deslizamiento **arranca desde el borde** (`startSlide`, fuera de escena) y avanza **1 px cada 4 ms con acumulador por tiempo** (igual que el menú, ≈0,5 s). Al navegar suena `SFX_CLICK` y al salir (`done()`) suena `SFX_BACK` (lo toca el `Engine`) y pasa directo a `MENU`. |
+| `MENU_CREDITS` | `MenuCredits` | 3 entradas navegables con `MOVE_LEFT`/`MOVE_RIGHT` y transición lateral (rol tamaño 2 **seleccionado con cuadro de borde a borde** y centrado en el alto restante del Body; nombre tamaño 1 plano en el pie). La transición usa el **mismo `Scroller` que el menú** pero con **2 instancias sincronizadas** (`_scrollerRol` 12x16 + `_scrollerNombre` 6x8): cada banda tiene su **propia tira**, que se compone **solo al entrar y al navegar** (`loadEntry()` → `Scroller::setTexto`, que además fija la fila donde se imprimirá: `roleY()` y `nameY()`). Cada `Scroller` **rellena su propia banda** antes de volcar la franja (fondo negro, texto blanco), así que la entrada anterior se mantiene hasta que la nueva la cubre (superposición al navegar rápido) y `MenuCredits::print()` ya no pinta el fondo ni llama a `redraw()` tras su `clear()`. El deslizamiento **arranca desde el borde** (`startSlide(rightToLeft)`, fuera de escena: `rightToLeft = (_entry > before)`) y avanza **1 px cada 4 ms con acumulador por tiempo** (`update()`, ≈0,5 s). Al navegar suena `SFX_CLICK` y al salir (`done()`) suena `SFX_BACK` (lo toca el `Engine`) y pasa directo a `MENU`. |
 
 ### Métodos
 
@@ -852,14 +865,15 @@ Toda ventana implementa:
   resuelven las rutas del core, y **dónde van depende de cómo se abra el
   proyecto**:
   - El proyecto se abre con el workspace **`D:\Documents\ESP32S3\ESP32S3.code-workspace`**
-    (carpeta raíz `.`, es decir `D:\Documents\ESP32S3`, que contiene `Snake_II` y
-    `blink`). En un `.code-workspace` **no** se lee el `c_cpp_properties.json` de
+    (carpeta raíz `.`, es decir `D:\Documents\ESP32S3`, que contiene
+    `Snake_II-OLED_128x64-I2C` y `blink`). En un `.code-workspace` **no** se lee el
+    `c_cpp_properties.json` de
     una subcarpeta: la configuración va en el bloque `settings` del propio
     `.code-workspace` con claves `C_Cpp.default.*`
     (`compilerPath`, `includePath`, `defines`, `cppStandard`, `cStandard`,
     `intelliSenseMode`). Ese archivo está **fuera del repo**, así que no se versiona.
-  - Si se abre la carpeta `Snake_II` sola (File > Open Folder), entonces sí manda
-    `.vscode/c_cpp_properties.json` (una configuración con nombre,
+  - Si se abre la carpeta `Snake_II-OLED_128x64-I2C` sola (File > Open Folder), entonces
+    sí manda `.vscode/c_cpp_properties.json` (una configuración con nombre,
     `ESP32-S3 Dev Module (arduino-esp32 3.3.12)`, equivalente a las
     `C_Cpp.default.*` del workspace). Es la copia que sí queda en el repo.
   - Contenido de las rutas:
@@ -883,16 +897,17 @@ Toda ventana implementa:
     ESP32; sin él cae en el `typedef BitOrder BusIOBitOrder` y el core 3.3.12 ya
     no define ese tipo (ahora usa `SPI_MSBFIRST`).
   - En el workspace, `${workspaceFolder}` es `D:\Documents\ESP32S3`, así que la
-    raíz del proyecto va como `${workspaceFolder}/Snake_II`.
-  - `Snake_II/.vscode/settings.json` deja el `.aider-venv` (y su caché) fuera de
-    la indexación y de las búsquedas; sin eso el workspace se indexa entero.
+    raíz del proyecto va como `${workspaceFolder}/Snake_II-OLED_128x64-I2C`.
+  - `Snake_II-OLED_128x64-I2C/.vscode/settings.json` deja el `.aider-venv` (y su
+    caché) fuera de la indexación y de las búsquedas; sin eso el workspace se indexa
+    entero.
   - Rutas absolutas: al actualizar el core (o el toolchain) hay que revisar los
     `3.3.12` y `2601`, y hay que tocarlas **en los dos sitios**.
 - **Warnings de compilación C++ activados** en la máquina de desarrollo vía
   `platform.local.txt` del core ESP32 (`compiler.cpp.extra_flags=-Wall -Wreorder`)
   para que desajustes como el orden de inicialización de miembros salten a la vista
   en la compilación (no entra en el repo: se configura a nivel del paquete del core).
-- La demo actual (`Snake_II.ino`) usa `Display`, `Buttons` y el sonido integrado:
+- La demo actual (`Snake_II-OLED_128x64-I2C.ino`) usa `Display`, `Buttons` y el sonido integrado:
   el menú arranca **sin la opción "Continue"** (no hay partida en curso) y solo
   aparece al volver del juego con la partida viva **y con puntos** (score > 0);
   al navegar el menú y los
@@ -940,11 +955,11 @@ llama a `display.clear()`, lo decide cada ventana.
    | Ventana | Estáticos (una vez) | Dinámicos por frame |
    |---------|---------------------|---------------------|
    | `Boot` | — (primer frame: clear completo + `firstPrint()`, la línea completa de `BAR_W` columnas de cada franja) | Por franja: su columna de cabeza en blanco y, en negro, la que deja libre por la cola (`drawBars()`, con el módulo normalizado en `drawBar` para el rebalse); si no cambió el desplazamiento (`_step == _prevStep`) no se dibuja nada |
-    | `Menu` | Cuadro blanco (25..42), título, pie (línea 54 + texto) | Banda de la opción (26..41) con `Scroller::blit` —**solo cuando el scroller tiene algo nuevo que volcar** (navegar, recomponer o tras el `clear`; en reposo se salta, sección 14)— + rombos (banda 45..53); y además la banda 45..53 + la línea separadora del pie cuando `restoreDiamondBand()` deja `_diamondsDirty` (regreso de `MenuDifficulty`/`MenuSound`, sin `clear()`) |
+    | `Menu` | Cuadro blanco (25..42), título, pie (línea 54 + texto) | Banda de la opción (26..41) con `Scroller::print` —**solo cuando el scroller tiene algo nuevo que volcar** (recomponer o tras el `clear`; en reposo se salta, sección 14)— + rombos (banda 45..53); y además la banda 45..53 + la línea separadora del pie cuando `restoreDiamondBand()` deja `_diamondsDirty` (regreso de `MenuDifficulty`/`MenuSound`, sin `clear()`) |
     | `MenuDifficulty` | — (entra sobre el `Menu` ya dibujado, no borra nada) | Selector `< N >`: borra y redibuja **cada frame** la banda 45..53 (número centrado estático con ancho constante + dos flechas laterales que parpadean juntas, ocultas en su límite; al mantener un botón el parpadeo se detiene y solo queda fija la flecha del botón activo, ocultándose la contraria; al llegar al límite se procesa igual que haber soltado el botón, volviendo el parpadeo normal) |
     | `MenuSound` | — (entra sobre el `Menu` ya dibujado, no borra nada) | Selector ON/OFF: borra y redibuja **cada frame** la banda 45..53 (palabra centrada estática + flecha única en el lado del destino, que parpadea) |
-    | `MenuCredits` | Título + cuadro blanco del rol | Bandas rol/nombre (`Scroller`, 2 bandas sincronizadas; se vuelcan juntas en el mismo frame y solo si hay algo nuevo que pintar, sección 14) |
-   | `Legend` | Rótulos, pad MOVE y los 4 rombos fijos | Zona del rombo activo (cuadro 9x9, parpadeo) + texto del pie (banda 54..63) solo si cambia el rombo; al cambiar, se restaura completo el rombo que deja de ser activo (evita que quede borrado si el cambio lo pilló en su fase oculta) |
+| `MenuCredits` | Título del Header (el cuadro blanco del rol lo pinta ahora el propio `Scroller` al rellenar su banda) | Bandas rol/nombre (`Scroller`, 2 instancias sincronizadas; cada una rellena su banda y se vuelca juntas en el mismo frame, y solo si hay algo nuevo que pintar, sección 14) |
+| `Legend` | Rótulos, pad MOVE y los 4 rombos fijos | Zona del rombo activo (cuadro 9x9, parpadeo) + texto del pie (banda `FOOT_LINE`..63) por medio de su propio `Scroller` (`_scrollerPie`): el primer texto se compone **centrado** en `begin()` y al cambiar de rombo **entra deslizándose** (`setTexto()` + `startSlide(true)`); mientras la franja se mueve, el ciclo de rombos se congela (`_scrollerPie.update()` && ...). Al cambiar, se restaura completo el rombo que deja de ser activo (evita que quede borrado si el cambio lo pilló en su fase oculta) |
    | `Game` | Primer frame: clear completo + Header (puntaje 12x16 izq., segundos restantes de la comida especial 12x16 der.) y alimento y serpiente | Header solo si cambia el puntaje o `_food.specialTime()` (banda 0..15); tablero (Body 16..63) solo si `_dirtyBoard` (movimiento, comida nueva, transición de estado): borra el Body, redibuja alimento + serpiente; overlay "3-2-1"/"PAUSA"/"GAME OVER"/festejo de récord (texto invertido sobre banda blanca: cuadro centrado para el conteo, de lado a lado para PAUSA, GAME OVER y los letreros del festejo "BUT"/"YOU ARE"/"THE BEST") en cada frame según el estado —en el conteo, al final de cada dígito el número y su cuadro se ocultan (`COUNT_HIDE_MS`), marcando `_dirtyBoard` una sola vez para restaurar el tablero —; al morir superando el récord, el "GAME OVER" es un ciclo "GAME OVER" → "BUT" → "YOU ARE" → "THE BEST" (`NEW_BEST_SIGN_MS` cada uno) que se repite hasta que se presiona un botón, y el `SFX_NEW_BEST` suena solo la primera vez que aparece el letrero "THE BEST" |
 
 4. Las ventanas `MenuDifficulty` y `MenuSound` **no hacen `clear()`**: son
@@ -967,7 +982,7 @@ llama a `display.clear()`, lo decide cada ventana.
 Encapsula la animación "scroller de 1 bit": compone un texto en un **array de
 `int8_t`** donde cada byte representa **1 columna de 8 píxeles** (bit 0 = fila 0,
 bit 7 = fila 7) y lo desliza lateralmente. **Una sola banda** por instancia.
-La franja es siempre **fondo blanco y texto negro** (sin parámetros de color).
+La franja es siempre **fondo negro y texto blanco** (sin parámetros de color).
 
 - **Constantes:** `STRIP_W = Config::Screen::WIDTH` (128), `STRIP_H = 24` (máx.
   altura de texto 18x24), `ANIM_TICK = 4` ms por píxel (vuelo ≈ 0,5 s).
@@ -975,32 +990,55 @@ La franja es siempre **fondo blanco y texto negro** (sin parámetros de color).
   (el array `_strip` es un miembro por valor), así que la copia está permitida
   aunque se mantiene bloqueada por coherencia con el resto del proyecto.
 - **API:**
-  - `begin()` — reposiciona el deslizamiento (objetivo 0) y marca `_dirty`.
-  - `setTexto(const char* text, uint8_t height, uint8_t size)` — compone el
-    texto centrado en un array de `int8_t` (cada byte = 1 columna de 8 px).
-    Calcula el **límite de caracteres** según el tamaño (`ancho / (6 * size)`)
-    y **trunca silenciosamente** si el texto excede el límite. El texto se
-    compone en un canvas auxiliar (`GFXcanvas8`) y luego se extraen las
-    columnas. Marca `_dirty`.
-  - `startSlide(int8_t dir)` — `+1` entra por la derecha, `-1` por la izquierda;
-    arranca desde el borde (`_slideX = ±ancho`) y marca `_dirty`.
-  - `animate()` — avanza 1 px por `ANIM_TICK` ms (acumulador por tiempo); a
-    llamar en `update()`. Mientras `_slideX != 0` pone `_dirty`: en cada frame
-    hay algo nuevo que pintar, y al llegar a 0 queda un **último volcado** que
-    asienta la banda (del frame siguiente en adelante `blit()` no hace nada).
-  - `redraw()` — fuerza el volcado en el próximo frame: la ventana la llama
-    **después de su `display.clear()`**, que se lleva por delante lo ya volcado.
-  - `blit(int16_t y)` — vuelca la franja a la pantalla en la fila `y`, con
-    **fondo blanco y texto negro** (sin parámetros de color). A llamar en
-    `print()`. **Es un no-op si no hay nada nuevo que volcar** (`_dirty` a 0).
-- **Dirty flag (reposo):** con el flag `_dirty` el `blit()` se salta cuando la
-  franja está en reposo, que es el caso normal. Lo ponen `begin()`, `setTexto()`,
-  `startSlide()`, `animate()` (mientras haya desplazamiento) y `redraw()`; lo
-  limpia `blit()` al volcar.
-- **Usos:** `Menu` = 1 instancia (16 px, `blit(TEXT_SEL_TOP)`); `MenuCredits` = 2
-  instancias sincronizadas (`_scrollerRol` 16 px + `_scrollerNombre` 8 px,
-  ambas reciben `startSlide()` y `animate()` en el mismo frame). En reposo
-  `blit()` es un no-op (dirty flag de `Scroller`).
+  - `void begin()` — reposiciona el deslizamiento (`_slideX = 0`), baja `_done`
+    y arranca el `Ticker`. **No recompone el texto**: la franja queda centrada
+    con lo que hubiera compuesto.
+  - `void setTexto(const char* text, uint8_t height, int16_t printY,
+    uint8_t size = 2)` — compone el texto centrado en el array de `int8_t`
+    (cada byte = 1 columna de 8 px), **fija la fila de pantalla donde se
+    imprimirá** (`printY`) y **el alto de la franja** (`height`, recortado a
+    `STRIP_H`), calcula el **límite de caracteres** según el tamaño
+    (`ancho / (6 * size)`) y **trunca silenciosamente** si el texto excede el
+    límite. El texto se compone en un canvas auxiliar (`GFXcanvas8`) y luego se
+    extraen las columnas. **Llama a `begin()`** al final (texto nuevo ya
+    centrado, sin vuelo).
+  - `void startSlide(bool rightToLeft)` — `true` entra por la derecha (se mueve
+    hacia la izquierda), `false` por la izquierda; arranca **fuera de pantalla**
+    (`_slideX = ±ancho`), baja `_done` y arranca el `Ticker`.
+  - `bool update()` — avanza 1 px por `ANIM_TICK` ms (acumulador por tiempo); a
+    llamar en `update()` de la ventana. Devuelve `true` mientras la animación
+    sigue su curso (la franja aún entra en pantalla) y `false` en cuanto
+    `_slideX` llega a 0. Con la animación terminada **no consume el reloj** (las
+    llamadas siguientes devuelven `false` sin avanzar) hasta que
+    `begin()`/`setTexto()`/`startSlide()` la reinicien.
+  - `bool print()` — vuelca la franja a la pantalla en la fila `_printY` fijada
+    por `setTexto()`, **rellenando la banda con el fondo antes de pintar el
+    texto**; a llamar en `print()` de la ventana. Devuelve `false` **sin
+    repintar nada** cuando `_done` está puesta (la animación ya terminó y su
+    frame final está en pantalla). Pone `_done` en el frame en que `_slideX`
+    llega a 0, guaranteeing que ese frame final se pinta.
+- **Bandera `_done` (reposo):** sustituye al antiguo `_dirty`. `print()` es un
+  no-op en cuanto la banda queda asentada —el caso normal—, así que no repinta
+  la franja en reposo. La bajan `begin()`, `setTexto()` (que llama a `begin()`) y
+  `startSlide()`.
+- **Relleno previo (no es un lujo):** mientras la franja entra desde el borde
+  solo cubre parte del ancho; las columnas que aún no cubre conservarían lo que
+  hubiera debajo (el texto anterior). `print()` recorre la pantalla columna a
+  columna calculando su equivalente en la franja (`screenX - _slideX`) y pinta
+  los 8 px de cada byte, con lo que el texto nuevo **tapa** al anterior a medida
+  que entra.
+- **Usos:**
+  - `Menu` = 1 instancia (16 px, `_printY = TEXT_SEL_TOP`); el `startSlide()`
+    está **comentado** en `navigate()` y `update()` tiene un `if (true) return;`
+    que salta `_scroller.update()`: la transición del menú **está desactivada**
+    en esta versión (la opción se recompone centrada, sin vuelo).
+  - `MenuCredits` = 2 instancias sincronizadas (`_scrollerRol` 16 px +
+    `_scrollerNombre` 8 px, ambas reciben `startSlide()` y `update()` en el
+    mismo frame). Cada una rellena su propia banda, así que `print()` ya no
+    necesita pintar el fondo ni llamar a `redraw()` tras su `clear()`.
+  - `Legend` = 1 instancia para el **texto del pie** (`_scrollerPie`, 8 px,
+    `_printY = Config::Screen::FOOT_TOP`): al cambiar de rombo el texto entra
+    deslizándose en lugar de aparecer de golpe.
 - **Detalle de diseño:** `setTexto()` usa `display.getTextWidth()` para el
   centrado y `display.getWidth()` para el límite de caracteres. El array
   `_strip[STRIP_H / 8][STRIP_W]` almacena las columnas: `_strip[row][col]` es
@@ -1448,8 +1486,8 @@ Estilo del archivo: los namespaces internos (`Pin`, `Screen`, `Difficulty`,
 
 | Namespace | Constantes | Las usan |
 |-----------|------------|----------|
-| `Config::Pin` | `BUTTONS`, `BUZZER`, `OLED_SDA`, `OLED_SCL` | `Snake_II.ino` (pasa `Config::Pin::BUTTONS` a `Buttons` y `Config::Pin::BUZZER` a `Sound`, que construye su `Buzzer`), `Buzzer` (pin por defecto), `Display` (pines I2C por defecto) |
-| `Config::Screen` | `WIDTH`/`HEIGHT`/`CELL`/`ADDRESS` y regiones `HEADER_*`/`BODY_*`/`FOOT_*` | `Display` (defaults del constructor y `regionBounds`), `Boot` (bandas TITULO=Header/CUERPO=Body), `Game` (tablero en el Body, celda de los sprites y `BODY_TOP` al volcar el tablero), `Food` (celda del alimento: centro del rombo y sprite especial), `MenuCredits` (rol del Body) |
+| `Config::Pin` | `BUTTONS`, `BUZZER`, `OLED_SDA`, `OLED_SCL` | `Snake_II-OLED_128x64-I2C.ino` (pasa `Config::Pin::BUTTONS` a `Buttons` y `Config::Pin::BUZZER` a `Sound`, que construye su `Buzzer`), `Buzzer` (pin por defecto), `Display` (pines I2C por defecto) |
+| `Config::Screen` | `WIDTH`/`HEIGHT`/`CELL`/`ADDRESS` y regiones `HEADER_*`/`BODY_*`/`FOOT_*` | `Display` (defaults del constructor y `regionBounds`), `Boot` (bandas TITULO=Header/CUERPO=Body), `Game` (tablero en el Body, celda de los sprites y `BODY_TOP` al volcar el tablero), `Food` (celda del alimento: centro del rombo y sprite especial), `MenuCredits` (rol del Body), `Legend` (línea y fila del pie: `FOOT_LINE`/`FOOT_TOP`/`FOOT_H`), `Scroller` (`WIDTH` como ancho de la tira) |
 | `Config::Difficulty` | `MIN_LEVEL`/`MAX_LEVEL`/`DEFAULT_LEVEL` | `MenuDifficulty` (selector de dificultad) y `Game` (`setDifficulty`/velocidad): antes duplicadas en ambas clases. El sufijo `_LEVEL` y `DEFAULT_LEVEL` evitan la macro `DEFAULT` del core ESP32 (`Arduino.h`). |
 | `Config::Version` | `VERSION`/`RELEASE_DATE` | `Menu` (valor por defecto del parámetro `version` de su constructor, que es el texto del pie; antes el literal `"v0.1"` estaba en la firma). `RELEASE_DATE` todavía no lo usa nadie: queda para la pantalla de créditos o el pie. |
 
@@ -1459,12 +1497,12 @@ Los `static constexpr` de esas clases se eliminaron; solo `Boot` conserva sus
 constantes propias (`BAR_W`, `BAR_SPACING`, `ANIM_TICK`, `TOTAL_MS`), que son de
 su animación.
 
-La banda del pie tiene su geometría en `Config::Screen`: `FOOT_LINE` = 53 para la
-línea separadora, y `FOOT_TOP` = 56 con `FOOT_H` = 8 para el texto, todo derivado
-de `HEIGHT` igual que `HEADER_TOP/H` y `BODY_TOP/H`. Antes eran `FOOT_TOP` =
-`HEIGHT - 9` y `FOOT_H` = 7. En el estado actual del repo **todavía no las usa
-ninguna ventana**: el pie de `Menu` sigue pintado sobre su propia banda (54..63) y
-el `Legend` que ya las consume (línea y texto con `drawText`) sigue sin commitear.
+La banda del pie tiene su geometría en `Config::Screen`: `FOOT_LINE` = 54 para la
+línea separadora (`HEIGHT - (FOOT_H + 1 + 1)`), y `FOOT_TOP` = 56 con `FOOT_H` = 8
+para el texto, todo derivado de `HEIGHT` igual que `HEADER_TOP/H` y `BODY_TOP/H`.
+Antes eran `FOOT_TOP` = `HEIGHT - 9` y `FOOT_H` = 7. Hoy las usa **`Legend`**: la
+línea del pie y la fila donde su `Scroller` imprime el texto (`FOOT_TOP` +
+`FOOT_H`). El pie de `Menu` sigue pintado sobre su propia banda (54..63).
 
 `CELL` sigue la misma regla: es la **única** medida de px por celda. Reemplaza al
 `static constexpr uint8_t CELL = 8` que `Food` declaraba por su cuenta y a los `8`
@@ -1480,7 +1518,7 @@ Config::Screen::CELL`).
 Ubicación: `Globals.h`. Declara con `extern` los **servicios de hardware** que
 comparten todas las clases nuestras. Desde este refactor las clases ya no reciben
 los servicios por constructor (ver secciones 3, 6 y 11): el único lugar donde se
-**instancian** es `Snake_II.ino`.
+**instancian** es `Snake_II-OLED_128x64-I2C.ino`.
 
 ```cpp
 // Globals.h
@@ -1497,7 +1535,7 @@ extern Sound   sound;
 
 ### Reglas
 
-1. **Se instancian solo en `Snake_II.ino`**, y cada uno se inicializa en su
+1. **Se instancian solo en `Snake_II-OLED_128x64-I2C.ino`**, y cada uno se inicializa en su
    `begin()` desde `setup()` (por eso el **orden de definición ya no importa**:
    el `Engine`, declarado al final, se construye sobre globales que solo
    necesitan su constructor —`Scroller` (`display.getWidth()`) y `Food` son

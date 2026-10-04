@@ -95,7 +95,7 @@ Menu::Menu(uint16_t bestScore, const char* version)
 
 void Menu::begin() {
   _scroller.begin();
-  _scroller.setTexto(OPTION_TEXT[_selected], 16, TEXT_12x16);
+  _scroller.setTexto(OPTION_TEXT[_selected], 16, TEXT_SEL_TOP, TEXT_12x16);
   _timer.start();
   _redraw = true;
   _visibleDiamond = true;
@@ -119,7 +119,7 @@ void Menu::setOptions(const char* const* texts, uint8_t count) {
 
   _scroller.begin();
   _timer.start();
-  _scroller.setTexto(optionText(_selected), 16, TEXT_12x16);
+  _scroller.setTexto(optionText(_selected), 16, TEXT_SEL_TOP, TEXT_12x16);
   _redraw = true;
 }
 
@@ -166,7 +166,7 @@ void Menu::setSelected(Menu::Option option) {
   _selected = index;
   _scroller.begin();
   _timer.start();
-  _scroller.setTexto(optionText(_selected), 16, TEXT_12x16);
+  _scroller.setTexto(optionText(_selected), 16, TEXT_SEL_TOP, TEXT_12x16);
   _redraw = true;
 }
 
@@ -199,7 +199,7 @@ void Menu::update() {
   navigate();
   if (true) return;  // IGNORE: no se actualiza el menú en esta versión
 
-  _scroller.animate();
+  _scroller.update();
 }
 
 // ========================================================
@@ -225,8 +225,8 @@ void Menu::navigate() {
 
   if (moved) {
     sound.play(Sound::SFX_CLICK);
-    // _scroller.setTexto(optionText(_selected), 16, TEXT_12x16);
-    // _scroller.startSlide((_selected > before) ? 1 : -1);
+    // _scroller.setTexto(optionText(_selected), 16, TEXT_SEL_TOP, TEXT_12x16);
+    // _scroller.startSlide(_selected > before);
     _timer.start();
     Serial.printf("Menu: opcion %d -> %d\n", before, _selected);
   }
@@ -339,7 +339,7 @@ void Menu::print() {
   // El scroller se salta este volcado cuando está en reposo (nada nuevo que
   // pintar: la banda ya está en la pantalla) y solo vuelca al navegar, al
   // recomponer la opción o tras el clear de arriba.
-  _scroller.blit(TEXT_SEL_TOP);
+  _scroller.print();
 }
 
 void Menu::firstPrint() {

@@ -28,8 +28,8 @@ void MenuCredits::begin() {
 
 void MenuCredits::update() {
   navigate();
-  _scrollerRol.animate();
-  _scrollerNombre.animate();
+  _scrollerRol.update();
+  _scrollerNombre.update();
 }
 
 void MenuCredits::navigate() {
@@ -49,45 +49,52 @@ void MenuCredits::navigate() {
   if (moved) {
     sound.play(Sound::SFX_CLICK);
     loadEntry();
-    int8_t dir = (_entry > before) ? 1 : -1;
-    _scrollerRol.startSlide(dir);
-    _scrollerNombre.startSlide(dir);
+    // Al avanzar hacia la derecha la franja entra por la derecha
+    bool rightToLeft = (_entry > before);
+    _scrollerRol.startSlide(rightToLeft);
+    _scrollerNombre.startSlide(rightToLeft);
     Serial.printf("MenuCredits: opcion %u -> %u\n", before, _entry);
   }
 
   if (buttons.pressed(Buttons::ACTION_UP)) _exit = true;
 }
 
+// ========================================================
+// Geometría de las bandas
+//
+// El rol se centra en el espacio entre el body y el pie; el
+// nombre va justo debajo de PIE_TOP. Ambas filas se calculan
+// aquí (y no en print()) porque setTexto() las necesita para
+// fijar dónde se imprimirá cada franja.
+// ========================================================
+
+int16_t MenuCredits::roleY() const {
+  int16_t bodyTop = (int16_t)Config::Screen::BODY_TOP;
+  int16_t roleH = display.getTextHeight(TEXT_12x16);
+  return bodyTop + (PIE_TOP - bodyTop - roleH) / 2;
+}
+
+int16_t MenuCredits::nameY() const {
+  return PIE_TOP + 1;
+}
+
 void MenuCredits::loadEntry() {
-  _scrollerRol.setTexto(ROLE_NAME[_entry][0], 16, TEXT_12x16);
-  _scrollerNombre.setTexto(ROLE_NAME[_entry][1], 8, TEXT_6x8);
+  _scrollerRol.setTexto(ROLE_NAME[_entry][0], 16, roleY(), TEXT_12x16);
+  _scrollerNombre.setTexto(ROLE_NAME[_entry][1], 8, nameY(), TEXT_6x8);
 }
 
 void MenuCredits::print() {
-  int16_t w = display.getWidth();
-  int16_t bodyTop = (int16_t)Config::Screen::BODY_TOP;
-  int16_t roleH = display.getTextHeight(TEXT_12x16);
-  int16_t roleY = bodyTop + (PIE_TOP - bodyTop - roleH) / 2;
-
+  // Cada Scroller rellena su propia banda antes de volcar la
+  // franja, así que aquí no hace falta pintar nada debajo: solo
+  // el clear() del primer frame.
   if (_redraw) {
     display.clear();
-
     display.drawTextAligned("Credits", CENTER, TEXT_12x16, REGION_HEADER);
-
-    display.screen().fillRect(0, roleY - 1, w, roleH + 2, SSD1306_WHITE);
-
     _redraw = false;
-
-    _scrollerRol.redraw();
-    _scrollerNombre.redraw();
   }
 
-  _scrollerRol.blit(roleY);
-
-  int16_t nameH = display.getTextHeight(TEXT_6x8);
-  int16_t nameY = PIE_TOP + 1;
-  display.screen().fillRect(0, nameY - 1, w, nameH + 2, SSD1306_WHITE);
-  _scrollerNombre.blit(nameY);
+  _scrollerRol.print();
+  _scrollerNombre.print();
 }
 
 bool MenuCredits::done() const {

@@ -11,7 +11,7 @@
 // columna de 8 px: bit 0 = fila 0, bit 7 = fila 7) y lo
 // desliza lateralmente. Una sola banda por instancia.
 //
-// La franja es siempre fondo blanco y texto negro (sin
+// La franja es siempre fondo negro y texto blanco (sin
 // parámetros de color). El texto se compone centrado en un
 // canvas auxiliar y luego se extraen las columnas.
 //
@@ -34,7 +34,13 @@ public:
   void begin();
 
   // ========================================================
-  // Componer el texto en la franja (texto centrado)
+  // Componer el texto en la franja (texto centrado) y
+  // fijar la fila donde se imprimirá
+  //
+  // `height` es el alto de la franja en px y `printY` la
+  // fila de pantalla donde print() la vuelca (de ahí el
+  // nombre: se fija una vez al componer y print() ya no lo
+  // necesita). `size` es el factor de escala de la fuente.
   //
   // Calcula el límite de caracteres según el tamaño
   // (ancho / (6 * size)) y trunca silenciosamente si el
@@ -42,34 +48,45 @@ public:
   // canvas auxiliar y luego se extraen las columnas.
   // ========================================================
 
-  void setTexto(const char* text, uint8_t height = Config::Screen::BODY_TOP + 3, uint8_t size = 2);
+  void setTexto(const char* text, uint8_t height, int16_t printY, uint8_t size = 2);
 
   // ========================================================
-  // Animación lateral (arranca desde el borde, ±ancho)
+  // Animación lateral (arranca desde el borde, fuera de
+  // pantalla)
   // ========================================================
 
-  void startSlide(int8_t dir);
+  // `rightToLeft` = true (1): la franja entra por la derecha
+  // y se desplaza hacia la izquierda. false (0): entra por
+  // la izquierda y se desplaza hacia la derecha.
+  void startSlide(bool rightToLeft);
 
   // ========================================================
-  // Avanzar la animación (1 px por ANIM_TICK ms)
+  // Actualizar (avanza la animación lateral: 1 px por
+  // ANIM_TICK ms, arrancada por startSlide())
   // ========================================================
 
-  void animate();
+  // true = la animación sigue su curso (la franja aún entra
+  // en pantalla). false = la animación finalizó (la franja
+  // quedó centrada); las llamadas siguientes devuelven
+  // false hasta que begin()/setTexto()/startSlide() la
+  // reinicien.
+  bool update();
 
   // ========================================================
-  // Forzar el volcado en el próximo frame (la ventana lo
-  // llama tras su display.clear())
+  // Dibujar (rellena la banda con el fondo de la franja en la
+  // fila fijada por setTexto() y vuelca encima el texto).
+  //
+  // Solo repinta mientras hay algo nuevo: al terminar la
+  // animación se pinta el frame final y la bandera _done
+  // queda puesta, así que las llamadas siguientes no
+  // repintan nada hasta que begin()/setTexto()/startSlide()
+  // la bajen.
   // ========================================================
 
-  void redraw();
-
-  // ========================================================
-  // Volcar la franja a la pantalla en la fila y (fondo
-  // blanco, texto negro). Es un no-op si no hay nada nuevo
-  // que volcar (dirty flag a 0).
-  // ========================================================
-
-  void blit(int16_t y);
+  // true = el texto se puede seguir animando (la franja aún
+  // entra en pantalla). false = la animación finalizó y la
+  // franja ya está pintada en su sitio.
+  bool print();
 
 private:
   // ========================================================
@@ -91,10 +108,11 @@ private:
 
   int8_t _strip[STRIP_H / 8][STRIP_W];  // franja: cada byte = 1 columna de 8 px
   uint8_t _height;                      // alto actual de la franja en px
-  int8_t _dir;                          // +1 entra por la derecha, -1 por la izquierda
+  int16_t _printY;                      // fila de pantalla donde se vuelca la franja
+  bool _rightToLeft;                    // true: entra por la derecha; false: por la izquierda
   int16_t _slideX;                      // borde izquierdo de la franja en pantalla
+  bool _done;                           // true: _slideX llegó a 0 y ese frame ya se pintó
   Ticker _ticker;                       // avance de 1 px por ANIM_TICK ms
-  bool _dirty;                          // hay algo nuevo que volcar a pantalla
 };
 
 #endif

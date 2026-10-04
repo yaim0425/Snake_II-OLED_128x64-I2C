@@ -4,6 +4,7 @@
 #include <Arduino.h>
 #include "Timer.h"
 #include "Config.h"
+#include "Scroller.h"
 
 // ========================================================
 // Legend — panel de botones (leyenda)
@@ -19,6 +20,10 @@
 //       Btn2 (→ = ACTION_RIGHT): "Select / Pause"
 //       Btn3 (↓ = ACTION_DOWN):  "None"
 //       Btn4 (← = ACTION_LEFT):  "None"
+//     Ese texto no aparece de golpe: lo compone un Scroller
+//     que lo desliza lateralmente en el sentido del cambio de
+//     rombo (avanzar → entra por la derecha; retroceder → por
+//     la izquierda).
 //
 // Se muestra al arranque (después de la animación Boot) y al
 // volver al menú desde cualquier ventana. Cualquier botón la
@@ -111,6 +116,11 @@ private:
 
   uint8_t _btn;  // rombo activo (0..3): recorre Btn1 → Btn4
   uint8_t _prevBtn;
+
+  // Franja del pie (función del rombo activo): al cambiar de rombo el
+  // texto entra deslizándose en lugar de aparecer de golpe.
+  Scroller _scrollerPie;
+
   Ticker _ticker;      // avance de 1 px cada ANIM_TICK ms (acumulador por tiempo)
   Stopwatch _timer;    // desde que se fijó el rombo activo (ciclo y parpadeo)
   int8_t _lastActive;  // último rombo cuya zona se gestionó (para restaurar el que deja de ser activo)
@@ -141,7 +151,9 @@ private:
   // Rombo completo de DIA_SIZE centrado en (cx, cy); si black es true no se dibuja
   void dDiamond(int16_t cx, int16_t cy, bool black);
   void blinkDiamond(bool print = false);
-  void nextBtn(bool print = false);
+
+  // Compone el texto del nuevo rombo y arranca su vuelo lateral
+  void nextBtn();
 
   // ¿El rombo activo está visible? (fijo durante HOLD_MS, luego parpadeo rápido)
   bool blinkVisible() const;

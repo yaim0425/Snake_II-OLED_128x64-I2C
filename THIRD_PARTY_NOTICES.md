@@ -1,6 +1,7 @@
 # Avisos de terceros (Third-party notices)
 
-Este documento lista las dependencias de terceros de Snake II y sus licencias.
+Este documento lista las dependencias de terceros de Snake_II-OLED_128x64-I2C y sus
+licencias.
 No forma parte del código fuente del proyecto, que se licencia bajo MIT
 (véase [`LICENSE.md`](LICENSE.md)); es un aviso de atribución.
 
@@ -30,7 +31,7 @@ Este repositorio **no contiene código, fuentes ni artwork de terceros**:
   cláusula de exención de responsabilidad **en la distribución de las propias
   librerías**. Como este repositorio no las distribuye (el usuario las instala
   desde el gestor de Arduino), ese aviso viaja con ellas. Quien reutilice el
-  código de Snake II debe instalar sus propias copias de las librerías.
+  código de Snake_II-OLED_128x64-I2C debe instalar sus propias copias de las librerías.
 - **LGPL-2.1 (core de Arduino-ESP32):** se enlaza dinámicamente como
   biblioteca independiente. No se modifica ni se redistribuye aquí; quien
   reutilice el proyecto debe usar el core oficial de Espressif, sin

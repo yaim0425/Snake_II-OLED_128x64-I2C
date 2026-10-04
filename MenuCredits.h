@@ -31,6 +31,14 @@ private:
 
   void navigate();
   void loadEntry();
+
+  // ========================================================
+  // Geometría de las dos bandas (compartida por loadEntry()
+  // y print())
+  // ========================================================
+
+  int16_t roleY() const;
+  int16_t nameY() const;
 };
 
 #endif
