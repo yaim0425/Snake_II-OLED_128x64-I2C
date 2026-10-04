@@ -63,17 +63,10 @@ void Scroller::setTexto(const char* text, uint8_t height, int16_t printY, uint8_
   canvas.setCursor(textX, 0);
   canvas.print(buffer);
 
-  uint8_t heightBytes = height / 8;
-  for (uint8_t row = 0; row < heightBytes; row++) {
-    for (uint16_t col = 0; col < w; col++) {
-      uint8_t byte = 0;
-      for (uint8_t bit = 0; bit < 8; bit++) {
-        uint8_t y = row * 8 + bit;
-        if (y < height && canvas.getPixel(col, y) != 0) {
-          byte |= (uint8_t)(1 << bit);
-        }
-      }
-      _strip[row][col] = (int8_t)byte;
+  for (uint16_t col = 0; col < w; col++) {
+    for (uint8_t y = 0; y < height; y++) {
+      bool pixel = canvas.getPixel(col, y) != 0;
+      setStripPixel(col, y, pixel);
     }
   }
 
@@ -152,20 +145,18 @@ bool Scroller::update() {
 bool Scroller::print() {
   if (_done) return false;
 
-  uint8_t heightBytes = _height / 8;
   int16_t w = Config::Screen::WIDTH;
 
   for (uint16_t screenX = 0; screenX < w; screenX++) {
     int16_t stripCol = (int16_t)screenX - _slideX;
     if (stripCol < 0 || stripCol >= (int16_t)STRIP_W) continue;
 
-    for (uint8_t row = 0; row < heightBytes; row++) {
-      int8_t byte = _strip[row][stripCol];
-      for (uint8_t bit = 0; bit < 8; bit++) {
-        uint8_t py = _printY + row * 8 + bit;
-        if (py >= display.getHeight()) break;
-        bool pixel = byte & (1 << bit);
-        display.drawPixel(screenX, py, pixel != 0);
+    for (uint8_t y = 0; y < _height; y++) {
+      uint8_t py = _printY + y;
+      if (py >= display.getHeight()) break;
+      bool pixel = getStripPixel((uint16_t)stripCol, y);
+      if (pixel) {
+        display.drawPixel(screenX, py, true);
       }
     }
   }
