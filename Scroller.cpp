@@ -67,7 +67,10 @@ void Scroller::setTexto(const char* text, int16_t y, uint8_t size) {
   canvas.setCursor(textX, size);
   canvas.print(buffer);
 
-  for (int16_t x = 0; x < CURTAIN_W; x++)
+  int16_t startX = _toLeft ? 0 : STRIP_W;
+  int16_t endX = _toLeft ? CURTAIN_W : BUFFER_W;
+
+  for (int16_t x = startX; x < endX; x++)
     for (int8_t y = x % 2; y < _height; y += 2)
       canvas.drawPixel(x, y, SSD1306_BLACK);
 
@@ -148,11 +151,35 @@ bool Scroller::print() {
 
   if (_toLeft) {
     int16_t startX = STRIP_W - _x;
-    for (int16_t x = 0; x < _x; x++)
-      if (startX + x >= 0)
-        for (int8_t y = 0; y < _height; y++)
-          display.drawPixel(startX + x, _y + y, getStripPixel(x, y));
+    for (int16_t x = 0; x < _x; x++) {
+      int16_t screenX = startX + x;
+      if (screenX < 0 || screenX >= STRIP_W) continue;
+      for (int8_t y = 0; y < _height; y++)
+        display.drawPixel(screenX, _y + y, getStripPixel(x, y));
+    }
+  } else {
+    int16_t startX = BUFFER_W - _x;
+    for (int16_t x = startX; x < BUFFER_W; x++) {
+      int16_t screenX = x - startX;
+      if (screenX == STRIP_W) continue;
+      for (int8_t y = 0; y < _height; y++)
+        display.drawPixel(screenX, _y + y, getStripPixel(x, y));
+    }
   }
+
+  // if (_toLeft) {
+  //   int16_t startX = STRIP_W - _x;
+  //   for (int16_t x = 0; x < _x; x++)
+  //     if (startX + x >= 0)
+  //       for (int8_t y = 0; y < _height; y++)
+  //         display.drawPixel(startX + x, _y + y, getStripPixel(x, y));
+  // } else {
+  //   int16_t startX = BUFFER_W - _x;
+  //   for (int16_t x = startX; x < BUFFER_W; x++)
+  //     // if (STRIP_W > x)
+  //       for (int8_t y = 0; y < _height; y++)
+  //         display.drawPixel(x - startX, _y + y, getStripPixel(x, y));
+  // }
 
   // int16_t w = Config::Screen::WIDTH;
   // for (uint16_t screenX = 0; screenX < w; screenX++) {

@@ -62,10 +62,7 @@ bool Snake::turn(Dir d) {
   // Prohibir la reversa directa contra la dirección COMMITIDA (_dir),
   // no contra un giro pendiente intermedio (la cabeza no puede volver
   // sobre sí misma respecto a la dirección con la que avanzará)
-  if ((d == Dir::UP && _dir == Dir::DOWN) ||
-      (d == Dir::DOWN && _dir == Dir::UP) ||
-      (d == Dir::LEFT && _dir == Dir::RIGHT) ||
-      (d == Dir::RIGHT && _dir == Dir::LEFT)) {
+  if ((d == Dir::UP && _dir == Dir::DOWN) || (d == Dir::DOWN && _dir == Dir::UP) || (d == Dir::LEFT && _dir == Dir::RIGHT) || (d == Dir::RIGHT && _dir == Dir::LEFT)) {
     return false;
   }
 
@@ -100,10 +97,10 @@ Snake::Result Snake::step(uint8_t fx, uint8_t fy) {
   uint8_t ny = h.y;
 
   switch (dir) {
-    case Dir::UP:    ny = (ny == 0) ? (uint8_t)(ROWS - 1) : (uint8_t)(ny - 1); break;
+    case Dir::UP: ny = (ny == 0) ? (uint8_t)(ROWS - 1) : (uint8_t)(ny - 1); break;
     case Dir::RIGHT: nx = (nx + 1) % COLS; break;
-    case Dir::DOWN:  ny = (ny == ROWS - 1) ? 0 : (uint8_t)(ny + 1); break;
-    case Dir::LEFT:  nx = (nx == 0) ? (uint8_t)(COLS - 1) : (uint8_t)(nx - 1); break;
+    case Dir::DOWN: ny = (ny == ROWS - 1) ? 0 : (uint8_t)(ny + 1); break;
+    case Dir::LEFT: nx = (nx == 0) ? (uint8_t)(COLS - 1) : (uint8_t)(nx - 1); break;
     default: break;
   }
 
@@ -129,8 +126,8 @@ Snake::Result Snake::step(uint8_t fx, uint8_t fy) {
   // cuerpo nuevo con su sprite persistente (BODY recto, CORNER si
   // giró, BELLY si era la casilla de la comida recién comida).
   const Seg& oldHead = _body[_headIx];
-  Dir in  = oldHead.dir;   // con qué dirección llegó la cabeza a esta casilla
-  Dir out = dir;           // con qué dirección se va hacia la nueva casilla
+  Dir in = oldHead.dir;  // con qué dirección llegó la cabeza a esta casilla
+  Dir out = dir;         // con qué dirección se va hacia la nueva casilla
 
   // La cabeza avanza a la nueva casilla (se agrega la nueva parte)
   uint8_t ni = (_headIx + 1) % MAX_LENGTH;
@@ -154,8 +151,7 @@ Snake::Result Snake::step(uint8_t fx, uint8_t fy) {
     // pasa a ser cola y recibe su sprite de cola apuntando como su dir
     _tailIx = (_tailIx + 1) % MAX_LENGTH;
     Seg& tail = _body[_tailIx];
-    tail.part = (Sprite::Part)(Sprite::TAIL_TO_UP +
-                  ((uint8_t)tail.dir - 1));
+    tail.part = (Sprite::Part)(Sprite::TAIL_TO_UP + ((uint8_t)tail.dir - 1));
     return Result::MOVED;
   }
 
@@ -209,10 +205,10 @@ Sprite::Part Snake::headPart(bool hasFood, uint8_t fx, uint8_t fy) const {
   uint8_t nx = head.x;
   uint8_t ny = head.y;
   switch (_dir) {
-    case Dir::UP:    ny = (ny == 0) ? (uint8_t)(ROWS - 1) : (uint8_t)(ny - 1); break;
+    case Dir::UP: ny = (ny == 0) ? (uint8_t)(ROWS - 1) : (uint8_t)(ny - 1); break;
     case Dir::RIGHT: nx = (nx + 1) % COLS; break;
-    case Dir::DOWN:  ny = (ny == ROWS - 1) ? 0 : (uint8_t)(ny + 1); break;
-    case Dir::LEFT:  nx = (nx == 0) ? (uint8_t)(COLS - 1) : (uint8_t)(nx - 1); break;
+    case Dir::DOWN: ny = (ny == ROWS - 1) ? 0 : (uint8_t)(ny + 1); break;
+    case Dir::LEFT: nx = (nx == 0) ? (uint8_t)(COLS - 1) : (uint8_t)(nx - 1); break;
     default: break;
   }
 
@@ -239,11 +235,11 @@ uint8_t Snake::slot(uint8_t index) const {
 
 Snake::Dir Snake::opposite(Dir d) const {
   switch (d) {
-    case Dir::UP:    return Dir::DOWN;
-    case Dir::DOWN:  return Dir::UP;
+    case Dir::UP: return Dir::DOWN;
+    case Dir::DOWN: return Dir::UP;
     case Dir::RIGHT: return Dir::LEFT;
-    case Dir::LEFT:  return Dir::RIGHT;
-    default:         return Dir::NONE;
+    case Dir::LEFT: return Dir::RIGHT;
+    default: return Dir::NONE;
   }
 }
 
@@ -270,11 +266,11 @@ Sprite::Part Snake::bodyPartFor(Dir in, Dir out) const {
   // a la derecha).
   Dir entry = opposite(in);
   Dir horiz = (entry == Dir::RIGHT || entry == Dir::LEFT) ? entry : out;
-  Dir vert  = (entry == Dir::RIGHT || entry == Dir::LEFT) ? out   : entry;
+  Dir vert = (entry == Dir::RIGHT || entry == Dir::LEFT) ? out : entry;
 
   uint8_t base = Sprite::CORNER_RIGHT_UP;
   if (horiz == Dir::RIGHT) base += (vert == Dir::UP) ? 0 : 1;
-  else                     base += (vert == Dir::UP) ? 2 : 3;
+  else base += (vert == Dir::UP) ? 2 : 3;
 
   return (Sprite::Part)base;
 }
@@ -299,11 +295,11 @@ Sprite::Part Snake::bellyPartFor(Dir in, Dir out) const {
   // (`out`). El nombre es BELLY_<horizontal>_<vertical>.
   Dir entry = opposite(in);
   Dir horiz = (entry == Dir::RIGHT || entry == Dir::LEFT) ? entry : out;
-  Dir vert  = (entry == Dir::RIGHT || entry == Dir::LEFT) ? out   : entry;
+  Dir vert = (entry == Dir::RIGHT || entry == Dir::LEFT) ? out : entry;
 
   uint8_t base = Sprite::BELLY_RIGHT_UP;
   if (horiz == Dir::RIGHT) base += (vert == Dir::UP) ? 0 : 1;
-  else                     base += (vert == Dir::UP) ? 2 : 3;
+  else base += (vert == Dir::UP) ? 2 : 3;
 
   return (Sprite::Part)base;
 }
