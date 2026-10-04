@@ -109,8 +109,6 @@ void Scroller::startSlide(bool toLeft) {
 bool Scroller::update() {
   if (_done) return false;
   _x += _timer.consume();
-  if (_x > BUFFER_W) _x = BUFFER_W;
-  _done = _x > BUFFER_W;
   return !_done;
 }
 
@@ -146,6 +144,8 @@ bool Scroller::print() {
   if (_done) return false;
   if (_lastX == _x) return false;
 
+  if (_x > BUFFER_W) _x = BUFFER_W;
+
   if (_toLeft) {
     int16_t startX = STRIP_W - _x;
     for (int16_t x = 0; x < _x; x++)
@@ -169,6 +169,7 @@ bool Scroller::print() {
   //   }
   // }
 
+  _done = _x == BUFFER_W;
   _lastX = _x;
   return true;
 }

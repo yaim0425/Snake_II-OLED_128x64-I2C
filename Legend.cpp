@@ -89,12 +89,10 @@ void Legend::update() {
   }
   
   if(_lastScroll) {
-    if(!_scrollerPie.update()){
-      _lastScroll = false;
-      _ticker.start();
-      _timer.start();
-    }
-    return;
+    if(_scrollerPie.update()) return;
+    _lastScroll = false;
+    _ticker.start();
+    _timer.start();
   };
 
   // El rombo activo cambia cada DWELL_MS (avance lento)
