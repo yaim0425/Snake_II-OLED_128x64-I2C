@@ -88,6 +88,18 @@ public:
   // franja ya está pintada en su sitio.
   bool print();
 
+  // ========================================================
+  // Acceso a la franja (_strip)
+  // ========================================================
+
+  // Lectura de un byte de la franja (cada byte = 1 columna de 8 px)
+  // rowBytes: fila en bytes (0..(STRIP_H/8)-1), col: columna (0..STRIP_W-1)
+  int8_t getStripByte(uint8_t rowBytes, uint16_t col) const;
+
+  // Escritura de un byte de la franja (cada byte = 1 columna de 8 px)
+  // rowBytes: fila en bytes (0..(STRIP_H/8)-1), col: columna (0..STRIP_W-1)
+  void setStripByte(uint8_t rowBytes, uint16_t col, int8_t value);
+
 private:
   // ========================================================
   // Geometría y tiempos

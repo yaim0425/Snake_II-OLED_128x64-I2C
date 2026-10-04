@@ -174,6 +174,22 @@ bool Scroller::print() {
   return true;
 }
 
+// ========================================================
+// Acceso a la franja (_strip)
+// ========================================================
+
+int8_t Scroller::getStripByte(uint8_t rowBytes, uint16_t col) const {
+  if (rowBytes >= (STRIP_H / 8)) return 0;
+  if (col >= STRIP_W) return 0;
+  return _strip[rowBytes][col];
+}
+
+void Scroller::setStripByte(uint8_t rowBytes, uint16_t col, int8_t value) {
+  if (rowBytes >= (STRIP_H / 8)) return;
+  if (col >= STRIP_W) return;
+  _strip[rowBytes][col] = value;
+}
+
 // ====================================================================================
 // Fin
 // ====================================================================================
