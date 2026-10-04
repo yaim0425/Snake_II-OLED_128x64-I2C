@@ -31,7 +31,7 @@ public:
   // Inicialización (al entrar en la ventana)
   // ========================================================
 
-  void begin();
+  // void begin();
 
   // ========================================================
   // Componer el texto en la franja (texto centrado) y
@@ -48,7 +48,7 @@ public:
   // canvas auxiliar y luego se extraen las columnas.
   // ========================================================
 
-  void setTexto(const char* text, uint8_t height, int16_t printY, uint8_t size = 2);
+  void setTexto(const char* text, int16_t y, uint8_t size = 2);
 
   // ========================================================
   // Animación lateral (arranca desde el borde, fuera de
@@ -58,7 +58,7 @@ public:
   // `rightToLeft` = true (1): la franja entra por la derecha
   // y se desplaza hacia la izquierda. false (0): entra por
   // la izquierda y se desplaza hacia la derecha.
-  void startSlide(bool rightToLeft);
+  void startSlide(bool rightToLeft = true);
 
   // ========================================================
   // Actualizar (avanza la animación lateral: 1 px por
@@ -106,10 +106,11 @@ private:
   // ========================================================
 
   // Ancho de la franja (ancho de pantalla)
-  static constexpr uint8_t STRIP_W = Config::Screen::WIDTH;
+  static constexpr uint16_t STRIP_W = Config::Screen::WIDTH;
 
   // Alto máximo de la franja (texto 18x24)
-  static constexpr uint8_t STRIP_H = 24;
+  static constexpr uint8_t STRIP_H = 32;
+  static constexpr uint8_t CURTAIN_W = 3;
 
   // Avance de 1 px cada ANIM_TICK ms (acumulador por tiempo)
   static constexpr uint32_t ANIM_TICK = 4;
@@ -118,13 +119,17 @@ private:
   // Estado interno
   // ========================================================
 
-  int8_t _strip[STRIP_H / 8][STRIP_W];  // franja: cada byte = 1 columna de 8 px
-  uint8_t _height;                      // alto actual de la franja en px
-  int16_t _printY;                      // fila de pantalla donde se vuelca la franja
-  bool _rightToLeft;                    // true: entra por la derecha; false: por la izquierda
-  int16_t _slideX;                      // borde izquierdo de la franja en pantalla
-  bool _done;                           // true: _slideX llegó a 0 y ese frame ya se pintó
-  Ticker _ticker;                       // avance de 1 px por ANIM_TICK ms
+  uint8_t _strip[STRIP_H / 8][STRIP_W];  // franja: cada byte = 1 columna de 8 px
+  uint8_t _height;                       // alto actual de la franja en px
+  int16_t _y;                       // fila de pantalla donde se vuelca la franja
+  bool _toLeft;                     // true: entra por la derecha; false: por la izquierda
+  
+  int16_t _x;                       // borde izquierdo de la franja en pantalla
+  int16_t _prevX;
+  Ticker _timer;                        // avance de 1 px por ANIM_TICK ms
+
+  bool _done;                            // true: _slideX llegó a 0 y ese frame ya se pintó
+  
 };
 
 #endif

@@ -19,8 +19,8 @@ MenuCredits::MenuCredits()
 
 void MenuCredits::begin() {
   _entry = 1;
-  _scrollerRol.begin();
-  _scrollerNombre.begin();
+  // _scrollerRol.begin();
+  // _scrollerNombre.begin();
   loadEntry();
   _exit = false;
   _redraw = true;
@@ -79,8 +79,8 @@ int16_t MenuCredits::nameY() const {
 }
 
 void MenuCredits::loadEntry() {
-  _scrollerRol.setTexto(ROLE_NAME[_entry][0], 16, roleY(), TEXT_12x16);
-  _scrollerNombre.setTexto(ROLE_NAME[_entry][1], 8, nameY(), TEXT_6x8);
+  _scrollerRol.setTexto(ROLE_NAME[_entry][0], roleY(), TEXT_12x16);
+  _scrollerNombre.setTexto(ROLE_NAME[_entry][1], nameY(), TEXT_6x8);
 }
 
 void MenuCredits::print() {
