@@ -115,7 +115,7 @@ private:
   // ========================================================
 
   uint8_t _btn;  // rombo activo (0..3): recorre Btn1 → Btn4
-  uint8_t _prevBtn;
+  uint8_t _lastBtn;
 
   // Franja del pie (función del rombo activo): al cambiar de rombo el
   // texto entra deslizándose en lugar de aparecer de golpe.
@@ -126,11 +126,10 @@ private:
   int8_t _lastActive;  // último rombo cuya zona se gestionó (para restaurar el que deja de ser activo)
   int8_t _lastText;    // texto del pie que se dibujó (para borrar/redibujar solo al cambiar)
 
-  bool _nextBtn;  // true si el texto del pie se dibujó (para borrar/redibujar solo al cambiar)
-
   bool _blinkDiamond;    // true si el mensaje de "Press any button..." cambió de visible a invisible o viceversa
   bool _visibleDiamond;  // true si el mensaje de "Press any button..." está visible
   bool _holdDiamond;     // true si el mensaje de "Press any button..." está visible
+  bool _lastScroll;
 
   bool _done;
   bool _clear;  // primer frame tras begin(): clear() completo + estáticos

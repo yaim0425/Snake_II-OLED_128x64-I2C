@@ -28,12 +28,13 @@ const char* const Legend::BTN_XXX[4] = {
 Legend::Legend()
   : _done(false),
     _btn(0),
-    _prevBtn(0),
+    _lastBtn(0),
     _ticker(CICLE),
     _holdDiamond(true),
     _timer(),
     _visibleDiamond(true),
     _clear(true),
+    _lastScroll(true),
     _lastActive(0),
     _lastText(-1) {}
 
@@ -44,18 +45,15 @@ Legend::Legend()
 void Legend::begin() {
   _done = false;
   _btn = 0;
-  _prevBtn = 0;
+  _lastBtn = 0;
   _ticker.start();
   _holdDiamond = true;
   _timer.start();
   _visibleDiamond = true;
   _clear = true;
+  _lastScroll = true;
   _lastActive = 0;
   _lastText = -1;
-
-  // Texto inicial del pie, ya centrado (sin vuelo: el slide es para
-  // los cambios de rombo posteriores)
-  _scrollerPie.setTexto(BTN_FUNC[_btn], 8, Config::Screen::FOOT_TOP, TEXT_6x8);
 }
 
 // ========================================================
@@ -89,18 +87,23 @@ void Legend::update() {
     _done = true;
     return;
   }
+  
+  if(_lastScroll ^ _scrollerPie.update()) {
+    _lastScroll = false;
+    _ticker.start();
+    _timer.start();
+    return;
+  };
 
   // El rombo activo cambia cada DWELL_MS (avance lento)
   uint32_t steps = _ticker.consume();
   if (steps) _btn = (_btn + steps) % 4;
 
-  if (!_scrollerPie.update() && _holdDiamond && _timer.expired(Config::Legend::HOLD))
+  if (_holdDiamond && _timer.expired(Config::Legend::HOLD))
     _holdDiamond = false;
 
   if (!_holdDiamond)
     _blinkDiamond = _visibleDiamond ^ _timer.blinkOn(Config::Legend::PERIOD, Config::Legend::OFF);
-
-  _nextBtn = _prevBtn != _btn;
 }
 
 // ========================================================
@@ -223,10 +226,11 @@ void Legend::firstPrint() {
 
   // ------------------------------------------------------
 
-  const int16_t pieY = Config::Screen::FOOT_TOP;
+  const char* pieText = BTN_FUNC[_btn];
   const int16_t pieH = Config::Screen::FOOT_H;
+  const int16_t pieY = Config::Screen::FOOT_TOP;
   display.fillRect(0, pieY - 1, w, pieH + 1, false);
-  display.drawText(BTN_FUNC[_btn], (w - strlen(BTN_FUNC[_btn]) * 6) / 2, pieY, TEXT_6x8);
+  display.drawTextInverted(pieText, (w - strlen(pieText) * 6) / 2, pieY, TEXT_6x8);
 }
 
 void Legend::blinkDiamond(bool print) {
@@ -291,18 +295,17 @@ void Legend::blinkDiamond(bool print) {
 // ========================================================
 
 void Legend::nextBtn() {
-  if (!_nextBtn) return;
+  if (_lastBtn == _btn) return;
 
   int16_t footTop = Config::Screen::FOOT_TOP;
-  int16_t footH = Config::Screen::FOOT_H;
-  _scrollerPie.setTexto(BTN_FUNC[_btn], footH, footTop, TEXT_6x8);
+  _scrollerPie.setTexto(BTN_FUNC[_btn], footTop, TEXT_6x8);
   _scrollerPie.startSlide(true);
 
   blinkDiamond(true);
-  _prevBtn = _btn;
+
   _timer.start();
   _holdDiamond = true;
-  _nextBtn = false;
+  _lastBtn = _btn;
 }
 
 // ========================================================
