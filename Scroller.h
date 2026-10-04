@@ -92,13 +92,13 @@ public:
   // Acceso a la franja (_strip)
   // ========================================================
 
-  // Lectura de un byte de la franja (cada byte = 1 columna de 8 px)
-  // rowBytes: fila en bytes (0..(STRIP_H/8)-1), col: columna (0..STRIP_W-1)
-  int8_t getStripByte(uint8_t rowBytes, uint16_t col) const;
+  // Lectura de un bit/píxel dentro de la franja (1 bit por píxel)
+  // x: columna (0..STRIP_W-1), y: fila (0..STRIP_H-1)
+  bool getStripPixel(uint16_t x, uint8_t y) const;
 
-  // Escritura de un byte de la franja (cada byte = 1 columna de 8 px)
-  // rowBytes: fila en bytes (0..(STRIP_H/8)-1), col: columna (0..STRIP_W-1)
-  void setStripByte(uint8_t rowBytes, uint16_t col, int8_t value);
+  // Escritura de un bit/píxel dentro de la franja (1 bit por píxel)
+  // x: columna (0..STRIP_W-1), y: fila (0..STRIP_H-1), value: true = set
+  void setStripPixel(uint16_t x, uint8_t y, bool value);
 
 private:
   // ========================================================

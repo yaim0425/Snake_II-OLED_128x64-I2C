@@ -178,16 +178,24 @@ bool Scroller::print() {
 // Acceso a la franja (_strip)
 // ========================================================
 
-int8_t Scroller::getStripByte(uint8_t rowBytes, uint16_t col) const {
-  if (rowBytes >= (STRIP_H / 8)) return 0;
-  if (col >= STRIP_W) return 0;
-  return _strip[rowBytes][col];
+bool Scroller::getStripPixel(uint16_t x, uint8_t y) const {
+  if (x >= STRIP_W) return false;
+  if (y >= STRIP_H) return false;
+  uint8_t rowBytes = y / 8;
+  uint8_t bit = y % 8;
+  return (_strip[rowBytes][x] & (1 << bit)) != 0;
 }
 
-void Scroller::setStripByte(uint8_t rowBytes, uint16_t col, int8_t value) {
-  if (rowBytes >= (STRIP_H / 8)) return;
-  if (col >= STRIP_W) return;
-  _strip[rowBytes][col] = value;
+void Scroller::setStripPixel(uint16_t x, uint8_t y, bool value) {
+  if (x >= STRIP_W) return;
+  if (y >= STRIP_H) return;
+  uint8_t rowBytes = y / 8;
+  uint8_t bit = y % 8;
+  if (value) {
+    _strip[rowBytes][x] |= (int8_t)(1 << bit);
+  } else {
+    _strip[rowBytes][x] &= (int8_t)~(1 << bit);
+  }
 }
 
 // ====================================================================================
