@@ -5,9 +5,9 @@
 #include "Config.h"
 
 static const char* const ROLE_NAME[MenuCredits::NUM_ENTRIES][2] = {
-  { "Dev",      "opencode.ai" },
-  { "Snake II", "v0.1"        },
-  { "Director", "YAIM904"     }
+  { "Dev", "opencode.ai" },
+  { "Snake II", "v0.1" },
+  { "Director", "YAIM904" }
 };
 
 static constexpr int16_t PIE_TOP = 54;

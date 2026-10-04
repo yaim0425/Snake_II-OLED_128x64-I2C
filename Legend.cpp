@@ -34,7 +34,7 @@ Legend::Legend()
     _timer(),
     _visibleDiamond(true),
     _clear(true),
-    _lastScroll(true),
+    _lastScroll(false),
     _lastActive(0),
     _lastText(-1) {}
 
@@ -51,7 +51,7 @@ void Legend::begin() {
   _timer.start();
   _visibleDiamond = true;
   _clear = true;
-  _lastScroll = true;
+  _lastScroll = false;
   _lastActive = 0;
   _lastText = -1;
 }
@@ -88,10 +88,12 @@ void Legend::update() {
     return;
   }
   
-  if(_lastScroll ^ _scrollerPie.update()) {
-    _lastScroll = false;
-    _ticker.start();
-    _timer.start();
+  if(_lastScroll) {
+    if(!_scrollerPie.update()){
+      _lastScroll = false;
+      _ticker.start();
+      _timer.start();
+    }
     return;
   };
 
@@ -300,6 +302,7 @@ void Legend::nextBtn() {
   int16_t footTop = Config::Screen::FOOT_TOP;
   _scrollerPie.setTexto(BTN_FUNC[_btn], footTop, TEXT_6x8);
   _scrollerPie.startSlide(true);
+  _lastScroll = true;
 
   blinkDiamond(true);
 
