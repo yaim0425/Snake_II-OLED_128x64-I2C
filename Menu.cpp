@@ -95,7 +95,7 @@ Menu::Menu(uint16_t bestScore, const char* version)
 
 void Menu::begin() {
   // _scroller.begin();
-  _scroller.setTexto(OPTION_TEXT[_selected], TEXT_SEL_TOP, TEXT_12x16);
+  _scroller.setTexto(OPTION_TEXT[_selected], TEXT_SEL_TOP, true, TEXT_12x16);
   _timer.start();
   _redraw = true;
   _visibleDiamond = true;
@@ -119,7 +119,7 @@ void Menu::setOptions(const char* const* texts, uint8_t count) {
 
   // _scroller.begin();
   _timer.start();
-  _scroller.setTexto(optionText(_selected), TEXT_SEL_TOP, TEXT_12x16);
+  _scroller.setTexto(optionText(_selected), TEXT_SEL_TOP, true, TEXT_12x16);
   _redraw = true;
 }
 
@@ -166,7 +166,7 @@ void Menu::setSelected(Menu::Option option) {
   _selected = index;
   // _scroller.begin();
   _timer.start();
-  _scroller.setTexto(optionText(_selected), TEXT_SEL_TOP, TEXT_12x16);
+  _scroller.setTexto(optionText(_selected), TEXT_SEL_TOP, true, TEXT_12x16);
   _redraw = true;
 }
 
@@ -225,8 +225,8 @@ void Menu::navigate() {
 
   if (moved) {
     sound.play(Sound::SFX_CLICK);
-    // _scroller.setTexto(optionText(_selected), 16, TEXT_SEL_TOP, TEXT_12x16);
-    // _scroller.startSlide(_selected > before);
+    // _scroller.setTexto(optionText(_selected), 16, TEXT_SEL_TOP, true, TEXT_12x16);
+    // _scroller.startSlide();
     _timer.start();
     Serial.printf("Menu: opcion %d -> %d\n", before, _selected);
   }

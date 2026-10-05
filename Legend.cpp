@@ -298,8 +298,8 @@ void Legend::nextBtn() {
   if (_lastBtn == _btn) return;
 
   int16_t footTop = Config::Screen::FOOT_TOP;
-  _scrollerPie.setTexto(BTN_FUNC[_btn], footTop, TEXT_6x8);
-  _scrollerPie.startSlide(true);
+  _scrollerPie.setTexto(BTN_FUNC[_btn], footTop, true, TEXT_6x8);
+  _scrollerPie.startSlide();
   _lastScroll = true;
 
   blinkDiamond(true);

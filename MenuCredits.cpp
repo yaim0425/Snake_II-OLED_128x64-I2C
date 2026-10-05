@@ -50,9 +50,8 @@ void MenuCredits::navigate() {
     sound.play(Sound::SFX_CLICK);
     loadEntry();
     // Al avanzar hacia la derecha la franja entra por la derecha
-    bool rightToLeft = (_entry > before);
-    _scrollerRol.startSlide(rightToLeft);
-    _scrollerNombre.startSlide(rightToLeft);
+    _scrollerRol.startSlide();
+    _scrollerNombre.startSlide();
     Serial.printf("MenuCredits: opcion %u -> %u\n", before, _entry);
   }
 
@@ -79,8 +78,8 @@ int16_t MenuCredits::nameY() const {
 }
 
 void MenuCredits::loadEntry() {
-  _scrollerRol.setTexto(ROLE_NAME[_entry][0], roleY(), TEXT_12x16);
-  _scrollerNombre.setTexto(ROLE_NAME[_entry][1], nameY(), TEXT_6x8);
+  _scrollerRol.setTexto(ROLE_NAME[_entry][0], roleY(), true, TEXT_12x16);
+  _scrollerNombre.setTexto(ROLE_NAME[_entry][1], nameY(), true, TEXT_6x8);
 }
 
 void MenuCredits::print() {
