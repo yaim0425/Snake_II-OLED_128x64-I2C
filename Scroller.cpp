@@ -42,7 +42,7 @@ Scroller::Scroller()
 // canvas auxiliar y luego se extraen las columnas.
 // ========================================================
 
-void Scroller::setTexto(const char* text, int16_t y, uint8_t size) {
+void Scroller::setTexto(const char* text, int16_t y, bool toLeft, uint8_t size) {
   if (size < 1) size = 1;
   if (size > 3) size = 3;
 
@@ -50,6 +50,7 @@ void Scroller::setTexto(const char* text, int16_t y, uint8_t size) {
   _size = size;
   _done = true;
   _height = 8 * size + size;
+  _toLeft = toLeft;
 
   uint8_t maxChars = STRIP_W / (6 * size);
 
@@ -89,11 +90,10 @@ void Scroller::setTexto(const char* text, int16_t y, uint8_t size) {
 // indicado (derecha si rightToLeft, izquierda si no)
 // ========================================================
 
-void Scroller::startSlide(bool toLeft) {
+void Scroller::startSlide() {
   _x = 0;
   _lastX = 0;
   _done = false;
-  _toLeft = toLeft;
   _timer.start();
 }
 

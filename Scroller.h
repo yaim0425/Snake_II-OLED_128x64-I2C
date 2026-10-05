@@ -48,7 +48,7 @@ public:
   // canvas auxiliar y luego se extraen las columnas.
   // ========================================================
 
-  void setTexto(const char* text, int16_t y, uint8_t size = 2);
+  void setTexto(const char* text, int16_t y, bool toLeft = true, uint8_t size = 2);
 
   // ========================================================
   // Animación lateral (arranca desde el borde, fuera de
@@ -58,7 +58,7 @@ public:
   // `rightToLeft` = true (1): la franja entra por la derecha
   // y se desplaza hacia la izquierda. false (0): entra por
   // la izquierda y se desplaza hacia la derecha.
-  void startSlide(bool toLeft);
+  void startSlide();
 
   // ========================================================
   // Actualizar (avanza la animación lateral: 1 px por
@@ -112,7 +112,7 @@ private:
   static constexpr uint8_t STRIP_H = 32;
 
   // Avance de 1 px cada ANIM_TICK ms (acumulador por tiempo)
-  static constexpr uint32_t ANIM_TICK = 4 * 250;
+  static constexpr uint32_t ANIM_TICK = 4;
 
   static constexpr int8_t CURTAIN_W = 3;
   static constexpr int16_t BUFFER_W = STRIP_W + CURTAIN_W;
