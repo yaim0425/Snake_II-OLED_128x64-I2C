@@ -236,7 +236,6 @@ void Legend::firstPrint() {
 void Legend::blinkDiamond(bool print) {
   if (!_blinkDiamond && !print) return;
 
-  const int16_t size = Config::Diamond::SIZE;
   const int16_t padY = Config::Screen::BODY_MIDDLE;
 
   int16_t centerX = 0;
@@ -266,6 +265,8 @@ void Legend::blinkDiamond(bool print) {
 
   if (print)
     _visibleDiamond = false;
+
+  const int16_t size = Config::Diamond::SIZE;
 
   switch (_btn) {
     case 0:
@@ -298,7 +299,7 @@ void Legend::nextBtn() {
   if (_lastBtn == _btn) return;
 
   int16_t footTop = Config::Screen::FOOT_TOP;
-  _scrollerPie.setTexto(BTN_FUNC[_btn], footTop, true, TEXT_6x8);
+  _scrollerPie.setTexto(BTN_FUNC[_btn], footTop, _btn % 2 == 0, TEXT_6x8);
   _scrollerPie.startSlide();
   _lastScroll = true;
 

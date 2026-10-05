@@ -19,6 +19,13 @@ Arduino IDE. Programación orientada a objetos: cada clase en su archivo `.h` y 
 - **La IA debe actualizar este documento (`PROYECTO.md`) antes de hacer el commit**:
   toda modificación de código debe quedar reflejada (secciones/API) y ese cambio a
   `PROYECTO.md` debe incluirse en el mismo commit.
+- **Al pedir un commit, la IA no modifica el código.** No "arregla" el código de los
+  archivos para dejarlo bien antes de commitear: si algo está mal, lo señala y espera
+  orden. Lo único que puede tocar sin permiso son los archivos `.md` y los comentarios.
+- **Commit y `push` van juntos.** En cuanto se crea el commit se hace `push`
+  inmediatamente, sin pedir confirmación adicional.
+- **Toda regla que el usuario dé debe quedar escrita en este documento**, para que
+  sobreviva a la siguiente sesión (ver la frase de arranque de más abajo).
 - **La IA no compila sin permiso explícito del usuario.** El usuario compila por su
   cuenta (compilar la IA y después el usuario demora el flujo de trabajo).
 
