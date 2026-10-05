@@ -164,20 +164,16 @@ void Legend::firstPrint() {
 
   // ------------------------------------------------------
 
-  const int16_t w = Config::Screen::WIDTH;
-  const int16_t size = Config::Diamond::SIZE;
-  const int16_t padY = Config::Screen::BODY_MIDDLE;
-
   char* text = "Move / Action";
   int16_t centerX = 0;
   int16_t centerY = 0;
 
-  int16_t middleX = w / 2;
+  int16_t middleX = WIDTH / 2;
   int16_t textX = 0;
 
   // ------------------------------------------------------
 
-  display.fillRect(0, TEXT_Y - 1, w, 8 + 1, SSD1306_WHITE);
+  display.fillRect(0, TEXT_Y - 1, WIDTH, 8 + 1, SSD1306_WHITE);
 
   // ------------------------------------------------------
 
@@ -187,38 +183,38 @@ void Legend::firstPrint() {
 
   // Arriba (↑)
   centerX = PAD_LEFT_X;
-  centerY = padY - PAD_RADIO;
+  centerY = PAD_Y - PAD_RADIO;
   display.fillTriangle(
-    centerX - size, centerY,
-    centerX, centerY - size,
-    centerX + size, centerY,
+    centerX - SIZE, centerY,
+    centerX, centerY - SIZE,
+    centerX + SIZE, centerY,
     SSD1306_WHITE);
 
   // Derecha (→)
   centerX = PAD_LEFT_X + PAD_RADIO;
-  centerY = padY;
+  centerY = PAD_Y;
   display.fillTriangle(
-    centerX, centerY - size,
-    centerX + size, centerY,
-    centerX, centerY + size,
+    centerX, centerY - SIZE,
+    centerX + SIZE, centerY,
+    centerX, centerY + SIZE,
     SSD1306_WHITE);
 
   // Abajo (↓)
   centerX = PAD_LEFT_X;
-  centerY = padY + PAD_RADIO;
+  centerY = PAD_Y + PAD_RADIO;
   display.fillTriangle(
-    centerX - size, centerY,
-    centerX, centerY + size,
-    centerX + size, centerY,
+    centerX - SIZE, centerY,
+    centerX, centerY + SIZE,
+    centerX + SIZE, centerY,
     SSD1306_WHITE);
 
   // Izquierda (←)
   centerX = PAD_LEFT_X - PAD_RADIO;
-  centerY = padY;
+  centerY = PAD_Y;
   display.fillTriangle(
-    centerX, centerY - size,
-    centerX - size, centerY,
-    centerX, centerY + size,
+    centerX, centerY - SIZE,
+    centerX - SIZE, centerY,
+    centerX, centerY + SIZE,
     SSD1306_WHITE);
 
   // ------------------------------------------------------
@@ -241,16 +237,13 @@ void Legend::firstPrint() {
   // ------------------------------------------------------
 
   const char* pieText = BTN_FUNC[_btn];
-  const int16_t pieH = Config::Screen::FOOT_H;
-  const int16_t pieY = Config::Screen::FOOT_TOP;
-  display.fillRect(0, pieY - 1, w, pieH + 1, SSD1306_WHITE);
-  display.drawText(pieText, (w - strlen(pieText) * 6) / 2, pieY, TEXT_6x8, SSD1306_BLACK, SSD1306_WHITE);
+  const int16_t footH = Config::Screen::FOOT_H;
+  display.fillRect(0, FOOT_TOP - 1, WIDTH, footH + 1, SSD1306_WHITE);
+  display.drawText(pieText, (WIDTH - strlen(pieText) * 6) / 2, FOOT_TOP, TEXT_6x8, SSD1306_BLACK, SSD1306_WHITE);
 }
 
 void Legend::blinkDiamond(bool print) {
   if (!_blinkDiamond && !print) return;
-
-  const int16_t padY = Config::Screen::BODY_MIDDLE;
 
   int16_t centerX = 0;
   int16_t centerY = 0;
@@ -258,56 +251,54 @@ void Legend::blinkDiamond(bool print) {
   switch (_btn) {
     case 0:  // Btn1 (Arriba)
       centerX = PAD_RIGHT_X;
-      centerY = padY - PAD_RADIO;
+      centerY = PAD_Y - PAD_RADIO;
       break;
 
     case 1:  // Btn2 (Derecha)
       centerX = PAD_RIGHT_X + PAD_RADIO;
-      centerY = padY;
+      centerY = PAD_Y;
       break;
 
     case 2:  // Btn3 (Abajo)
       centerX = PAD_RIGHT_X;
-      centerY = padY + PAD_RADIO;
+      centerY = PAD_Y + PAD_RADIO;
       break;
 
     case 3:  // Btn4 (Izquierda)
       centerX = PAD_RIGHT_X - PAD_RADIO;
-      centerY = padY;
+      centerY = PAD_Y;
       break;
   }
 
   if (print)
     _visibleDiamond = false;
 
-  const int16_t size = Config::Diamond::SIZE;
-
   switch (_btn) {
     case 0:
     case 2:
       display.fillTriangle(
-        centerX - size, centerY,
-        centerX, centerY - size,
-        centerX + size, centerY,
+        centerX - SIZE, centerY,
+        centerX, centerY - SIZE,
+        centerX + SIZE, centerY,
         _visibleDiamond ? SSD1306_BLACK : SSD1306_WHITE);
       display.fillTriangle(
-        centerX - size, centerY,
-        centerX, centerY + size,
-        centerX + size, centerY,
+        centerX - SIZE, centerY,
+        centerX, centerY + SIZE,
+        centerX + SIZE, centerY,
         _visibleDiamond ? SSD1306_BLACK : SSD1306_WHITE);
       break;
 
     case 1:
     case 3:
       display.fillTriangle(
-        centerX, centerY - size,
-        centerX - size, centerY,
-        centerX, centerY + size,
+        centerX, centerY - SIZE,
+        centerX - SIZE, centerY,
+        centerX, centerY + SIZE,
         _visibleDiamond ? SSD1306_BLACK : SSD1306_WHITE);
       display.fillTriangle(
-        centerX, centerY - size,
-        centerX + size, centerY,
-        centerX, centerY + size,
+        centerX, centerY - SIZE,
+        centerX + SIZE, centerY,
+        centerX, centerY + SIZE,
         _visibleDiamond ? SSD1306_BLACK : SSD1306_WHITE);
       break;
   }
@@ -328,8 +319,7 @@ void Legend::blinkDiamond(bool print) {
 void Legend::nextBtn() {
   if (_lastBtn == _btn) return;
 
-  int16_t footTop = Config::Screen::FOOT_TOP;
-  _scrollerPie.setTexto(BTN_FUNC[_btn], footTop, true, TEXT_6x8);
+  _scrollerPie.setTexto(BTN_FUNC[_btn], FOOT_TOP, true, TEXT_6x8);
   _scrollerPie.startSlide();
   _lastScroll = true;
 

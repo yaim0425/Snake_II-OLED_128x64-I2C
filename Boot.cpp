@@ -152,7 +152,6 @@ void Boot::firstPrint() {
 
   // ------------------------------------------------------
 
-  const int16_t width = Config::Screen::WIDTH;
   // int16_t headerTop = Config::Screen::HEADER_TOP;
 
   // int16_t footLine = Config::Screen::FOOT_LINE;
@@ -201,9 +200,9 @@ void Boot::firstPrint() {
 
   // ------------------------------------------------------
 
-  display.fillRect(0, bodyTop, width, Config::Screen::BODY_H, SSD1306_WHITE);
+  display.fillRect(0, bodyTop, WIDTH, Config::Screen::BODY_H, SSD1306_WHITE);
 
-  const int16_t midX = (width - Sprite::LOGO_W) / 2;
+  const int16_t midX = (WIDTH - Sprite::LOGO_W) / 2;
 
   for (int16_t y = 0; y < Sprite::LOGO_H; y++)
     for (int16_t x = 0; x < Sprite::LOGO_W; x++)
@@ -236,13 +235,10 @@ void Boot::firstPrint() {
 void Boot::blinkMessage() {
   if (!_blinkMessage) return;
 
-  const int16_t width = Config::Screen::WIDTH;
-  const int16_t headerTop = Config::Screen::HEADER_TOP;
-
   for (int8_t line = 0; line < MESSAGE_LINES; line++) {
     const char* message = MESSAGE[line];
-    int16_t x = (width - strlen(message) * 6) / 2;
-    int16_t y = headerTop + line * 8;
+    int16_t x = (WIDTH - strlen(message) * 6) / 2;
+    int16_t y = HEADER_TOP + line * 8;
 
     if (_visibleMessage)
       display.drawText(message, x, y, TEXT_6x8, SSD1306_BLACK, SSD1306_BLACK);

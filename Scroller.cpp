@@ -213,7 +213,7 @@ bool Scroller::getStripPixel(uint16_t x, uint8_t y) const {
   return (_strip[rowBytes][x] & (1 << bit)) != 0;
 }
 
-void Scroller::setStripPixel(uint16_t x, uint8_t y, bool color = SSD1306_WHITE) {
+void Scroller::setStripPixel(uint16_t x, uint8_t y, bool color) {
   if (x >= BUFFER_W) return;
   if (y >= STRIP_H) return;
   uint8_t rowBytes = y / 8;

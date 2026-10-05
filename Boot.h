@@ -73,11 +73,13 @@ private:
   // ========================================================
   // Tiempo
   // ========================================================
+  static constexpr int16_t WIDTH = Config::Screen::WIDTH;
+  static constexpr int16_t HEADER_TOP = Config::Screen::HEADER_TOP;
 
-  static const uint32_t HOLD = Config::DefaultTimer::HOLD;
-  // static const uint32_t NEXT = Config::DefaultTimer::;
-  static const uint32_t PERIOD = Config::DefaultTimer::PERIOD;
-  static const uint8_t OFF = Config::DefaultTimer::OFF;
+  static constexpr uint32_t HOLD = Config::DefaultTimer::HOLD;
+  // static constexpr uint32_t NEXT = Config::DefaultTimer::;
+  static constexpr uint32_t PERIOD = Config::DefaultTimer::PERIOD;
+  static constexpr uint8_t OFF = Config::DefaultTimer::OFF;
 
   // Avance de 1 px cada ANIM_TICK ms
   // static constexpr uint32_t ANIM_TICK = 30;

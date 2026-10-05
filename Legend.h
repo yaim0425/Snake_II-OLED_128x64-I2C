@@ -78,15 +78,18 @@ private:
 
   // Rótulo sobre el pad MOVE
   static constexpr int16_t TEXT_Y = Config::Screen::HEADER_TOP + 4;  // punto Y del texto "Move" y "Action"
+  static constexpr int16_t FOOT_TOP = Config::Screen::FOOT_TOP;
 
   // ========================================================
   // Rombos de posición del pad ACTION (mitad derecha)
   // ========================================================
 
-  static constexpr uint8_t SIZE = Config::Diamond::SIZE;            // rombo completo (SIEMPRE rombo)
+  static constexpr int16_t WIDTH = Config::Screen::WIDTH;
+  static constexpr uint8_t SIZE = Config::Diamond::SIZE;                // rombo completo (SIEMPRE rombo)
   static constexpr int16_t PAD_RADIO = 10;                              // radio del pad (centro-rombo)
   static constexpr int16_t PAD_RIGHT_X = Config::Screen::WIDTH * 0.75;  // centro del pad de rombos
-  static constexpr int16_t PAD_Y = Config::Screen::BODY_MIDDLE;         // centro vertical del pad de rombos
+  // static constexpr uint8_t BODY_MIDDLE = Config::Screen::BODY_TOP + (Config::Screen::BODY_H - Config::Screen::FOOT_H - 1) / 2 - 2; // -8  5
+  static constexpr int16_t PAD_Y = Config::Screen::BODY_TOP + (Config::Screen::BODY_H - Config::Screen::FOOT_H - 1) / 2 - 2;  // centro vertical del pad de rombos
 
   // Textos del pie: identificador y función de cada rombo (Btn1..Btn4)
   static const char* const BTN_FUNC[4];
@@ -98,10 +101,10 @@ private:
   // Animación del rombo activo (ciclo lento + parpadeo rápido)
   // ========================================================
 
-  static constexpr uint32_t HOLD = Config::Legend::HOLD;    // visible fija antes de parpadear
-  static constexpr uint32_t NEXT = Config::Legend::NEXT;  // duración total por rombo (avance lento)
+  static constexpr uint32_t HOLD = Config::Legend::HOLD;      // visible fija antes de parpadear
+  static constexpr uint32_t NEXT = Config::Legend::NEXT;      // duración total por rombo (avance lento)
   static constexpr uint32_t PERIOD = Config::Legend::PERIOD;  // período del parpadeo MUY rápido (ms)
-  static constexpr uint8_t OFF = Config::Legend::OFF;       // % del período en que está oculto
+  static constexpr uint8_t OFF = Config::Legend::OFF;         // % del período en que está oculto
 
   // ========================================================
   // Pie del Body (mismo diseño que el menú)
@@ -121,8 +124,8 @@ private:
   // texto entra deslizándose en lugar de aparecer de golpe.
   Scroller _scrollerPie;
 
-  Ticker _ticker;      // avance de 1 px cada ANIM_TICK ms (acumulador por tiempo)
-  Stopwatch _timer;    // desde que se fijó el rombo activo (ciclo y parpadeo)
+  Ticker _ticker;    // avance de 1 px cada ANIM_TICK ms (acumulador por tiempo)
+  Stopwatch _timer;  // desde que se fijó el rombo activo (ciclo y parpadeo)
   // int8_t _lastActive;  // último rombo cuya zona se gestionó (para restaurar el que deja de ser activo)
   // int8_t _lastText;    // texto del pie que se dibujó (para borrar/redibujar solo al cambiar)
 
