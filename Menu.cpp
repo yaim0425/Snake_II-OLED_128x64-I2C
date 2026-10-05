@@ -298,7 +298,8 @@ void Menu::print() {
     display.fillRect(0, DIA_TOP, display.getWidth(), DIA_SIZE + 1, true);
     for (int8_t i = 0; i < OPT_COUNT; i++)
       drawDiamond(i, i == _selected, false);
-    display.fillRect(0, Config::Screen::FOOT_LINE, display.getWidth(), 1, false);
+    display.fillRect(0, Config::Screen::FOOT_TOP - 2, display.getWidth(), 1, false);
+    // display.fillRect(0, Config::Screen::FOOT_LINE, display.getWidth(), 1, false);
     _visibleDiamond = true;  // el rombo activo vuelve a la fase visible
     _diamondsDirty = false;
   }
@@ -351,7 +352,7 @@ void Menu::firstPrint() {
   display.drawTextInverted(OPTION_TEXT[_selected], (Config::Screen::WIDTH - strlen(OPTION_TEXT[_selected]) * 12) / 2, BOX_TOP + 1, TEXT_12x16);
 
   // Pie (línea + Best/versión)
-  display.fillRect(0, Config::Screen::FOOT_LINE, Config::Screen::WIDTH, 1, false);
+  display.fillRect(0, Config::Screen::FOOT_TOP - 2, Config::Screen::WIDTH, 1, false);
 
   // Best score
   const char* label = "Best ";

@@ -61,10 +61,10 @@ private:
   // ========================================================
 
   // Grosor de cada línea vertical
-  static constexpr uint8_t BAR_W = 3;
+  // static constexpr uint8_t BAR_W = 3;
 
   // Separación entre líneas (el desplazamiento repite cada traslación)
-  static constexpr uint8_t BAR_SPACING = 8;
+  // static constexpr uint8_t BAR_SPACING = 8;
 
   // Bandas completas (regiones de la pantalla en Config::Screen):
   // TITULO = Header (Config::Screen::HEADER_TOP/H), CUERPO = Body
@@ -78,7 +78,7 @@ private:
   static constexpr uint32_t ANIM_TICK = 30;
 
   // Duración total de la animación
-  static constexpr uint32_t TOTAL_MS = 4000;
+  // static constexpr uint32_t TOTAL_MS = 4000;
 
   // static constexpr char* MESSAGE = "Press any button to start";
   static constexpr int8_t MESSAGE_LINES = 2;
@@ -88,8 +88,8 @@ private:
   // Estado interno
   // ========================================================
 
-  uint8_t _step;      // desplazamiento actual (0..BAR_SPACING-1)
-  uint8_t _prevStep;  // desplazamiento que se dibujó en pantalla
+  // uint8_t _step;      // desplazamiento actual (0..BAR_SPACING-1)
+  // uint8_t _prevStep;  // desplazamiento que se dibujó en pantalla
   // Ticker _ticker;     // avance de 1 px cada ANIM_TICK ms (acumulador por tiempo)
   Stopwatch _timer;  // duración total desde el begin() (TOTAL_MS)
 
@@ -100,9 +100,9 @@ private:
   bool _done;
   bool _clear;  // primer frame: clear() completo + dibujar todo
 
-  int16_t _x;
-  int16_t _y;
-  int16_t _bars;
+  // int16_t _x;
+  // int16_t _y;
+  // int16_t _bars;
 
   // ========================================================
   // Helpers
@@ -110,7 +110,7 @@ private:
 
   // Dibuja una columna vertical de 1 px con el módulo normalizado a
   // 0..ancho-1 (fillRect recorta en vez de envolver)
-  void drawBar(int16_t x, uint8_t y, uint8_t height, bool black);
+  // void drawBar(int16_t x, uint8_t y, uint8_t height, bool black);
 
   // Dibuja las franjas iniciales: las BAR_W-1 columnas de la cola de cada
   // franja (la de cabeza la pone drawBars, que es la única columna nueva
@@ -121,15 +121,15 @@ private:
   // Dibuja todas las franjas (TITULO y CUERPO) en el desplazamiento actual:
   // imprime la columna de cabeza de cada franja y borra en negro la que
   // deja libre por la cola
-  void drawBars();
+  // void drawBars();
 
   // Borra SOLO las columnas de las franjas anteriores que no coinciden con
   // las nuevas (las que coinciden se mantienen; el resto de la pantalla no
   // se toca)
-  void eraseOldBars();
+  // void eraseOldBars();
 
   // Borra 1 px de cada columna de la franja vieja que no está en la nueva
-  void eraseBarDiff(int16_t oldX, int16_t newX, uint8_t top, uint8_t height, int16_t width);
+  // void eraseBarDiff(int16_t oldX, int16_t newX, uint8_t top, uint8_t height, int16_t width);
 };
 
 #endif

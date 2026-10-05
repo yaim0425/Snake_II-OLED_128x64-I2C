@@ -19,14 +19,14 @@ Boot::Boot()
   // _prevStep(0),
   // : _ticker(ANIM_TICK),
   : _timer(),
-    _blinkMessage(false),
     _visibleMessage(false),
+    _blinkMessage(false),
     _holdMessage(true),
     _done(false),
-    _clear(true),
-    _x(0),
-    _y(0),
-    _bars(0) {}
+    _clear(true) {}
+    // _x(0),
+    // _y(0),
+    // _bars(0) {}
 
 
 // ========================================================
@@ -37,9 +37,9 @@ void Boot::begin() {
   // _step = 0;
   // _ticker.start();
   _timer.start();
-  _x = 0;
-  _y = 0;
-  _bars = 0;
+  // _x = 0;
+  // _y = 0;
+  // _bars = 0;
   _visibleMessage = false;
   _blinkMessage = false;
   _holdMessage = true;
@@ -94,7 +94,7 @@ void Boot::update() {
   // if (steps) _step = (_step + steps) % BAR_SPACING;
 
   if (_holdMessage && _timer.expired(Config::DefaultTimer::HOLD))
-    _holdMessage = !_holdMessage;
+    _holdMessage = false;
 
   if (!_holdMessage)
     _blinkMessage = _visibleMessage ^ _timer.blinkOn(Config::DefaultTimer::PERIOD, Config::DefaultTimer::OFF);
@@ -152,7 +152,7 @@ void Boot::firstPrint() {
 
   // ------------------------------------------------------
 
-  const int16_t w = Config::Screen::WIDTH;
+  const int16_t width = Config::Screen::WIDTH;
   // int16_t headerTop = Config::Screen::HEADER_TOP;
 
   // int16_t footLine = Config::Screen::FOOT_LINE;
@@ -201,14 +201,13 @@ void Boot::firstPrint() {
 
   // ------------------------------------------------------
 
-  display.fillRect(0, bodyTop, w, Config::Screen::BODY_H, false);
+  display.fillRect(0, bodyTop, width, Config::Screen::BODY_H, SSD1306_WHITE);
 
-  const int16_t midX = (w - Sprite::LOGO_W) / 2;
+  const int16_t midX = (width - Sprite::LOGO_W) / 2;
 
-  for (int16_t y = 0; y < Sprite::LOGO_H; ++y)
-    for (int16_t x = 0; x < Sprite::LOGO_W; ++x)
-      if (Sprite::logoPixel(x, y))
-        display.drawPixel(midX + x, bodyTop + y, true);
+  for (int16_t y = 0; y < Sprite::LOGO_H; y++)
+    for (int16_t x = 0; x < Sprite::LOGO_W; x++)
+      display.drawPixel(midX + x, bodyTop + y, Sprite::logoPixel(x, y));
 
   // ------------------------------------------------------
 
@@ -237,18 +236,18 @@ void Boot::firstPrint() {
 void Boot::blinkMessage() {
   if (!_blinkMessage) return;
 
-  const int16_t w = Config::Screen::WIDTH;
+  const int16_t width = Config::Screen::WIDTH;
   const int16_t headerTop = Config::Screen::HEADER_TOP;
 
   for (int8_t line = 0; line < MESSAGE_LINES; line++) {
     const char* message = MESSAGE[line];
-    int16_t x = (w - strlen(message) * 6) / 2;
+    int16_t x = (width - strlen(message) * 6) / 2;
     int16_t y = headerTop + line * 8;
 
     if (_visibleMessage)
-      display.fillRect(x, y, strlen(message) * 6, 8, true);
+      display.drawText(message, x, y, TEXT_6x8, SSD1306_BLACK, SSD1306_BLACK);
     else
-      display.drawText(message, x, y, TEXT_6x8);
+      display.drawText(message, x, y, TEXT_6x8, SSD1306_WHITE, SSD1306_BLACK);
   }
 
   _visibleMessage = !_visibleMessage;
@@ -264,31 +263,31 @@ void Boot::blinkMessage() {
 // La base de cada franja es la misma que en drawFirstBars().
 // ========================================================
 
-void Boot::drawBars() {
-  const int16_t w = display.getWidth();
+// void Boot::drawBars() {
+//   const int16_t w = display.getWidth();
 
-  // TITULO: de izquierda a derecha (cabeza a la derecha, se borra la izquierda)
-  for (int16_t x = 0; x < w; x += BAR_SPACING) {
-    int16_t px = x + _step;
+//   // TITULO: de izquierda a derecha (cabeza a la derecha, se borra la izquierda)
+//   for (int16_t x = 0; x < w; x += BAR_SPACING) {
+//     int16_t px = x + _step;
 
-    int16_t deleteBar = px - 1;
-    int16_t createBar = px + BAR_W - 1;
+//     int16_t deleteBar = px - 1;
+//     int16_t createBar = px + BAR_W - 1;
 
-    drawBar(deleteBar, Config::Screen::HEADER_TOP, Config::Screen::HEADER_H, true);
-    drawBar(createBar, Config::Screen::HEADER_TOP, Config::Screen::HEADER_H, false);
-  }
+//     drawBar(deleteBar, Config::Screen::HEADER_TOP, Config::Screen::HEADER_H, true);
+//     drawBar(createBar, Config::Screen::HEADER_TOP, Config::Screen::HEADER_H, false);
+//   }
 
-  // CUERPO: de derecha a izquierda (cabeza a la izquierda, se borra la derecha)
-  for (int16_t x = 0; x < w; x += BAR_SPACING) {
-    int16_t px = w - x - _step - BAR_W;
+//   // CUERPO: de derecha a izquierda (cabeza a la izquierda, se borra la derecha)
+//   for (int16_t x = 0; x < w; x += BAR_SPACING) {
+//     int16_t px = w - x - _step - BAR_W;
 
-    int16_t deleteBar = px + BAR_W - 1;
-    int16_t createBar = px - 1;
+//     int16_t deleteBar = px + BAR_W - 1;
+//     int16_t createBar = px - 1;
 
-    drawBar(deleteBar, Config::Screen::BODY_TOP, Config::Screen::BODY_H, true);
-    drawBar(createBar, Config::Screen::BODY_TOP, Config::Screen::BODY_H, false);
-  }
-}
+//     drawBar(deleteBar, Config::Screen::BODY_TOP, Config::Screen::BODY_H, true);
+//     drawBar(createBar, Config::Screen::BODY_TOP, Config::Screen::BODY_H, false);
+//   }
+// }
 
 // ========================================================
 // Borrar solo lo que dejan de ocupar las franjas: cada columna
@@ -296,42 +295,42 @@ void Boot::drawBars() {
 // pinta de negro; el resto de la pantalla no se toca
 // ========================================================
 
-void Boot::eraseOldBars() {
-  const int16_t w = display.getWidth();
+// void Boot::eraseOldBars() {
+//   const int16_t w = display.getWidth();
 
-  for (int16_t x = 0; x < w; x += BAR_SPACING) {
-    int16_t oldX = (x + _prevStep) % w;
-    int16_t newX = (x + _step) % w;
-    eraseBarDiff(oldX, newX, Config::Screen::HEADER_TOP, Config::Screen::HEADER_H, w);
-  }
+//   for (int16_t x = 0; x < w; x += BAR_SPACING) {
+//     int16_t oldX = (x + _prevStep) % w;
+//     int16_t newX = (x + _step) % w;
+//     eraseBarDiff(oldX, newX, Config::Screen::HEADER_TOP, Config::Screen::HEADER_H, w);
+//   }
 
-  for (int16_t x = 0; x < w; x += BAR_SPACING) {
-    int16_t oldX = ((x - _prevStep) % w + w) % w;
-    int16_t newX = ((x - _step) % w + w) % w;
-    eraseBarDiff(oldX, newX, Config::Screen::BODY_TOP, Config::Screen::BODY_H, w);
-  }
-}
+//   for (int16_t x = 0; x < w; x += BAR_SPACING) {
+//     int16_t oldX = ((x - _prevStep) % w + w) % w;
+//     int16_t newX = ((x - _step) % w + w) % w;
+//     eraseBarDiff(oldX, newX, Config::Screen::BODY_TOP, Config::Screen::BODY_H, w);
+//   }
+// }
 
 // ========================================================
 // Borra 1 px de las columnas de la franja vieja que no están en la nueva
 // ========================================================
 
-void Boot::eraseBarDiff(int16_t oldX, int16_t newX, uint8_t top,
-                        uint8_t height, int16_t width) {
-  Adafruit_SSD1306& s = display.screen();
+// void Boot::eraseBarDiff(int16_t oldX, int16_t newX, uint8_t top,
+//                         uint8_t height, int16_t width) {
+//   Adafruit_SSD1306& s = display.screen();
 
-  for (uint8_t i = 0; i < BAR_W; i++) {
-    int16_t oc = (oldX + i) % width;
-    bool shared = false;
-    for (uint8_t j = 0; j < BAR_W; j++) {
-      if (((newX + j) % width) == oc) {
-        shared = true;
-        break;
-      }
-    }
-    if (!shared) s.fillRect(oc, top, 1, height, SSD1306_BLACK);
-  }
-}
+//   for (uint8_t i = 0; i < BAR_W; i++) {
+//     int16_t oc = (oldX + i) % width;
+//     bool shared = false;
+//     for (uint8_t j = 0; j < BAR_W; j++) {
+//       if (((newX + j) % width) == oc) {
+//         shared = true;
+//         break;
+//       }
+//     }
+//     if (!shared) s.fillRect(oc, top, 1, height, SSD1306_BLACK);
+//   }
+// }
 
 // ========================================================
 // Dibujar una columna vertical de 1 px con el módulo normalizado
@@ -341,11 +340,11 @@ void Boot::eraseBarDiff(int16_t oldX, int16_t newX, uint8_t top,
 // el borrado de la columna que queda libre)
 // ========================================================
 
-void Boot::drawBar(int16_t x, uint8_t y, uint8_t height, bool black) {
-  const int16_t w = display.getWidth();
+// void Boot::drawBar(int16_t x, uint8_t y, uint8_t height, bool black) {
+//   const int16_t w = display.getWidth();
 
-  display.fillRect(((x % w) + w) % w, y, 1, height, black);
-}
+//   display.fillRect(((x % w) + w) % w, y, 1, height, black);
+// }
 
 // ========================================================
 // Salida (true = la animación terminó)

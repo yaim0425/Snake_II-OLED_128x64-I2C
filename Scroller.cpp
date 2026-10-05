@@ -161,7 +161,7 @@ bool Scroller::print() {
     int16_t startX = BUFFER_W - _x;
     for (int16_t x = startX; x < BUFFER_W; x++) {
       int16_t screenX = x - startX;
-      if (screenX == STRIP_W) continue;
+      if (screenX >= STRIP_W) continue;
       for (int8_t y = 0; y < _height; y++)
         display.drawPixel(screenX, _y + y, getStripPixel(x, y));
     }
