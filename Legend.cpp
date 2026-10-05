@@ -237,8 +237,7 @@ void Legend::firstPrint() {
   // ------------------------------------------------------
 
   const char* pieText = BTN_FUNC[_btn];
-  const int16_t footH = Config::Screen::FOOT_H;
-  display.fillRect(0, FOOT_TOP - 1, WIDTH, footH + 1, SSD1306_WHITE);
+  display.fillRect(0, FOOT_TOP - 1, WIDTH, Config::Screen::FOOT_H + 1, SSD1306_WHITE);
   display.drawText(pieText, (WIDTH - strlen(pieText) * 6) / 2, FOOT_TOP, TEXT_6x8, SSD1306_BLACK, SSD1306_WHITE);
 }
 
