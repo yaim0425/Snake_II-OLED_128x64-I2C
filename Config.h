@@ -68,7 +68,7 @@ constexpr uint8_t CELL = 8;        // px por celda de la rejilla
 constexpr uint8_t ADDRESS = 0x3C;  // dirección I2C
 
 // Regiones: Header (0..15) y Body (16..63)
-constexpr uint8_t HEADER_TOP = 0;
+constexpr uint8_t HEADER_TOP = 1;
 constexpr uint8_t HEADER_H = 16;
 
 constexpr uint8_t BODY_TOP = 16;

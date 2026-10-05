@@ -10,8 +10,8 @@
 //     MenuCredits, MenuDifficulty, MenuSound, Game, Legend) como
 //     miembros. En Snake_II.ino ya NO hay ventanas globales: son
 //     internas de Engine.
-//     AISLADO: por ahora Engine solo posee y despacha Boot y Legend
-//     (ver el bloque AISLADO en Engine.h).
+//     AISLADO: por ahora Engine solo posee y despacha Boot, Legend
+//     y Menu (ver el bloque AISLADO en Engine.h).
 //
 // setup() inicia el hardware y luego engine.begin() (entra al primer
 // estado, Boot); loop() hace la única lectura de botones del frame
@@ -42,8 +42,9 @@ Sound   sound(Config::Pin::BUZZER);
 // según su estado. Su constructor no recibe nada: las ventanas
 // usan los servicios globales directamente.
 //
-// AISLADO: durante el trabajo en Boot y Legend solo quedan las
-// ventanas Boot y Legend; el flujo es Boot -> Legend y se detiene.
+// AISLADO: durante el trabajo en Menu solo quedan las ventanas
+// Boot, Legend y Menu; el flujo es Boot -> Legend -> Menu y ahi se
+// detiene.
 // ====================================================================================
 
 Engine engine;

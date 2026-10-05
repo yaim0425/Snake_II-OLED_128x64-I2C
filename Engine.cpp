@@ -40,36 +40,39 @@ void Engine::update() {
         _legend.update();
         if (_legend.done()) {
           // La Legend ya reprodujo el sonido según el botón presionado
-          // AISLADO: sin salida al Menu, el flujo termina en Legend.
-          // changeState(State::MENU);
+          changeState(State::MENU);
         }
         break;
       }
 
-    // AISLADO: ventanas del Menu y del Game. Se comentan por bloque
+    case State::MENU:
+      {
+
+        _menu.update();
+
+        // Confirmar opción (ACTION_RIGHT) -> cambiar de ventana
+        int8_t select = _menu.confirm();
+        if (select >= 0) {
+          sound.play(Sound::SFX_CONFIRM);
+          // AISLADO: los destinos de abajo (Game y submenus) siguen
+          // desactivados, asi que el Menu no transiciona. Al reactivarlos
+          // hay que descomentar el switch y volver a habilitar los estados
+          // en el enum de Engine.h.
+          // switch (select) {
+          //   case Menu::OPT_NEW: changeState(State::NEW); break;
+          //   case Menu::OPT_CONTINUE: changeState(State::CONTINUE); break;
+          //   case Menu::OPT_DIFFICULTY: changeState(State::MENU_DIFFICULTY); break;
+          //   case Menu::OPT_SOUND: changeState(State::MENU_SOUND); break;
+          //   case Menu::OPT_CREDITS: changeState(State::MENU_CREDITS); break;
+          // }
+        }
+        break;
+      }
+
+    // AISLADO: ventanas del Game y de los submenus. Se comentan por bloque
     // entero, no linea por linea, para que el revert sea limpio. Al
     // reactivar hay que volver a descomentar el enum de State y los
     // miembros en Engine.h.
-    //
-    // case State::MENU:
-    //   {
-    //
-    //     _menu.update();
-    //
-    //     // Confirmar opción (ACTION_RIGHT) -> cambiar de ventana
-    //     int8_t select = _menu.confirm();
-    //     if (select >= 0) {
-    //       sound.play(Sound::SFX_CONFIRM);
-    //       switch (select) {
-    //         case Menu::OPT_NEW: changeState(State::NEW); break;
-    //         case Menu::OPT_CONTINUE: changeState(State::CONTINUE); break;
-    //         case Menu::OPT_DIFFICULTY: changeState(State::MENU_DIFFICULTY); break;
-    //         case Menu::OPT_SOUND: changeState(State::MENU_SOUND); break;
-    //         case Menu::OPT_CREDITS: changeState(State::MENU_CREDITS); break;
-    //       }
-    //     }
-    //     break;
-    //   }
     //
     // case State::NEW:
     // case State::CONTINUE:
@@ -142,8 +145,8 @@ void Engine::print() {
   switch (_state) {
     case State::BOOT: _boot.print(); break;
     case State::LEGEND: _legend.print(); break;
-    // AISLADO: ventanas del Menu y del Game (ver Engine::update).
-    // case State::MENU: _menu.print(); break;
+    case State::MENU: _menu.print(); break;
+    // AISLADO: ventanas del Game y de los submenus (ver Engine::update).
     // case State::NEW:
     // case State::CONTINUE:
     //   _game.print();
@@ -158,10 +161,9 @@ void Engine::print() {
 // Puntaje máximo (lo conserva el menú entre sesiones)
 // ========================================================
 
-// AISLADO: escribe en el Menu, que ya no es miembro de Engine.
-// void Engine::setBestScore(uint16_t value) {
-//   _menu.setBestScore(value);
-// }
+void Engine::setBestScore(uint16_t value) {
+  _menu.setBestScore(value);
+}
 
 // ========================================================
 // Transición (fija el estado y llama al begin() de la ventana entrante)
@@ -173,13 +175,13 @@ void Engine::changeState(State newState, bool beginWindow) {
   switch (_state) {
     case State::BOOT: _boot.begin(); break;
     case State::LEGEND: _legend.begin(); break;
-    // AISLADO: ventanas del Menu y del Game (ver Engine::update).
-    // case State::MENU:
-    //   // beginWindow=false: solo se usa al volver de MenuDifficulty/MenuSound,
-    //   // que ya dejaron repintada la banda de rombos (restoreDiamondBand) y
-    //   // por tanto no necesitan el clear() completo de Menu::begin().
-    //   if (beginWindow) _menu.begin();
-    //   break;
+    case State::MENU:
+      // beginWindow=false: solo se usa al volver de MenuDifficulty/MenuSound,
+      // que ya dejaron repintada la banda de rombos (restoreDiamondBand) y
+      // por tanto no necesitan el clear() completo de Menu::begin().
+      if (beginWindow) _menu.begin();
+      break;
+    // AISLADO: ventanas del Game y de los submenus (ver Engine::update).
     // case State::NEW:
     //   _game.setDifficulty(_menuDifficulty.difficulty());
     //   _game.begin(true);
