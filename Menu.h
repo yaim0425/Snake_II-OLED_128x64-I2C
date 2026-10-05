@@ -34,7 +34,8 @@ public:
   // Inicialización
   // ========================================================
 
-  // void begin();
+  void begin();
+
   // ========================================================
   // Opciones (cantidad variable)
   // ========================================================
@@ -74,13 +75,14 @@ public:
   // Actualizar (consume eventos de botones, navega y anima)
   // ========================================================
 
-  // void update();
+  void update();
 
   // ========================================================
   // Dibujar
   // ========================================================
 
   void print();
+  void showOptions();
 
   // ========================================================
   // Accesos
@@ -106,6 +108,11 @@ public:
 
 private:
   void firstPrint();
+  void blinkDiamond(bool print = false);
+  void nextOption();
+  void toggleDiamond(bool show);
+  void toggleTriangle(int8_t op, bool show);
+
   // void drawDiamond(int8_t selected, bool focus, bool black);
 
   // ========================================================
@@ -137,11 +144,15 @@ private:
   // ========================================================
 
   static constexpr int16_t WIDTH = Config::Screen::WIDTH;
+  static constexpr uint8_t SIZE = Config::Diamond::SIZE;
+  static constexpr int16_t FOOT_TOP = Config::Screen::FOOT_TOP;
+  static constexpr int16_t TRIANGLE_Y = FOOT_TOP - 3;
+  static constexpr int16_t DIAMOND_Y = TRIANGLE_Y - SIZE - 3;
 
   // Cuadro de selección: fijo, ancho completo. Con el rombo activo de punta en
   // la 45: 2 filas libres (44..43) y el cuadro desde la fila 3 (42) hacia arriba
-  // static constexpr int16_t BOX_TOP = 25;
-  // static constexpr int16_t BOX_HEIGHT = 18;
+  static constexpr int16_t BOX_HEIGHT = 16;
+  static constexpr int16_t BOX_TOP = DIAMOND_Y - SIZE - 4 - BOX_HEIGHT;
 
   // Posición del texto del cuadro (1 px dentro, centrado verticalmente)
   // static constexpr int16_t TEXT_SEL_TOP = 26;
@@ -178,8 +189,9 @@ private:
 
   // uint8_t _optionCount;
   // const char* const* _optionTexts;
-  // bool _visibleContinue;  // muestra/oculta la opción "Continue" (default: oculta)
-  // bool _visibleDiamond;   // rombo activo visible (parpadeo)
+  bool _blinkDiamond;
+  bool _visibleContinue;  // muestra/oculta la opción "Continue" (default: oculta)
+  bool _visibleDiamond;   // rombo activo visible (parpadeo)
 
   int8_t _selected;  // opción actual (objetivo central)
   int8_t _lastSelected;
@@ -188,6 +200,7 @@ private:
   // bool _diamondsDirty;  // hay que repintar solo la banda de rombos (restoreDiamondBand)
 
   // Scroller _scroller;  // scroller de 1 bit del cuadro de selección (1 banda, texto 12x16)
+  int8_t _space;
 
   bool _done;
   bool _clear;  // primer frame tras begin(): clear() completo + estáticos

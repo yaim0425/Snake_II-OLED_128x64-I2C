@@ -81,14 +81,16 @@ Menu::Menu(uint16_t bestScore)
     // _showFooter(true),
     // _optionCount(OPT_NEW),
     // _optionTexts(NO_CONTINUE_OPTIONS),
-    // _visibleContinue(false),
-    // _visibleDiamond(true),
+    _blinkDiamond(false),
+    _visibleContinue(false),
+    _visibleDiamond(true),
     _selected(OPT_NEW),
     _lastSelected(OPT_NEW),
     // _timer(),
     // _redraw(true),
     // _diamondsDirty(false),
     // _scroller(),
+    _space(WIDTH / OPT_COUNT),
     _done(false),
     _clear(true) {}
 
@@ -96,14 +98,24 @@ Menu::Menu(uint16_t bestScore)
 // Inicialización
 // ========================================================
 
-// void Menu::begin() {
-//   // _scroller.begin();
-//   _scroller.setTexto(OPTION_TEXT[_selected], TEXT_SEL_TOP, true, TEXT_12x16);
-//   _timer.start();
-//   _redraw = true;
-//   _visibleDiamond = true;
-//   // _optionCount = OPT_COUNT;
-// }
+void Menu::begin() {
+  _bestScore = 0;
+  _blinkDiamond = false;
+  _visibleContinue = true;
+  // _visibleContinue = false;
+  _visibleDiamond = true;
+  _selected = OPT_NEW;
+  _lastSelected = OPT_NEW;
+  _space = WIDTH / (OPT_COUNT + (_visibleContinue ? 1 : 0));
+  _done = false;
+  _clear = true;
+
+  // // _scroller.begin();
+  // _scroller.setTexto(OPTION_TEXT[_selected], TEXT_SEL_TOP, true, TEXT_12x16);
+  // _timer.start();
+  // _redraw = true;
+  // // _optionCount = OPT_COUNT;
+}
 
 // ========================================================
 // Opciones (cantidad variable)
@@ -198,12 +210,12 @@ Menu::Menu(uint16_t bestScore)
 // navega y compone.
 // ========================================================
 
-// void Menu::update() {
-//   navigate();
-//   if (true) return;  // IGNORE: no se actualiza el menú en esta versión
+void Menu::update() {
+  // navigate();
+  // if (true) return;  // IGNORE: no se actualiza el menú en esta versión
 
-//   _scroller.update();
-// }
+  // _scroller.update();
+}
 
 // ========================================================
 // Navegación
@@ -288,7 +300,7 @@ void Menu::print() {
   // // UNA sola vez; ya no se borran ni se redibujan en cada frame.
   // if (_redraw) {
   //   display.clear();
-    firstPrint();
+  firstPrint();
   //   _redraw = false;
   // }
 
@@ -356,32 +368,50 @@ void Menu::firstPrint() {
 
   // ------------------------------------------------------
 
-  // Fondo y header (título)
+  // Título
   const char* name = Config::Version::NAME;
   const int16_t headerW = Config::Screen::HEADER_TOP;
   display.drawText(name, (WIDTH - strlen(name) * 12) / 2, headerW, TEXT_12x16, SSD1306_WHITE, SSD1306_BLACK);
 
-  // // Cuadro de selección (banda de la opción actual)
-  // display.fillRect(0, BOX_TOP, display.getWidth(), BOX_HEIGHT, false);
-  // display.drawTextInverted(OPTION_TEXT[_selected], (Config::Screen::WIDTH - strlen(OPTION_TEXT[_selected]) * 12) / 2, BOX_TOP + 1, TEXT_12x16);
+  // const int16_t SIZE = Config::Diamond::SIZE;
+  // const int16_t centerX = WIDTH / 2;
+  // const int16_t centerY = Config::Screen::FOOT_TOP - SIZE - (1 + 2);
 
-  // // Pie (línea + Best/versión)
-  // display.fillRect(0, Config::Screen::FOOT_TOP - 2, Config::Screen::WIDTH, 1, false);
+  // // Arriba (↑)
+  // display.fillTriangle(
+  //   centerX - SIZE, centerY,
+  //   centerX, centerY - SIZE,
+  //   centerX + SIZE, centerY,
+  //   SSD1306_WHITE);
+
+  // // Abajo (↓)
+  // display.fillTriangle(
+  //   centerX - SIZE, centerY,
+  //   centerX, centerY + SIZE,
+  //   centerX + SIZE, centerY,
+  //   SSD1306_WHITE);
+
+  showOptions();
+
+  // Cuadro de selección (banda de la opción actual)
+  const char* text = OPTION_TEXT[_selected];
+  display.fillRect(0, BOX_TOP - 2, WIDTH, BOX_HEIGHT + 2, SSD1306_WHITE);
+  display.drawText(text, (WIDTH - strlen(text) * 12) / 2, BOX_TOP, TEXT_12x16, SSD1306_BLACK, SSD1306_WHITE);
+
+  const int16_t footTop = Config::Screen::FOOT_TOP;
+  const int16_t footH = Config::Screen::FOOT_H;
+  display.fillRect(0, footTop - 1, WIDTH, footH + 1, SSD1306_WHITE);
 
   // Best score
   const char* label = "Best ";
   char bestScore[9];
   sprintf(bestScore, "%u", (unsigned)_bestScore);
-
-  const int16_t footTop = Config::Screen::FOOT_TOP;
-  const int16_t footH = Config::Screen::FOOT_H;
-  display.fillRect(0, footTop - 1, WIDTH, footH + 1, SSD1306_WHITE);
-  display.drawText(label, 0, footTop, TEXT_6x8, SSD1306_BLACK, SSD1306_WHITE);
-  display.drawText(bestScore, strlen(label) * 6, footTop, TEXT_6x8, SSD1306_BLACK, SSD1306_WHITE);
+  display.drawText(label, 1, footTop, TEXT_6x8, SSD1306_BLACK, SSD1306_WHITE);
+  display.drawText(bestScore, 1 + strlen(label) * 6, footTop, TEXT_6x8, SSD1306_BLACK, SSD1306_WHITE);
 
   // Versión
   const char* version = Config::Version::VERSION;
-  display.drawText( version, WIDTH - strlen(version) * 6, footTop, TEXT_6x8, SSD1306_BLACK, SSD1306_WHITE);
+  display.drawText(version, WIDTH - strlen(version) * 6, footTop, TEXT_6x8, SSD1306_BLACK, SSD1306_WHITE);
 
   // for (uint8_t selected = 0; selected < OPT_COUNT; selected++)
   //   drawDiamond(selected, selected == _selected, false);
@@ -436,3 +466,99 @@ bool Menu::done() const {
   return _done;
 }
 
+void Menu::blinkDiamond(bool print) {
+  if (!_blinkDiamond && !print) return;
+
+  int16_t centerX = 0;
+
+  switch (_selected) {
+    case OPT_NEW:
+      // centerX = 0;
+      break;
+
+    case OPT_CONTINUE:
+      // centerX = 0;
+      break;
+
+    case OPT_DIFFICULTY:
+      // centerX = 0;
+      break;
+
+    case OPT_SOUND:
+      // centerX = 0;
+      break;
+
+    case OPT_CREDITS:
+      // centerX = 0;
+      break;
+  }
+
+  if (print)
+    _visibleDiamond = false;
+
+  const int16_t centerY = FOOT_TOP - SIZE - 2;
+
+  display.fillTriangle(
+    centerX - SIZE, centerY,
+    centerX, centerY - SIZE,
+    centerX + SIZE, centerY,
+    _visibleDiamond ? SSD1306_BLACK : SSD1306_WHITE);
+
+  display.fillTriangle(
+    centerX - SIZE, centerY,
+    centerX, centerY + SIZE,
+    centerX + SIZE, centerY,
+    _visibleDiamond ? SSD1306_BLACK : SSD1306_WHITE);
+
+  _blinkDiamond = false;
+  _visibleDiamond = !_visibleDiamond;
+}
+
+void Menu::nextOption() {
+  if (_lastSelected == _selected) return;
+
+  // _scrollerPie.setTexto(BTN_FUNC[_selected], FOOT_TOP, true, TEXT_6x8);
+  // _scrollerPie.startSlide();
+  // _lastScroll = true;
+
+  // blinkDiamond(true);
+
+  // _timer.start();
+  // _holdDiamond = true;
+  _lastSelected = _selected;
+}
+
+void Menu::toggleDiamond(bool show) {
+  int16_t centerX = (_selected + 1) * _space;
+
+  display.fillTriangle(
+    centerX -SIZE, DIAMOND_Y,
+    centerX, DIAMOND_Y -SIZE,
+    centerX +SIZE, DIAMOND_Y,
+    show ? SSD1306_WHITE : SSD1306_BLACK);
+
+  display.fillTriangle(
+    centerX -SIZE, DIAMOND_Y,
+    centerX, DIAMOND_Y +SIZE,
+    centerX +SIZE, DIAMOND_Y,
+    show ? SSD1306_WHITE : SSD1306_BLACK);
+}
+
+void Menu::toggleTriangle(int8_t op, bool show) {
+  if (op >= OPT_COUNT) return;
+
+  int16_t centerX = (op + 1) * _space;
+
+  display.fillTriangle(
+    centerX - SIZE, TRIANGLE_Y,
+    centerX, TRIANGLE_Y - SIZE,
+    centerX + SIZE, TRIANGLE_Y,
+    show ? SSD1306_WHITE : SSD1306_BLACK);
+}
+
+void Menu::showOptions() {
+  for (int8_t op = 0; op < OPT_COUNT - (_visibleContinue ? 0 : 1); op++)
+    if (op != _selected)
+      toggleTriangle(op, true);
+  toggleDiamond(true);
+}
