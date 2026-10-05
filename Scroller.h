@@ -112,7 +112,7 @@ private:
   static constexpr uint8_t STRIP_H = 32;
 
   // Avance de 1 px cada ANIM_TICK ms (acumulador por tiempo)
-  static constexpr uint32_t ANIM_TICK = 4;
+  static constexpr uint32_t ANIM_TICK = Config::Scroller::ANIMATION;
 
   static constexpr int8_t CURTAIN_W = 3;
   static constexpr int16_t BUFFER_W = STRIP_W + CURTAIN_W;

@@ -24,9 +24,9 @@ Boot::Boot()
     _holdMessage(true),
     _done(false),
     _clear(true) {}
-    // _x(0),
-    // _y(0),
-    // _bars(0) {}
+// _x(0),
+// _y(0),
+// _bars(0) {}
 
 
 // ========================================================
@@ -93,11 +93,11 @@ void Boot::update() {
   // // }
   // if (steps) _step = (_step + steps) % BAR_SPACING;
 
-  if (_holdMessage && _timer.expired(Config::DefaultTimer::HOLD))
+  if (_holdMessage && _timer.expired(HOLD))
     _holdMessage = false;
 
   if (!_holdMessage)
-    _blinkMessage = _visibleMessage ^ _timer.blinkOn(Config::DefaultTimer::PERIOD, Config::DefaultTimer::OFF);
+    _blinkMessage = _visibleMessage ^ _timer.blinkOn(PERIOD, OFF);
 }
 
 // ========================================================

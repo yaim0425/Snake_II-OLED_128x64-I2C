@@ -74,7 +74,7 @@ public:
   void show();
 
   void drawPixel(
-    uint8_t x, uint8_t y,
+    int16_t x, int16_t y,
     bool color = SSD1306_BLACK);
 
   // Rectángulo relleno: misma firma que Adafruit_SSD1306::fillRect

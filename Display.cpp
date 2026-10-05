@@ -63,7 +63,7 @@ void Display::show() {
 }
 
 void Display::drawPixel(
-  uint8_t x, uint8_t y,
+  int16_t x, int16_t y,
   bool color) {
   if (_screen == nullptr) return;
   _screen->drawPixel(x, y, color);

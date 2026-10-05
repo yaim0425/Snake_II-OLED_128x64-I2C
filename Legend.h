@@ -59,7 +59,6 @@ public:
   // ========================================================
 
   void print();
-  void firstPrint();
 
   // ========================================================
   // Salida (true = se pidió ir al menú)
@@ -68,11 +67,12 @@ public:
   bool done() const;
 
 private:
+  void firstPrint();
   // ========================================================
   // Geometría del pad MOVE (rombo de 4 flechas)
   // ========================================================
 
-  static constexpr int16_t CY = 32;  // centro vertical de ambos pads
+  // static constexpr int16_t CY = 32;  // centro vertical de ambos pads
   // static constexpr int16_t PAD_R = 12;                            // radio del rombo (centro-flecha)
   static constexpr int16_t PAD_LEFT_X = Config::Screen::WIDTH * 0.25;  // centro del pad MOVE
 
@@ -83,7 +83,7 @@ private:
   // Rombos de posición del pad ACTION (mitad derecha)
   // ========================================================
 
-  static constexpr uint8_t DIA_SIZE = Config::Diamond::SIZE;            // rombo completo (SIEMPRE rombo)
+  static constexpr uint8_t SIZE = Config::Diamond::SIZE;            // rombo completo (SIEMPRE rombo)
   static constexpr int16_t PAD_RADIO = 10;                              // radio del pad (centro-rombo)
   static constexpr int16_t PAD_RIGHT_X = Config::Screen::WIDTH * 0.75;  // centro del pad de rombos
   static constexpr int16_t PAD_Y = Config::Screen::BODY_MIDDLE;         // centro vertical del pad de rombos
@@ -91,24 +91,24 @@ private:
   // Textos del pie: identificador y función de cada rombo (Btn1..Btn4)
   static const char* const BTN_FUNC[4];
 
-  static const char* const BTN_NAME[4];
-  static const char* const BTN_XXX[4];
+  // static const char* const BTN_NAME[4];
+  // static const char* const BTN_XXX[4];
 
   // ========================================================
   // Animación del rombo activo (ciclo lento + parpadeo rápido)
   // ========================================================
 
-  static constexpr uint32_t HOLD = 900;    // visible fija antes de parpadear
-  static constexpr uint32_t CICLE = 2200;  // duración total por rombo (avance lento)
-  static constexpr uint32_t PERIOD = 100;  // período del parpadeo MUY rápido (ms)
-  static constexpr uint8_t OFF = 50;       // % del período en que está oculto
+  static constexpr uint32_t HOLD = Config::Legend::HOLD;    // visible fija antes de parpadear
+  static constexpr uint32_t NEXT = Config::Legend::NEXT;  // duración total por rombo (avance lento)
+  static constexpr uint32_t PERIOD = Config::Legend::PERIOD;  // período del parpadeo MUY rápido (ms)
+  static constexpr uint8_t OFF = Config::Legend::OFF;       // % del período en que está oculto
 
   // ========================================================
   // Pie del Body (mismo diseño que el menú)
   // ========================================================
 
-  static constexpr int16_t PIE_LINE_ROW = 54;  // línea separadora
-  static constexpr int16_t PIE_TOP = 57;       // texto centrado (función del rombo activo)
+  // static constexpr int16_t PIE_LINE_ROW = 54;  // línea separadora
+  // static constexpr int16_t PIE_TOP = 57;       // texto centrado (función del rombo activo)
 
   // ========================================================
   // Estado
@@ -123,8 +123,8 @@ private:
 
   Ticker _ticker;      // avance de 1 px cada ANIM_TICK ms (acumulador por tiempo)
   Stopwatch _timer;    // desde que se fijó el rombo activo (ciclo y parpadeo)
-  int8_t _lastActive;  // último rombo cuya zona se gestionó (para restaurar el que deja de ser activo)
-  int8_t _lastText;    // texto del pie que se dibujó (para borrar/redibujar solo al cambiar)
+  // int8_t _lastActive;  // último rombo cuya zona se gestionó (para restaurar el que deja de ser activo)
+  // int8_t _lastText;    // texto del pie que se dibujó (para borrar/redibujar solo al cambiar)
 
   bool _blinkDiamond;    // true si el mensaje de "Press any button..." cambió de visible a invisible o viceversa
   bool _visibleDiamond;  // true si el mensaje de "Press any button..." está visible
@@ -139,23 +139,23 @@ private:
   // ========================================================
 
   // Flecha sólida (0 = ↑, 1 = →, 2 = ↓, 3 = ←), centrada en (cx, cy)
-  void drawArrow(uint8_t dir, int16_t cx, int16_t cy);
+  // void drawArrow(uint8_t dir, int16_t cx, int16_t cy);
 
   // Rombo de 4 flechas centrado en (cx, cy)
-  void drawPad(int16_t cx);
+  // void drawPad(int16_t cx);
 
   // Posición del rombo i (0 = ↑, 1 = →, 2 = ↓, 3 = ←)
-  void diamondCenter(uint8_t i, int16_t& cx, int16_t& cy) const;
+  // void diamondCenter(uint8_t i, int16_t& cx, int16_t& cy) const;
 
   // Rombo completo de DIA_SIZE centrado en (cx, cy); si black es true no se dibuja
-  void dDiamond(int16_t cx, int16_t cy, bool black);
+  // void dDiamond(int16_t cx, int16_t cy, bool color);
   void blinkDiamond(bool print = false);
 
   // Compone el texto del nuevo rombo y arranca su vuelo lateral
   void nextBtn();
 
-  // ¿El rombo activo está visible? (fijo durante HOLD_MS, luego parpadeo rápido)
-  bool blinkVisible() const;
+  // // ¿El rombo activo está visible? (fijo durante HOLD_MS, luego parpadeo rápido)
+  // bool blinkVisible() const;
 };
 
 #endif

@@ -271,7 +271,7 @@ namespace Sprite {
   // Pixel del logo del arranque (x = columna, y = fila, desde 0).
   // px (0,0) = bit 15 de la palabra 0; px (16,0) = bit 15 de la palabra 1.
   constexpr bool logoPixel(uint8_t x, uint8_t y) {
-    return (LOGO[y * LOGO_WORDS + (x / 16)] & ((uint16_t)1 << (15 - (x % 16)))) != 0;
+    return (LOGO[y * LOGO_WORDS + (x / 16)] & ((uint16_t)1 << (15 - (x % 16)))) == 0;
   }
 }
 

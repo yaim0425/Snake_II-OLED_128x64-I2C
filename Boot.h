@@ -74,8 +74,13 @@ private:
   // Tiempo
   // ========================================================
 
+  static const uint32_t HOLD = Config::DefaultTimer::HOLD;
+  // static const uint32_t NEXT = Config::DefaultTimer::;
+  static const uint32_t PERIOD = Config::DefaultTimer::PERIOD;
+  static const uint8_t OFF = Config::DefaultTimer::OFF;
+
   // Avance de 1 px cada ANIM_TICK ms
-  static constexpr uint32_t ANIM_TICK = 30;
+  // static constexpr uint32_t ANIM_TICK = 30;
 
   // Duración total de la animación
   // static constexpr uint32_t TOTAL_MS = 4000;

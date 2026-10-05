@@ -81,7 +81,7 @@ void Scroller::setTexto(const char* text, int16_t y, bool toLeft, uint8_t size) 
 
   for (uint16_t x = 0; x < BUFFER_W; x++)
     for (uint8_t y = 0; y < _height; y++)
-      setStripPixel(x, y, canvas.getPixel(x, y) == SSD1306_BLACK);
+      setStripPixel(x, y, canvas.getPixel(x, y));
 }
 
 // ========================================================
@@ -213,12 +213,12 @@ bool Scroller::getStripPixel(uint16_t x, uint8_t y) const {
   return (_strip[rowBytes][x] & (1 << bit)) != 0;
 }
 
-void Scroller::setStripPixel(uint16_t x, uint8_t y, bool value) {
+void Scroller::setStripPixel(uint16_t x, uint8_t y, bool color = SSD1306_WHITE) {
   if (x >= BUFFER_W) return;
   if (y >= STRIP_H) return;
   uint8_t rowBytes = y / 8;
   uint8_t bit = y % 8;
-  if (value) {
+  if (color) {
     _strip[rowBytes][x] |= (int8_t)(1 << bit);
   } else {
     _strip[rowBytes][x] &= (int8_t) ~(1 << bit);
