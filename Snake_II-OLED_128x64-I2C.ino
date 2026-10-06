@@ -1,11 +1,15 @@
 // ====================================================================================
 // SNAKE II — Enlace de dependencias (wiring)
 //
-// Este archivo define los SERVICIOS GLOBALES (hardware) y crea el Engine:
+// Este archivo define los GLOBALES (ver Globals.h):
 //   - Display y Buttons: hardware (I2C del OLED y pines de los botones).
 //   - Sound: sonido. Contiene su propia capa de hardware Buzzer (por valor,
 //     pin Config::Pin::BUZZER) y la inicializa en sound.begin().
 //     Declarado extern en Globals.h; definido aquí.
+//   - Settings: almacén de estado compartido (mejor puntaje, sonido
+//     activo, dificultad). Sin begin(): sus valores por defecto
+//     salen del constructor. Declarado extern en Globals.h;
+//     definido aquí.
 //   - Engine: despachador puro que POSEE las ventanas (Boot, Menu,
 //     MenuCredits, MenuDifficulty, MenuSound, Game, Legend) como
 //     miembros. En Snake_II.ino ya NO hay ventanas globales: son
@@ -26,15 +30,17 @@
 #include <Arduino.h>
 
 // ====================================================================================
-// Servicios globales (hardware), compartidos por todas las clases.
-// Definidos aquí (no en un .cpp aparte); el orden de construcción
-// no importa: cada servicio se inicializa en su begin() desde setup().
+// Globales (servicios de hardware + almacén de estado), compartidos por todas
+// las clases. Definidos aquí (no en un .cpp aparte); el orden de construcción
+// no importa: cada servicio se inicializa en su begin() desde setup() y
+// Settings solo usa su constructor.
 // ====================================================================================
 
 Display display;
 Buttons buttons(Config::Pin::BUTTONS);
 
 Sound   sound(Config::Pin::BUZZER);
+Settings settings;
 
 // ====================================================================================
 // Despachador: posee las ventanas (Boot, Menu, MenuCredits,

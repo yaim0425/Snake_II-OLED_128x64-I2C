@@ -43,13 +43,21 @@ C:\ESP32S3\Snake_II-OLED_128x64-I2C.
 
 ## 1. Estado actual del proyecto
 
-En desarrollo. `Snake_II-OLED_128x64-I2C.ino` es el **wiring**: define los servicios globales
-(`Display`, `Buttons`, `Sound` — `Globals.h`) y crea el `Engine`, que **posee las
+En desarrollo. `Snake_II-OLED_128x64-I2C.ino` es el **wiring**: define los globales
+(`Display`, `Buttons`, `Sound` — servicios; `Settings` — almacén de estado; todos
+en `Globals.h`) y crea el `Engine`, que **posee las
 ventanas** (`Boot`, `Legend`, `Menu`, `MenuDifficulty`, `MenuSound`,
 `MenuCredits`, `Game`) como miembros. Las
 constantes compartidas viven en `Config.h` (pines, geometría, dificultad, versión).
 
 **Arquitectura:**
+- **`Settings` (sección 22):** almacén global de estado que **no debe vivir en
+  ninguna ventana** (hoy: mejor puntaje, sonido activo y dificultad; el resto de
+  valores compartidos se añade ahí). Contenedor de datos puro, sin
+  `begin()`/`update()`; su **instancia** —no sus métodos— es global
+  (`settings`, `Globals.h`). **Solo creado por ahora:** la integración con
+  `Menu`/`MenuDifficulty`/`Sound` está pendiente (esas clases siguen con sus
+  propias copias).
 - `Engine` es el despachador: posee las ventanas (no globales, no anidadas) y
   llama al `begin()` de la entrante al cambiar de estado. `loop()` hace la única
   lectura de botones del frame.
@@ -118,7 +126,7 @@ Directorio: `D:\Documents\ESP32S3\Snake_II-OLED_128x64-I2C`
 |---------|-----------|
 | `Display.h` / `Display.cpp` | Clase `Display` (control del OLED). Completa. |
 | `Config.h` | Constantes compartidas del proyecto (namespace `Config`, sección 19): pines (`Config::Pin`: botones, buzzer, SDA/SCL), geometría y regiones de la pantalla (`Config::Screen`: 128×64, celda 8, dirección I2C, Header/Body), límites de la dificultad (`Config::Difficulty`), la versión del firmware (`Config::Version`: VERSION/RELEASE_DATE, la usa el pie del menú; NAME lo dibuja `Boot`), créditos (`Config::Credits`), tiempos de `Legend` (`Config::Legend`: NEXT/PERIOD/OFF, `HOLD` comentado), tamaño de rombo (`Config::Diamond`), repetición de botones (`Config::Button`: DELAY/TICK, **nuevo**), animación del `Scroller` (`Config::Scroller`) y parpadeo genérico (`Config::DefaultTimer`: PERIOD/OFF, `HOLD` comentado). Solo lo verdaderamente compartido; el resto es `static constexpr` en su clase. Sin `#define` para valores (constantes con tipo y ámbito). |
-| `Globals.h` | Declara `extern` los **servicios globales**: `Display display;`, `Buttons buttons;` y `Sound sound;` (definidos en `Snake_II-OLED_128x64-I2C.ino`, sección 20). **No** declara el `Buzzer` (es interno de `Sound`). No define las ventanas: esas viven dentro de `Engine`. |
+| `Globals.h` | Declara `extern` los **globales del proyecto**: `Display display;`, `Buttons buttons;` y `Sound sound;` (servicios) más `Settings settings;` (almacén de estado, sección 22), todos definidos en `Snake_II-OLED_128x64-I2C.ino` (sección 20). **No** declara el `Buzzer` (es interno de `Sound`). No define las ventanas: esas viven dentro de `Engine`. |
 | `Buttons.h` / `Buttons.cpp` | Clase `Buttons` (lectura con debounce, `hold`/`pressed`/`released`; `MAX_BUTTONS` es el contador final del enum `Button`; `isSet` declarado en el header y definido en el `.cpp`). Completa. |
 | `Boot.h` / `Boot.cpp` | Clase `Boot` (pantalla de arranque: Header con el mensaje "Press any button / to start" que **parpadea sin fase fija** —`PERIOD=400 ms`, oculto el 50 %, `HOLD` comentado— y Body con el logo `Sprite::LOGO` en blanco; se termina con cualquier botón con su sonido según el botón; la animación de bandas de líneas verticales anterior está comentada). Completa. |
 | `Legend.h` / `Legend.cpp` | Clase `Legend` (panel de botones: pad MOVE a la izquierda con 4 flechas, 4 rombos completos de ACTION a la derecha en las posiciones de un pad que parpadean MUY rápido uno a la vez en ciclo lento —ciclo `NEXT=2500 ms` con el `Ticker`, **sin fase fija** (`HOLD` comentado), parpadeo `PERIOD=100 ms` al 50 %— y texto de la función del rombo activo en el pie (Back, Select / Pause, None, None), compuesto y mostrado con su propio `Scroller` (`_scroller`) para que **entre deslizándose** al cambiar de rombo; cualquier botón la cierra con un sonido según el botón pulsado: MOVE = CLICK, ACTION_UP = BACK, ACTION_RIGHT = CONFIRM). Completa. |
@@ -134,6 +142,7 @@ Directorio: `D:\Documents\ESP32S3\Snake_II-OLED_128x64-I2C`
 | `Snake_II-OLED_128x64-I2C.ino` | Enlace de dependencias (wiring). Define los **servicios globales** (`display`, `buttons`, `sound`) y crea `Engine engine;` (que posee las ventanas). `Sound` se construye con el pin: `Sound sound(Config::Pin::BUZZER);` (el `Buzzer` es suyo). `setup()` llama `display.begin()`, `buttons.begin()`, `sound.begin()` (que inicializa su `Buzzer` interno) y `engine.begin()`; `loop()` hace la **única lectura de botones del frame** (`buttons.read()`) y llama `engine.update()`, `engine.print()`, `sound.update()` y `display.show()`. |
 | `Buzzer.h` / `Buzzer.cpp` | Clase `Buzzer` (capa de hardware de sonido: un tono no bloqueante vía LEDC). **No es un servicio global**: la posee `Sound` por valor (sección 10.2). Completa. |
 | `Sound.h` / `Sound.cpp` | Classe `Sound` (secuencias de los efectos del juego sobre su `Buzzer` interno —miembro por valor, inicializado en `begin()`—, con `setEnabled` para silenciar). Completa. |
+| `Settings.h` / `Settings.cpp` | Clase `Settings` (almacén de estado compartido **fuera de las ventanas**): mejor puntaje, sonido activo y dificultad, con valores por defecto tomados de `Config` (`_bestScore = 0`, `_soundEnabled = true`, `_difficulty = DEFAULT_LEVEL`) y clamp en `setDifficulty`. Contenedor de datos puro: sin `begin()`/`update()`/`print()` y sin dependencias de hardware. La **instancia** —no los métodos— es global (`settings`, sección 22). Completa; **pendiente de integrar**: todavía no la lee ni la escribe nadie. |
 | `Sprite.h` | Namespace `Sprite` (tabla de sprites de la serpiente, estilo Nokia: cola, cuerpo, curvas, cabeza cerrada/abierta y panza; sprites de 4×4 px + sprite de la comida especial de 8×4 px + el logo del arranque `LOGO` de 80×48 px, leído con `Sprite::logoPixel(x, y)`, sección 15). Solo datos (header-only, sin `.cpp`). Adaptada al estilo del proyecto. |
 | `Timer.h` / `Timer.cpp` | Reloj de 64 bits y cronómetros compartidos (`nowMs()`, `Stopwatch`, `Ticker`), basados en `esp_timer_get_time()` (sección 21). El header solo declara; las definiciones están en el `.cpp`, porque el `inline` en el header repetía el mismo código en cada `.cpp` que lo incluye. |
 | `PROYECTO.md` | Este documento. |
@@ -1566,10 +1575,12 @@ Config::Screen::CELL`).
 
 ---
 
-## 20. `Globals.h` — servicios globales
+## 20. `Globals.h` — globales (servicios y estado)
 
-Ubicación: `Globals.h`. Declara con `extern` los **servicios de hardware** que
-comparten todas las clases nuestras. Desde este refactor las clases ya no reciben
+Ubicación: `Globals.h`. Declara con `extern` los **globales** que comparten
+todas las clases nuestras: los servicios de hardware (`Display`, `Buttons`,
+`Sound`) y el almacén de estado compartido (`Settings`, sección 22). Desde este
+refactor las clases ya no reciben
 los servicios por constructor (ver secciones 3, 6 y 11): el único lugar donde se
 **instancian** es `Snake_II-OLED_128x64-I2C.ino`.
 
@@ -1580,28 +1591,34 @@ los servicios por constructor (ver secciones 3, 6 y 11): el único lugar donde s
 #include "Display.h"
 #include "Buttons.h"
 #include "Sound.h"
+#include "Settings.h"
 
 extern Display display;
 extern Buttons buttons;
 extern Sound   sound;
+extern Settings settings;
 ```
 
 ### Reglas
 
-1. **Se instancian solo en `Snake_II-OLED_128x64-I2C.ino`**, y cada uno se inicializa en su
-   `begin()` desde `setup()` (por eso el **orden de definición ya no importa**:
+1. **Se instancian solo en `Snake_II-OLED_128x64-I2C.ino`**, y cada servicio se inicializa en su
+   `begin()` desde `setup()` (`Settings` no tiene `begin()`: bastan sus valores
+   por defecto del constructor) (por eso el **orden de definición ya no importa**:
    el `Engine`, declarado al final, se construye sobre globales que solo
    necesitan su constructor —`Scroller` (`display.getWidth()`) y `Food` son
    seguros— y el trabajo real va en los `begin()`). **No** se usa
    `static order/fiasco` ni factories.
-2. **Solo las clases de servicio son globales.** Las **ventanas** (`Boot`,
-   `Legend`, `Menu`, `MenuCredits`, `Game`) NO: son miembros del `Engine` (sección
-   11) y por eso no aparecen aquí. El **`Buzzer` tampoco**: es una pieza de
-   hardware interna de `Sound` (miembro por valor), no un servicio global.
+2. **Son globales los servicios de hardware y `Settings`.** Las **ventanas**
+   (`Boot`, `Legend`, `Menu`, `MenuCredits`, `Game`) NO: son miembros del
+   `Engine` (sección 11) y por eso no aparecen aquí. El **`Buzzer` tampoco**: es
+   una pieza de hardware interna de `Sound` (miembro por valor), no un servicio
+   global. `Settings` sí es global porque es el almacén de estado compartido
+   (sección 22): ni ventana ni hardware.
 3. **`Globals.h` se incluye solo desde los `.cpp`** (las cabeceras no lo
    incluyen): evita acoplar los `.h` al global y mantiene el orden de includes
-   predecible. Un `.cpp` que usa un servicio global debe incluir `Globals.h`.
-   `Sound.h` sí incluye `Buzzer.h`, porque su miembro es un `Buzzer` por valor.
+   predecible. Un `.cpp` que usa un servicio global o `settings` debe incluir
+   `Globals.h`. `Sound.h` sí incluye `Buzzer.h`, porque su miembro es un
+   `Buzzer` por valor.
 
 ---
 
@@ -1686,4 +1703,54 @@ class Ticker {
 
 `Sound` no tiene reloj propio: delega las duraciones en `Buzzer`. `Snake` sigue
 siendo lógica pura (solo `Arduino.h`: `delay`/`random`) y no usa el reloj.
+
+---
+
+## 22. Clase `Settings` — API (estado compartido)
+
+Ubicación: `Settings.h` / `Settings.cpp`. Almacena la información que **no debe
+vivir en ninguna ventana** y que varias partes del sistema necesitan leer y
+escribir: hoy el **mejor puntaje**, el **sonido activo** y la **dificultad**.
+Cualquier otro valor compartido que surja (p. ej. si hay partida en curso) se
+añade aquí.
+
+Es un **contenedor de datos puro**: no depende de `Display`/`Buttons`/`Sound`,
+no tiene `begin()`/`update()`/`print()` ni relojes; solo getters y setters. Sus
+valores por defecto salen del constructor (de `Config` donde aplica).
+
+### Instancia global
+
+Lo global es la **instancia** —no métodos ni propiedades estáticas—: igual que
+los servicios, `extern Settings settings;` vive en `Globals.h` (sección 20) y
+`Settings settings;` se define en `Snake_II-OLED_128x64-I2C.ino`. Cualquier
+clase la usa directamente desde su `.cpp` (`settings.bestScore()`) incluyendo
+`Globals.h`.
+
+### Constructor
+
+```cpp
+Settings();
+```
+
+Sin parámetros. Valores por defecto: `_bestScore = 0`, `_soundEnabled = true` y
+ `_difficulty = Config::Difficulty::DEFAULT_LEVEL`.
+
+### Métodos
+
+| Método | Descripción |
+|--------|-------------|
+| `uint16_t bestScore() const` | Mejor puntaje (récord). |
+| `void setBestScore(uint16_t)` | Fija el récord tal cual (no compara: decidir si algo es récord es cosa del llamador). |
+| `bool soundEnabled() const` | ¿Sonido activo? |
+| `void setSoundEnabled(bool)` | Activa/desactiva el sonido. |
+| `uint8_t difficulty() const` | Nivel de dificultad (1..10). |
+| `void setDifficulty(uint8_t)` | Fija el nivel con **clamp** a `Config::Difficulty::MIN_LEVEL`/`MAX_LEVEL`. |
+
+### Estado actual (pendiente de integrar)
+
+La clase y su instancia global **existen pero todavía no las consume nadie**:
+`Menu` sigue guardando su propio `_bestScore` (sección 7), `MenuDifficulty` su
+`_difficulty` (sección 10.3) y `Sound` su `_enabled` (sección 10.2). Mover esas
+copias a `settings` queda como tarea pendiente (decisión del usuario: en esta
+tarea solo se creó la clase).
 

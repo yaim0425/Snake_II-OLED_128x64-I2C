@@ -1,0 +1,70 @@
+#ifndef SETTINGS_H
+#define SETTINGS_H
+
+#include "Config.h"
+
+// ========================================================
+// Settings — estado compartido fuera de las ventanas
+//
+// Almacena la información que NO es propia de ninguna ventana
+// (hoy: el mejor puntaje, el sonido activo y la dificultad) y
+// que varias partes del sistema tienen que leer y escribir.
+//
+// Es un contenedor de datos puro: sin dependencias de hardware
+// (Display/Buttons/Sound), sin begin()/update()/print() y sin
+// relojes; solo getters y setters. Cualquier valor nuevo que
+// deba vivir fuera de una ventana se añade aquí.
+//
+// La INSTANCIA es global (ver Globals.h): `settings`, definida
+// en Snake_II-OLED_128x64-I2C.ino junto a los servicios. Cualquier
+// clase la usa directamente desde su .cpp (settings.bestScore())
+// incluyendo Globals.h.
+// ========================================================
+
+class Settings {
+public:
+
+  // ========================================================
+  // Constructor (valores por defecto: récord 0, sonido activo
+  // y dificultad Config::Difficulty::DEFAULT_LEVEL)
+  // ========================================================
+
+  Settings();
+
+  // ========================================================
+  // Mejor puntaje (récord)
+  // ========================================================
+
+  uint16_t bestScore() const;
+  void setBestScore(uint16_t value);
+
+  // ========================================================
+  // Sonido activo
+  // ========================================================
+
+  bool soundEnabled() const;
+  void setSoundEnabled(bool enabled);
+
+  // ========================================================
+  // Dificultad (setter con clamp a Config::Difficulty)
+  // ========================================================
+
+  uint8_t difficulty() const;
+  void setDifficulty(uint8_t level);
+
+private:
+
+  // ========================================================
+  // Estado
+  // ========================================================
+
+  uint16_t _bestScore;   // récord (0 al arrancar)
+  bool _soundEnabled;    // sonido activo (true al arrancar)
+  uint8_t _difficulty;   // nivel 1..10 (DEFAULT_LEVEL al arrancar)
+};
+
+#endif
+
+// ====================================================================================
+// Fin
+// ====================================================================================
