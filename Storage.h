@@ -1,10 +1,10 @@
-#ifndef SETTINGS_H
-#define SETTINGS_H
+#ifndef STORAGE_H
+#define STORAGE_H
 
 #include "Config.h"
 
 // ========================================================
-// Settings — estado compartido fuera de las ventanas
+// Storage — estado compartido fuera de las ventanas
 //
 // Almacena la información que NO es propia de ninguna ventana
 // (hoy: el mejor puntaje, el sonido activo y la dificultad) y
@@ -15,13 +15,13 @@
 // relojes; solo getters y setters. Cualquier valor nuevo que
 // deba vivir fuera de una ventana se añade aquí.
 //
-// La INSTANCIA es global (ver Globals.h): `settings`, definida
+// La INSTANCIA es global (ver Globals.h): `storage`, definida
 // en Snake_II-OLED_128x64-I2C.ino junto a los servicios. Cualquier
-// clase la usa directamente desde su .cpp (settings.bestScore())
+// clase la usa directamente desde su .cpp (storage.bestScore())
 // incluyendo Globals.h.
 // ========================================================
 
-class Settings {
+class Storage {
 public:
 
   // ========================================================
@@ -29,7 +29,7 @@ public:
   // y dificultad Config::Difficulty::DEFAULT_LEVEL)
   // ========================================================
 
-  Settings();
+  Storage();
 
   // ========================================================
   // Mejor puntaje (récord)

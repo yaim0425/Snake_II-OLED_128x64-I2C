@@ -1,10 +1,10 @@
-#include "Settings.h"
+#include "Storage.h"
 
 // ========================================================
 // Constructor
 // ========================================================
 
-Settings::Settings()
+Storage::Storage()
   : _bestScore(0),
     _soundEnabled(true),
     _difficulty(Config::Difficulty::DEFAULT_LEVEL) {}
@@ -13,11 +13,11 @@ Settings::Settings()
 // Mejor puntaje (récord)
 // ========================================================
 
-uint16_t Settings::bestScore() const {
+uint16_t Storage::bestScore() const {
   return _bestScore;
 }
 
-void Settings::setBestScore(uint16_t value) {
+void Storage::setBestScore(uint16_t value) {
   _bestScore = value;
 }
 
@@ -25,11 +25,11 @@ void Settings::setBestScore(uint16_t value) {
 // Sonido activo
 // ========================================================
 
-bool Settings::soundEnabled() const {
+bool Storage::soundEnabled() const {
   return _soundEnabled;
 }
 
-void Settings::setSoundEnabled(bool enabled) {
+void Storage::setSoundEnabled(bool enabled) {
   _soundEnabled = enabled;
 }
 
@@ -37,11 +37,11 @@ void Settings::setSoundEnabled(bool enabled) {
 // Dificultad (clamp a Config::Difficulty::MIN_LEVEL..MAX_LEVEL)
 // ========================================================
 
-uint8_t Settings::difficulty() const {
+uint8_t Storage::difficulty() const {
   return _difficulty;
 }
 
-void Settings::setDifficulty(uint8_t level) {
+void Storage::setDifficulty(uint8_t level) {
   if (level < Config::Difficulty::MIN_LEVEL) level = Config::Difficulty::MIN_LEVEL;
   else if (level > Config::Difficulty::MAX_LEVEL) level = Config::Difficulty::MAX_LEVEL;
   _difficulty = level;

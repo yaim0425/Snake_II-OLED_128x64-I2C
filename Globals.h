@@ -3,7 +3,7 @@
 #include "Display.h"
 #include "Buttons.h"
 #include "Sound.h"
-#include "Settings.h"
+#include "Storage.h"
 
 // ========================================================
 // Globals — globales del proyecto (servicios de hardware +
@@ -11,10 +11,10 @@
 //
 // Los ÚNICOS globales del proyecto: los servicios de hardware
 // que usa todo el mundo (Display, Buttons, Sound) y el almacén
-// de estado compartido (Settings: mejor puntaje, sonido activo
+// de estado compartido (Storage: mejor puntaje, sonido activo
 // y dificultad — sección 22).
 // Cualquier clase los usa DIRECTAMENTE (display.drawText(...),
-// buttons.pressed(...), sound.play(...), settings.bestScore()),
+// buttons.pressed(...), sound.play(...), storage.bestScore()),
 // sin inyectarlos por constructor.
 //
 // El Buzzer NO es un servicio global: es propiedad exclusiva
@@ -34,7 +34,7 @@
 extern Display display;
 extern Buttons buttons;
 extern Sound   sound;
-extern Settings settings;
+extern Storage storage;
 
 // ====================================================================================
 // Fin

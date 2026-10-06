@@ -6,7 +6,7 @@
 //   - Sound: sonido. Contiene su propia capa de hardware Buzzer (por valor,
 //     pin Config::Pin::BUZZER) y la inicializa en sound.begin().
 //     Declarado extern en Globals.h; definido aquí.
-//   - Settings: almacén de estado compartido (mejor puntaje, sonido
+//   - Storage: almacén de estado compartido (mejor puntaje, sonido
 //     activo, dificultad). Sin begin(): sus valores por defecto
 //     salen del constructor. Declarado extern en Globals.h;
 //     definido aquí.
@@ -33,14 +33,14 @@
 // Globales (servicios de hardware + almacén de estado), compartidos por todas
 // las clases. Definidos aquí (no en un .cpp aparte); el orden de construcción
 // no importa: cada servicio se inicializa en su begin() desde setup() y
-// Settings solo usa su constructor.
+// Storage solo usa su constructor.
 // ====================================================================================
 
 Display display;
 Buttons buttons(Config::Pin::BUTTONS);
 
 Sound   sound(Config::Pin::BUZZER);
-Settings settings;
+Storage storage;
 
 // ====================================================================================
 // Despachador: posee las ventanas (Boot, Menu, MenuCredits,
