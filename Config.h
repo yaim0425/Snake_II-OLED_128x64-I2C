@@ -75,7 +75,7 @@ constexpr uint8_t BODY_TOP = 16;
 constexpr uint8_t BODY_H = 48;
 
 constexpr uint8_t FOOT_H = 8;
-constexpr uint8_t FOOT_TOP = HEIGHT - FOOT_H;             // Punto Y del texto del pie
+constexpr uint8_t FOOT_TOP = HEIGHT - FOOT_H;  // Punto Y del texto del pie
 // constexpr uint8_t FOOT_LINE = HEIGHT - (FOOT_H + 1 + 1);  // línea separadora del pie + 1 px de margen;
 
 // constexpr uint8_t BODY_MIDDLE = BODY_TOP + (BODY_H - FOOT_H - 1) / 2 - 2; // -8  5
@@ -136,8 +136,8 @@ constexpr char* THANKS = "Thanks for playing!";
 }
 
 namespace Legend {
-constexpr uint32_t HOLD = 900;    // visible fija antes de parpadear
-constexpr uint32_t NEXT = 2200;   // duración total por rombo (avance lento)
+// constexpr uint32_t HOLD = 250;    // visible fija antes de parpadear
+constexpr uint32_t NEXT = 2000;   // duración total por rombo (avance lento)
 constexpr uint32_t PERIOD = 100;  // período del parpadeo MUY rápido (ms)
 constexpr uint8_t OFF = 50;       // % del período en que está oculto
 }
@@ -146,15 +146,20 @@ namespace Diamond {
 constexpr uint8_t SIZE = 3;  // px de un lado del rombo
 }
 
+namespace Button {
+constexpr uint32_t DELAY   = 400;  // mantener para empezar a repetir (ms)
+constexpr uint32_t TICK    = 100;  // intervalo de repetición mientras se mantiene (ms)
+}
+
 namespace Scroller {
 constexpr int16_t TOP = 28;        // fila superior de la franja de texto (banda del menú)
 constexpr uint32_t ANIMATION = 4;  // ms por px de desplazamiento lateral
 }
 
 namespace DefaultTimer {
-constexpr uint32_t HOLD = 1000;    // mantener sin navegar para parpadear
-constexpr uint32_t PERIOD = 1000;  // período completo del parpadeo (ms)
-constexpr uint8_t OFF = 20;        // % del período en que está oculto
+// constexpr uint32_t HOLD = 500;    // mantener sin navegar para parpadear
+constexpr uint32_t PERIOD = 400;  // período completo del parpadeo (ms)
+constexpr uint8_t OFF = 50;       // % del período en que está oculto
 }
 }
 

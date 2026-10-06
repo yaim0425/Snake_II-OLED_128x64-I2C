@@ -32,10 +32,8 @@ void Engine::update() {
 
     case State::LEGEND:
       _legend.update();
-      if (_legend.done()) {
-        changeState(State::MENU);
-        break;
-      }
+      if (_legend.done()) changeState(State::MENU);
+      break;
 
     case State::MENU:
       _menu.update();

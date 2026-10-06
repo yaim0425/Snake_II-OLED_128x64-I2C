@@ -8,7 +8,7 @@
 // Opciones por defecto
 // ========================================================
 
-const char* const Menu::OPTION_TEXT[OPT_COUNT] = {
+const char* const Menu::OPTION[OPT_COUNT] = {
   "New",
   "Continue",
   "Difficulty",
@@ -81,16 +81,22 @@ Menu::Menu(uint16_t bestScore)
     // _showFooter(true),
     // _optionCount(OPT_NEW),
     // _optionTexts(NO_CONTINUE_OPTIONS),
-    _blinkDiamond(false),
-    _visibleContinue(false),
-    _visibleDiamond(true),
+    _blinkOption(false),
+    _showOption(false),
+    _holdButtons(true),
+    _lastScroll(true),
+    _showContinue(false),
     _selected(OPT_NEW),
     _lastSelected(OPT_NEW),
-    // _timer(),
+    _timer(),
+    _repeat(),
+    _repeatTick(),
+    // _ticker(PERIOD),
     // _redraw(true),
     // _diamondsDirty(false),
-    // _scroller(),
+    _scroller(),
     _space(WIDTH / OPT_COUNT),
+    _confirm(false),
     _done(false),
     _clear(true) {}
 
@@ -98,21 +104,23 @@ Menu::Menu(uint16_t bestScore)
 // Inicialización
 // ========================================================
 
-void Menu::begin() {
+void Menu::begin(bool showContinue, int8_t selected) {
   _bestScore = 0;
-  _blinkDiamond = false;
-  _visibleContinue = true;
-  // _visibleContinue = false;
-  _visibleDiamond = true;
-  _selected = OPT_NEW;
-  _lastSelected = OPT_NEW;
-  _space = WIDTH / (OPT_COUNT + (_visibleContinue ? 1 : 0));
+  _blinkOption = false;
+  _holdButtons = true;
+  _lastScroll = true;
+  _showOption = false;
+  _showContinue = showContinue;
+  _selected = selected;
+  _lastSelected = selected;
+  _space = WIDTH / (OPT_COUNT + (showContinue ? 1 : 0));
+  _confirm = false;
   _done = false;
   _clear = true;
 
-  // // _scroller.begin();
+  // _scroller.begin();
   // _scroller.setTexto(OPTION_TEXT[_selected], TEXT_SEL_TOP, true, TEXT_12x16);
-  // _timer.start();
+  _timer.start();
   // _redraw = true;
   // // _optionCount = OPT_COUNT;
 }
@@ -211,6 +219,25 @@ void Menu::begin() {
 // ========================================================
 
 void Menu::update() {
+  if (_done) return;
+
+  // if (_holdButtons) _holdButtons = !_timer.expired(5000);
+
+  holdButtons();
+  navigate();
+  action();
+
+  if (_lastScroll) {
+    if (_scroller.update()) return;
+    _lastScroll = false;
+    _showOption = false;
+    // _ticker.start();
+    _timer.start();
+  }
+
+  _blinkOption = _showOption != _timer.blinkOn(PERIOD, OFF);
+
+
   // navigate();
   // if (true) return;  // IGNORE: no se actualiza el menú en esta versión
 
@@ -221,31 +248,45 @@ void Menu::update() {
 // Navegación
 // ========================================================
 
-// void Menu::navigate() {
-//   int8_t before = _selected;
-//   bool moved = false;
+void Menu::holdButtons() {
+  if (!_holdButtons) return;
 
-//   // Solo MOVE_LEFT y MOVE_RIGHT (primera y última no conectadas)
-//   if (buttons.pressed(Buttons::MOVE_LEFT) && _selected > 0) {
-//     _selected--;
-//     if (_selected == OPT_CONTINUE && !_visibleContinue) _selected--;  // saltar "Continue" si no está visible
-//     moved = true;
-//   }
+  _holdButtons = false;
+  for (int8_t button = 0; button < Buttons::MAX_BUTTONS; button++)
+    _holdButtons = _holdButtons || buttons.hold(button);
+}
 
-//   if (buttons.pressed(Buttons::MOVE_RIGHT) && _selected < OPT_COUNT - 1) {
-//     _selected++;
-//     if (_selected == OPT_CONTINUE && !_visibleContinue) _selected++;  // saltar "Continue" si no está visible
-//     moved = true;
-//   }
+void Menu::navigate() {
+  if (_holdButtons) return;
 
-//   if (moved) {
-//     sound.play(Sound::SFX_CLICK);
-//     // _scroller.setTexto(optionText(_selected), 16, TEXT_SEL_TOP, true, TEXT_12x16);
-//     // _scroller.startSlide();
-//     _timer.start();
-//     Serial.printf("Menu: opcion %d -> %d\n", before, _selected);
-//   }
-// }
+  bool moved = false;
+
+  if (holdRepeat(Buttons::MOVE_LEFT) && _selected > 0) {
+    _selected--;
+    if (!_showContinue && _selected == OPT_CONTINUE) _selected--;
+    moved = true;
+  } else if (holdRepeat(Buttons::MOVE_RIGHT) && _selected < OPT_COUNT - 1) {
+    _selected++;
+    if (!_showContinue && _selected == OPT_CONTINUE) _selected++;
+    moved = true;
+  }
+
+  if (moved) sound.play(Sound::SFX_CLICK);
+}
+
+void Menu::action() {
+  if (_holdButtons) return;
+
+  if (buttons.pressed(Buttons::ACTION_UP)) {
+    _selected = _showContinue ? OPT_CONTINUE : OPT_NEW;
+    if (_lastSelected == _selected) return;
+    sound.play(Sound::SFX_BACK);
+  } else if (buttons.pressed(Buttons::ACTION_RIGHT)) {
+    sound.play(Sound::SFX_CONFIRM);
+    // _confirm = true;
+    _confirm = !_confirm;
+  }
+}
 
 // ========================================================
 // Rombos de posición
@@ -294,6 +335,7 @@ void Menu::update() {
 // ========================================================
 
 void Menu::print() {
+  if (_done) return;
 
   // // Estáticos (solo al entrar, tras el clear() completo): fondo, cuadro
   // // de selección, header (título) y pie (línea + Best/versión). Se dibujan
@@ -301,6 +343,9 @@ void Menu::print() {
   // if (_redraw) {
   //   display.clear();
   firstPrint();
+  blink();
+  nextOption();
+  _scroller.print();
   //   _redraw = false;
   // }
 
@@ -391,12 +436,10 @@ void Menu::firstPrint() {
   //   centerX + SIZE, centerY,
   //   SSD1306_WHITE);
 
-  showOptions();
-
   // Cuadro de selección (banda de la opción actual)
-  const char* text = OPTION_TEXT[_selected];
   display.fillRect(0, BOX_TOP - 2, WIDTH, BOX_HEIGHT + 2, SSD1306_WHITE);
-  display.drawText(text, (WIDTH - strlen(text) * 12) / 2, BOX_TOP, TEXT_12x16, SSD1306_BLACK, SSD1306_WHITE);
+  toggleText(true);
+  showOptions();
 
   const int16_t footTop = Config::Screen::FOOT_TOP;
   const int16_t footH = Config::Screen::FOOT_H;
@@ -436,9 +479,9 @@ void Menu::firstPrint() {
 // Accesos
 // ========================================================
 
-// int8_t Menu::selected() const {
-//   return _selected;
-// }
+int8_t Menu::selected() const {
+  return _selected;
+}
 
 // int8_t Menu::confirm() const {
 //   // Se devuelve la OPCIÓN LÓGICA (enum Option): con "Continue" oculto la
@@ -466,88 +509,75 @@ bool Menu::done() const {
   return _done;
 }
 
-void Menu::blinkDiamond(bool print) {
-  if (!_blinkDiamond && !print) return;
+void Menu::blink() {
+  if (!_blinkOption && !_confirm) return;
+  _showOption = !_showOption;
 
-  int16_t centerX = 0;
-
-  switch (_selected) {
-    case OPT_NEW:
-      // centerX = 0;
-      break;
-
-    case OPT_CONTINUE:
-      // centerX = 0;
-      break;
-
-    case OPT_DIFFICULTY:
-      // centerX = 0;
-      break;
-
-    case OPT_SOUND:
-      // centerX = 0;
-      break;
-
-    case OPT_CREDITS:
-      // centerX = 0;
-      break;
+  if (_confirm) {
+    _showOption = true;
+    // _confirm = false;
+    // _done = true;
   }
-
-  if (print)
-    _visibleDiamond = false;
-
-  const int16_t centerY = FOOT_TOP - SIZE - 2;
-
-  display.fillTriangle(
-    centerX - SIZE, centerY,
-    centerX, centerY - SIZE,
-    centerX + SIZE, centerY,
-    _visibleDiamond ? SSD1306_BLACK : SSD1306_WHITE);
-
-  display.fillTriangle(
-    centerX - SIZE, centerY,
-    centerX, centerY + SIZE,
-    centerX + SIZE, centerY,
-    _visibleDiamond ? SSD1306_BLACK : SSD1306_WHITE);
-
-  _blinkDiamond = false;
-  _visibleDiamond = !_visibleDiamond;
+  
+  toggleText(_showOption);
+  toggleDiamond(_selected, _showOption);
+  _blinkOption = false;
 }
 
 void Menu::nextOption() {
   if (_lastSelected == _selected) return;
 
-  // _scrollerPie.setTexto(BTN_FUNC[_selected], FOOT_TOP, true, TEXT_6x8);
-  // _scrollerPie.startSlide();
-  // _lastScroll = true;
+  toggleDiamond(_lastSelected, false);
+  toggleTriangle(_lastSelected, true);
+
+  toggleTriangle(_selected, false);
+  toggleDiamond(_selected, true);
+
+  // int8_t op = _selected;
+  // if (!_visibleContinue && op >= OPT_CONTINUE) op++;
+  // const char* text = OPTION_TEXT[op];
+  // display.fillRect(0, BOX_TOP - 2, WIDTH, BOX_HEIGHT + 2, SSD1306_WHITE);
+  // display.drawText(text, (WIDTH - strlen(text) * 12) / 2, BOX_TOP, TEXT_12x16, SSD1306_BLACK, SSD1306_WHITE);
+
+  _scroller.setTexto(OPTION[_selected], BOX_TOP, _lastSelected > _selected, TEXT_12x16);
+  _scroller.startSlide();
+  _lastScroll = true;
 
   // blinkDiamond(true);
 
   // _timer.start();
   // _holdDiamond = true;
+  // _visibleDiamond = false;
   _lastSelected = _selected;
 }
 
-void Menu::toggleDiamond(bool show) {
-  int16_t centerX = (_selected + 1) * _space;
+void Menu::toggleDiamond(int8_t diamond, bool show) {
+
+  int16_t centerX = diamond + 1;
+  if (!_showContinue && diamond >= OPT_CONTINUE)
+    centerX--;
+  centerX *= _space;
 
   display.fillTriangle(
-    centerX -SIZE, DIAMOND_Y,
-    centerX, DIAMOND_Y -SIZE,
-    centerX +SIZE, DIAMOND_Y,
+    centerX - SIZE, DIAMOND_Y,
+    centerX, DIAMOND_Y - SIZE,
+    centerX + SIZE, DIAMOND_Y,
     show ? SSD1306_WHITE : SSD1306_BLACK);
 
   display.fillTriangle(
-    centerX -SIZE, DIAMOND_Y,
-    centerX, DIAMOND_Y +SIZE,
-    centerX +SIZE, DIAMOND_Y,
+    centerX - SIZE, DIAMOND_Y,
+    centerX, DIAMOND_Y + SIZE,
+    centerX + SIZE, DIAMOND_Y,
     show ? SSD1306_WHITE : SSD1306_BLACK);
 }
 
-void Menu::toggleTriangle(int8_t op, bool show) {
-  if (op >= OPT_COUNT) return;
+void Menu::toggleTriangle(int8_t triangle, bool show) {
+  if (triangle >= OPT_COUNT) return;
 
-  int16_t centerX = (op + 1) * _space;
+  int16_t centerX = triangle + 1;
+  if (!_showContinue && triangle >= OPT_CONTINUE)
+    centerX--;
+  centerX *= _space;
 
   display.fillTriangle(
     centerX - SIZE, TRIANGLE_Y,
@@ -556,9 +586,32 @@ void Menu::toggleTriangle(int8_t op, bool show) {
     show ? SSD1306_WHITE : SSD1306_BLACK);
 }
 
+void Menu::toggleText(bool show) {
+  const char* text = OPTION[_selected];
+  const bool Color = show ? SSD1306_BLACK : SSD1306_WHITE;
+  display.drawText(text, (WIDTH - strlen(text) * 12) / 2, BOX_TOP - 1, TEXT_12x16, Color, SSD1306_WHITE);
+}
+
 void Menu::showOptions() {
-  for (int8_t op = 0; op < OPT_COUNT - (_visibleContinue ? 0 : 1); op++)
-    if (op != _selected)
-      toggleTriangle(op, true);
-  toggleDiamond(true);
+  display.fillRect(0, BOX_TOP + BOX_HEIGHT + 2, WIDTH, FOOT_TOP - 2, SSD1306_BLACK);
+  for (int8_t pos = 0; pos < OPT_COUNT; pos++) {
+    if (!_showContinue && pos == OPT_CONTINUE) continue;
+    if (pos != _selected) toggleTriangle(pos, true);
+  }
+  toggleDiamond(_selected, true);
+}
+
+bool Menu::holdRepeat(uint8_t button) {
+  if (buttons.pressed(button)) {
+    _repeat.start();
+    _repeatTick.start();
+    return true;
+  }
+
+  if (buttons.hold(button) && _repeat.expired(DELAY) && _repeatTick.expired(TICK)) {
+    _repeatTick.start();
+    return true;
+  }
+
+  return false;
 }

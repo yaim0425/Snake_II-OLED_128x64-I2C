@@ -12,6 +12,7 @@ Scroller::Scroller()
     _size(2),
     _y(0),
     _toLeft(true),
+    _isStopNow(false),
     _x(0),
     _lastX(0),
     _done(true),
@@ -26,10 +27,13 @@ Scroller::Scroller()
 // ========================================================
 
 // void Scroller::begin() {
-//   // _x = 0;
-//   // _lastX = 0;
-//   // _done = false;
-//   // _timer.start();
+//     _height = 16;
+//     _size = 2;
+//     _y = 0;
+//     _toLeft = true;
+//     _x = 0;
+//     _lastX = 0;
+//     _done = true;
 // }
 
 // ========================================================
@@ -49,10 +53,10 @@ void Scroller::setTexto(const char* text, int16_t y, bool toLeft, uint8_t size) 
   _y = y - size;
   _size = size;
   _done = true;
-  _height = 8 * size + size;
   _toLeft = toLeft;
+  _height = 8 * size + 2;
 
-  uint8_t maxChars = STRIP_W / (6 * size);
+  uint8_t maxChars = floor(STRIP_W / (6 * size));
 
   char buffer[24];
   strncpy(buffer, text, maxChars);
@@ -65,7 +69,7 @@ void Scroller::setTexto(const char* text, int16_t y, bool toLeft, uint8_t size) 
   canvas.fillScreen(SSD1306_WHITE);
   canvas.setTextSize(size);
   canvas.setTextColor(SSD1306_BLACK);
-  canvas.setCursor(textX, size);
+  canvas.setCursor(textX, 1);
   canvas.print(buffer);
 
   int16_t startX = _toLeft ? 0 : STRIP_W;
@@ -94,6 +98,7 @@ void Scroller::startSlide() {
   _x = 0;
   _lastX = 0;
   _done = false;
+  _isStopNow = false;
   _timer.start();
 }
 
@@ -112,7 +117,7 @@ void Scroller::startSlide() {
 bool Scroller::update() {
   if (_done) return false;
   _x += _timer.consume();
-  return !_done;
+  return true;
 }
 
 // ========================================================

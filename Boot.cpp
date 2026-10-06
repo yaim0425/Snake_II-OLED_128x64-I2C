@@ -19,7 +19,7 @@ Boot::Boot()
   // _prevStep(0),
   // : _ticker(ANIM_TICK),
   : _timer(),
-    _visibleMessage(false),
+    _showMessage(false),
     _blinkMessage(false),
     _holdMessage(true),
     _done(false),
@@ -40,7 +40,7 @@ void Boot::begin() {
   // _x = 0;
   // _y = 0;
   // _bars = 0;
-  _visibleMessage = false;
+  _showMessage = false;
   _blinkMessage = false;
   _holdMessage = true;
   _done = false;
@@ -93,11 +93,11 @@ void Boot::update() {
   // // }
   // if (steps) _step = (_step + steps) % BAR_SPACING;
 
-  if (_holdMessage && _timer.expired(HOLD))
-    _holdMessage = false;
+  // if (_holdMessage && _timer.expired(HOLD))
+  //   _holdMessage = false;
 
-  if (!_holdMessage)
-    _blinkMessage = _visibleMessage ^ _timer.blinkOn(PERIOD, OFF);
+  // if (!_holdMessage)
+  _blinkMessage = _showMessage != _timer.blinkOn(PERIOD, OFF);
 }
 
 // ========================================================
@@ -176,7 +176,7 @@ void Boot::firstPrint() {
 
   // ------------------------------------------------------
 
-  _visibleMessage = false;
+  _showMessage = false;
   _blinkMessage = true;
   blinkMessage();
 
@@ -240,13 +240,13 @@ void Boot::blinkMessage() {
     int16_t x = (WIDTH - strlen(message) * 6) / 2;
     int16_t y = HEADER_TOP + line * 8;
 
-    if (_visibleMessage)
+    if (_showMessage)
       display.drawText(message, x, y, TEXT_6x8, SSD1306_BLACK, SSD1306_BLACK);
     else
       display.drawText(message, x, y, TEXT_6x8, SSD1306_WHITE, SSD1306_BLACK);
   }
 
-  _visibleMessage = !_visibleMessage;
+  _showMessage = !_showMessage;
   _blinkMessage = false;
 }
 

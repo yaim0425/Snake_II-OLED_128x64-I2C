@@ -10,7 +10,7 @@ public:
   // Configuración
   // ========================================================
 
-  static constexpr uint8_t MAX_BUTTONS = 8;
+  // static constexpr uint8_t MAX_BUTTONS = 8;
 
   enum Button : uint8_t {
     MOVE_UP = 0,
@@ -21,7 +21,9 @@ public:
     ACTION_UP,
     ACTION_RIGHT,
     ACTION_DOWN,
-    ACTION_LEFT
+    ACTION_LEFT,
+
+    MAX_BUTTONS
   };
 
   // ========================================================
@@ -49,7 +51,7 @@ public:
   // Estado actual
   // ========================================================
 
-  bool state(uint8_t index) const;
+  bool hold(uint8_t index) const;
   bool pressed(uint8_t index) const;
   bool released(uint8_t index) const;
 
@@ -93,9 +95,7 @@ private:
   // Helper: verifica un bit (botón 0-7) en un estado agrupado
   // ========================================================
 
-  static inline bool isSet(uint8_t estados, uint8_t boton) {
-    return (estados & (1 << boton)) != 0;
-  }
+  static inline bool isSet(uint8_t states, uint8_t botton);
 
   // ========================================================
   // Debounce

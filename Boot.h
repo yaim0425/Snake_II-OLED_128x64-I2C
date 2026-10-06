@@ -76,7 +76,7 @@ private:
   static constexpr int16_t WIDTH = Config::Screen::WIDTH;
   static constexpr int16_t HEADER_TOP = Config::Screen::HEADER_TOP;
 
-  static constexpr uint32_t HOLD = Config::DefaultTimer::HOLD;
+  // static constexpr uint32_t HOLD = Config::DefaultTimer::HOLD;
   // static constexpr uint32_t NEXT = Config::DefaultTimer::;
   static constexpr uint32_t PERIOD = Config::DefaultTimer::PERIOD;
   static constexpr uint8_t OFF = Config::DefaultTimer::OFF;
@@ -101,7 +101,7 @@ private:
   Stopwatch _timer;  // duración total desde el begin() (TOTAL_MS)
 
   bool _blinkMessage;    // true si el mensaje de "Press any button..." cambió de visible a invisible o viceversa
-  bool _visibleMessage;  // true si el mensaje de "Press any button..." está visible
+  bool _showMessage;  // true si el mensaje de "Press any button..." está visible
   bool _holdMessage;     // true si el mensaje de "Press any button..." está visible
 
   bool _done;

@@ -31,8 +31,7 @@ Legend::Legend()
     _ticker(NEXT),
     _timer(),
     _blinkDiamond(false),
-    _visibleDiamond(true),
-    _holdDiamond(true),
+    _showDiamond(true),
     _lastScroll(false),
     _done(false),
     _clear(true) {}
@@ -47,8 +46,7 @@ void Legend::begin() {
   _ticker.start();
   _timer.start();
   _blinkDiamond = false;
-  _visibleDiamond = true;
-  _holdDiamond = true;
+  _showDiamond = true;
   _lastScroll = false;
   _done = false;
   _clear = true;
@@ -87,7 +85,7 @@ void Legend::update() {
   }
 
   if (_lastScroll) {
-    if (_scrollerPie.update()) return;
+    if (_scroller.update()) return;
     _lastScroll = false;
     _ticker.start();
     _timer.start();
@@ -97,11 +95,7 @@ void Legend::update() {
   uint32_t steps = _ticker.consume();
   if (steps) _btn = (_btn + steps) % 4;
 
-  if (_holdDiamond && _timer.expired(HOLD))
-    _holdDiamond = false;
-
-  if (!_holdDiamond)
-    _blinkDiamond = _visibleDiamond ^ _timer.blinkOn(PERIOD, OFF);
+  _blinkDiamond = _showDiamond != _timer.blinkOn(PERIOD, OFF);
 }
 
 // ========================================================
@@ -119,7 +113,7 @@ void Legend::print() {
   firstPrint();
   blinkDiamond();
   nextBtn();
-  _scrollerPie.print();
+  _scroller.print();
   // if (true) return;
 
   // if (_prevBtn != _btn) {
@@ -224,9 +218,8 @@ void Legend::firstPrint() {
   textX = (middleX + (middleX - strlen(text) * 6) / 2);
   display.drawText(text, textX, TEXT_Y, TEXT_6x8, SSD1306_BLACK, SSD1306_WHITE);
 
-  for (_btn = 0; _btn < 4; _btn++)
-    blinkDiamond(true);
-  _btn = 0;
+  for (int8_t i = 0; i < 4; i++)
+    toggleDiamond(i);
 
   // for (uint8_t step = 0; step < 4; step++) {
   //   int16_t cx, cy;
@@ -241,13 +234,71 @@ void Legend::firstPrint() {
   display.drawText(pieText, (WIDTH - strlen(pieText) * 6) / 2, FOOT_TOP, TEXT_6x8, SSD1306_BLACK, SSD1306_WHITE);
 }
 
-void Legend::blinkDiamond(bool print) {
-  if (!_blinkDiamond && !print) return;
+void Legend::blinkDiamond() {
+  if (!_blinkDiamond ) return;
+  toggleDiamond(_btn);
 
-  int16_t centerX = 0;
-  int16_t centerY = 0;
+  // int16_t centerX = 0;
+  // int16_t centerY = 0;
 
-  switch (_btn) {
+  // switch (_btn) {
+  //   case 0:  // Btn1 (Arriba)
+  //     centerX = PAD_RIGHT_X;
+  //     centerY = PAD_Y - PAD_RADIO;
+  //     break;
+
+  //   case 1:  // Btn2 (Derecha)
+  //     centerX = PAD_RIGHT_X + PAD_RADIO;
+  //     centerY = PAD_Y;
+  //     break;
+
+  //   case 2:  // Btn3 (Abajo)
+  //     centerX = PAD_RIGHT_X;
+  //     centerY = PAD_Y + PAD_RADIO;
+  //     break;
+
+  //   case 3:  // Btn4 (Izquierda)
+  //     centerX = PAD_RIGHT_X - PAD_RADIO;
+  //     centerY = PAD_Y;
+  //     break;
+  // }
+
+  // switch (_btn) {
+  //   case 0:
+  //   case 2:
+  //     display.fillTriangle(
+  //       centerX - SIZE, centerY,
+  //       centerX, centerY - SIZE,
+  //       centerX + SIZE, centerY,
+  //       _showDiamond ? SSD1306_BLACK : SSD1306_WHITE);
+  //     display.fillTriangle(
+  //       centerX - SIZE, centerY,
+  //       centerX, centerY + SIZE,
+  //       centerX + SIZE, centerY,
+  //       _showDiamond ? SSD1306_BLACK : SSD1306_WHITE);
+  //     break;
+
+  //   case 1:
+  //   case 3:
+  //     display.fillTriangle(
+  //       centerX, centerY - SIZE,
+  //       centerX - SIZE, centerY,
+  //       centerX, centerY + SIZE,
+  //       _showDiamond ? SSD1306_BLACK : SSD1306_WHITE);
+  //     display.fillTriangle(
+  //       centerX, centerY - SIZE,
+  //       centerX + SIZE, centerY,
+  //       centerX, centerY + SIZE,
+  //       _showDiamond ? SSD1306_BLACK : SSD1306_WHITE);
+  //     break;
+  // }
+
+  _blinkDiamond = false;
+  _showDiamond = !_showDiamond;
+}
+
+void Legend::diamondCenter(int8_t diamond, int16_t& centerX, int16_t& centerY) {
+  switch (diamond) {
     case 0:  // Btn1 (Arriba)
       centerX = PAD_RIGHT_X;
       centerY = PAD_Y - PAD_RADIO;
@@ -268,42 +319,25 @@ void Legend::blinkDiamond(bool print) {
       centerY = PAD_Y;
       break;
   }
+}
 
-  if (print)
-    _visibleDiamond = false;
+void Legend::toggleDiamond(int8_t diamond, bool show) {
+ 
+  int16_t centerX = 0;
+  int16_t centerY = 0;
+  diamondCenter(diamond, centerX, centerY);
 
-  switch (_btn) {
-    case 0:
-    case 2:
-      display.fillTriangle(
-        centerX - SIZE, centerY,
-        centerX, centerY - SIZE,
-        centerX + SIZE, centerY,
-        _visibleDiamond ? SSD1306_BLACK : SSD1306_WHITE);
-      display.fillTriangle(
-        centerX - SIZE, centerY,
-        centerX, centerY + SIZE,
-        centerX + SIZE, centerY,
-        _visibleDiamond ? SSD1306_BLACK : SSD1306_WHITE);
-      break;
+  display.fillTriangle(
+    centerX - SIZE, centerY,
+    centerX, centerY - SIZE,
+    centerX + SIZE, centerY,
+    _showDiamond || show ? SSD1306_WHITE : SSD1306_BLACK);
 
-    case 1:
-    case 3:
-      display.fillTriangle(
-        centerX, centerY - SIZE,
-        centerX - SIZE, centerY,
-        centerX, centerY + SIZE,
-        _visibleDiamond ? SSD1306_BLACK : SSD1306_WHITE);
-      display.fillTriangle(
-        centerX, centerY - SIZE,
-        centerX + SIZE, centerY,
-        centerX, centerY + SIZE,
-        _visibleDiamond ? SSD1306_BLACK : SSD1306_WHITE);
-      break;
-  }
-
-  _blinkDiamond = false;
-  _visibleDiamond = !_visibleDiamond;
+  display.fillTriangle(
+    centerX - SIZE, centerY,
+    centerX, centerY + SIZE,
+    centerX + SIZE, centerY,
+    _showDiamond || show ? SSD1306_WHITE : SSD1306_BLACK);
 }
 
 // ========================================================
@@ -318,14 +352,11 @@ void Legend::blinkDiamond(bool print) {
 void Legend::nextBtn() {
   if (_lastBtn == _btn) return;
 
-  _scrollerPie.setTexto(BTN_FUNC[_btn], FOOT_TOP, true, TEXT_6x8);
-  _scrollerPie.startSlide();
+  _scroller.setTexto(BTN_FUNC[_btn], FOOT_TOP, true, TEXT_6x8);
+  _scroller.startSlide();
   _lastScroll = true;
 
-  blinkDiamond(true);
-
-  _timer.start();
-  _holdDiamond = true;
+  toggleDiamond(_lastBtn, true);
   _lastBtn = _btn;
 }
 

@@ -68,6 +68,9 @@ public:
 
 private:
   void firstPrint();
+  void diamondCenter(int8_t diamond, int16_t& centerX, int16_t& centerY);
+  void toggleDiamond(int8_t diamond, bool show = false);
+
   // ========================================================
   // Geometría del pad MOVE (rombo de 4 flechas)
   // ========================================================
@@ -101,7 +104,7 @@ private:
   // Animación del rombo activo (ciclo lento + parpadeo rápido)
   // ========================================================
 
-  static constexpr uint32_t HOLD = Config::Legend::HOLD;      // visible fija antes de parpadear
+  // static constexpr uint32_t HOLD = Config::Legend::HOLD;      // visible fija antes de parpadear
   static constexpr uint32_t NEXT = Config::Legend::NEXT;      // duración total por rombo (avance lento)
   static constexpr uint32_t PERIOD = Config::Legend::PERIOD;  // período del parpadeo MUY rápido (ms)
   static constexpr uint8_t OFF = Config::Legend::OFF;         // % del período en que está oculto
@@ -122,7 +125,7 @@ private:
 
   // Franja del pie (función del rombo activo): al cambiar de rombo el
   // texto entra deslizándose en lugar de aparecer de golpe.
-  Scroller _scrollerPie;
+  Scroller _scroller;
 
   Ticker _ticker;    // avance de 1 px cada ANIM_TICK ms (acumulador por tiempo)
   Stopwatch _timer;  // desde que se fijó el rombo activo (ciclo y parpadeo)
@@ -130,8 +133,7 @@ private:
   // int8_t _lastText;    // texto del pie que se dibujó (para borrar/redibujar solo al cambiar)
 
   bool _blinkDiamond;    // true si el mensaje de "Press any button..." cambió de visible a invisible o viceversa
-  bool _visibleDiamond;  // true si el mensaje de "Press any button..." está visible
-  bool _holdDiamond;     // true si el mensaje de "Press any button..." está visible
+  bool _showDiamond;  // true si el mensaje de "Press any button..." está visible
   bool _lastScroll;
 
   bool _done;
@@ -152,7 +154,7 @@ private:
 
   // Rombo completo de DIA_SIZE centrado en (cx, cy); si black es true no se dibuja
   // void dDiamond(int16_t cx, int16_t cy, bool color);
-  void blinkDiamond(bool print = false);
+  void blinkDiamond();
 
   // Compone el texto del nuevo rombo y arranca su vuelo lateral
   void nextBtn();

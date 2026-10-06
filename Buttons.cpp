@@ -127,7 +127,11 @@ void Buttons::read() {
 // Estado actual
 // ========================================================
 
-bool Buttons::state(uint8_t index) const {
+bool Buttons::isSet(uint8_t states, uint8_t botton) {
+  return (states & (1 << botton)) != 0;
+}
+
+bool Buttons::hold(uint8_t index) const {
   return isSet(_buttons, index);
 }
 

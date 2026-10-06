@@ -34,7 +34,7 @@ public:
   // Inicialización
   // ========================================================
 
-  void begin();
+  void begin(bool showContinue = false, int8_t selected = OPT_NEW);
 
   // ========================================================
   // Opciones (cantidad variable)
@@ -88,7 +88,7 @@ public:
   // Accesos
   // ========================================================
 
-  // int8_t selected() const;
+  int8_t selected() const;
   // void setBestScore(uint16_t value);
 
   // Devuelve la opción elegida si se confirma (ACTION_RIGHT), o -1
@@ -107,11 +107,14 @@ public:
   bool done() const;
 
 private:
+  void action();
   void firstPrint();
-  void blinkDiamond(bool print = false);
+  void blink();
   void nextOption();
-  void toggleDiamond(bool show);
-  void toggleTriangle(int8_t op, bool show);
+  void toggleText(bool show);
+  void toggleDiamond(int8_t diamond, bool show);
+  void toggleTriangle(int8_t triangle, bool show);
+  bool holdRepeat(uint8_t button);
 
   // void drawDiamond(int8_t selected, bool focus, bool black);
 
@@ -119,7 +122,7 @@ private:
   // Opciones por defecto
   // ========================================================
 
-  static const char* const OPTION_TEXT[OPT_COUNT];
+  static const char* const OPTION[OPT_COUNT];
 
   // La lista que se muestra depende de si hay partida en curso:
   //   - con "Continue": DEFAULT_OPTIONS (5) opciones
@@ -161,10 +164,12 @@ private:
   // static constexpr int16_t DIA_TOP = 45;  // punta superior del rombo (rombo simétrico 45..53)
   // static constexpr uint8_t DIA_SIZE = 8;  // rombo: punta 45, hombros 49, punta inferior 53
 
-  // Parpadeo del rombo seleccionado tras mantenerlo: visible 75%, oculto 25%
-  // static constexpr uint32_t BLINK_HOLD = 500;    // mantener sin navegar para parpadear
-  // static constexpr uint32_t BLINK_PERIOD = 500;  // período completo del parpadeo (ms)
-  // static constexpr uint8_t BLINK_OFF_PCT = 25;   // % del período en que está oculto
+  // static constexpr uint32_t HOLD = Config::DefaultTimer::HOLD;      // visible fija antes de parpadear
+  static constexpr uint32_t PERIOD = Config::DefaultTimer::PERIOD;  // período del parpadeo MUY rápido (ms)
+  static constexpr uint8_t OFF = Config::DefaultTimer::OFF;         // % del período en que está oculto
+
+  static constexpr uint32_t DELAY   = Config::Button::DELAY;  // mantener para empezar a repetir (ms)
+  static constexpr uint32_t TICK    = Config::Button::TICK;  // intervalo de repetición mientras se mantiene (ms)
 
   // Pie del Body: línea separadora y texto (el texto baja 1 px: 56 -> 57)
   // static constexpr int16_t PIE_LINE_ROW = 54;  // línea horizontal 1 px, a 2 px sobre el pie
@@ -174,7 +179,8 @@ private:
   // Métodos internos
   // ========================================================
 
-  // void navigate();
+  void holdButtons();
+  void navigate();
   // void blink();
 
   // ========================================================
@@ -189,19 +195,25 @@ private:
 
   // uint8_t _optionCount;
   // const char* const* _optionTexts;
-  bool _blinkDiamond;
-  bool _visibleContinue;  // muestra/oculta la opción "Continue" (default: oculta)
-  bool _visibleDiamond;   // rombo activo visible (parpadeo)
+  bool _blinkOption;
+  bool _showOption;   // rombo activo visible (parpadeo)
+  bool _holdButtons;     // true si el mensaje de "Press any button..." está visible
+  bool _lastScroll;
+  bool _showContinue;  // muestra/oculta la opción "Continue" (default: oculta)
 
   int8_t _selected;  // opción actual (objetivo central)
   int8_t _lastSelected;
-  // Stopwatch _timer;     // desde la última selección (parpadeo del rombo)
+  // Ticker _ticker;    // avance de 1 px cada ANIM_TICK ms (acumulador por tiempo)
+  Stopwatch _timer;  // desde que se fijó el rombo activo (ciclo y parpadeo)
   // bool _redraw;         // primer frame tras begin(): clear() completo + estáticos
   // bool _diamondsDirty;  // hay que repintar solo la banda de rombos (restoreDiamondBand)
+  Stopwatch _repeat;     // inicio de la mantención (repetición por hold)
+  Stopwatch _repeatTick; // último paso de la repetición
 
-  // Scroller _scroller;  // scroller de 1 bit del cuadro de selección (1 banda, texto 12x16)
+  Scroller _scroller;  // scroller de 1 bit del cuadro de selección (1 banda, texto 12x16)
   int8_t _space;
 
+  bool _confirm;
   bool _done;
   bool _clear;  // primer frame tras begin(): clear() completo + estáticos
 };

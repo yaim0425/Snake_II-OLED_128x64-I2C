@@ -87,7 +87,7 @@ public:
   // entra en pantalla). false = la animación finalizó y la
   // franja ya está pintada en su sitio.
   bool print();
-
+private:
   // ========================================================
   // Acceso a la franja (_strip)
   // ========================================================
@@ -100,7 +100,6 @@ public:
   // x: columna (0..STRIP_W-1), y: fila (0..STRIP_H-1), value: true = set
   void setStripPixel(uint16_t x, uint8_t y, bool color);
 
-private:
   // ========================================================
   // Geometría y tiempos
   // ========================================================
@@ -126,6 +125,7 @@ private:
   int8_t _size;
   int16_t _y;                            // fila de pantalla donde se vuelca la franja
   bool _toLeft;                          // true: entra por la derecha; false: por la izquierda
+  bool _isStopNow;
   int16_t _x;                            // borde izquierdo de la franja en pantalla
   int16_t _lastX;                        // borde izquierdo de la franja en pantalla
   bool _done;                            // true: _slideX llegó a 0 y ese frame ya se pintó
