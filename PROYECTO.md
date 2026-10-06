@@ -66,15 +66,18 @@ constantes compartidas viven en `Config.h` (pines, geometría, dificultad, versi
   excepción: no limpian nada, se dibujan **sobre el `Menu`** sustituyendo solo
   la banda de los rombos y vuelven con
   `changeState(State::MENU, false)` + `Menu::restoreDiamondBand()`, así que el
-  título, el cuadro de la opción y el pie nunca se repintan en el ida y vuelta
-  (**hoy comentado** con el aislamiento de esas ventanas, ver sección 11).
+  título, el cuadro de la opción y el pie nunca se repintan en el ida y vuelta.
+  Hoy solo `MenuSound` está fuera del aislamiento y su regreso hace el
+  `begin()` completo del `Menu`: `Menu::restoreDiamondBand()` sigue comentada
+  (ver sección 11).
 - Flujo de arranque: `Boot` → `Legend` → `Menu`. La `Legend` solo aparece al
   arrancar; al volver al menú se pasa directo a `Menu`.
 - **Aislamiento temporal (bloques `AISLADO` en `Engine.h`/`Engine.cpp`):**
-  `Engine` solo posee y despacha `Boot`, `Legend` y `Menu`; `Game`,
-  `MenuCredits`, `MenuDifficulty` y `MenuSound` siguen existiendo como clases
-  pero sus estados, miembros y transiciones están comentados. El flujo queda
-  `Boot` → `Legend` → `Menu` y ahí se detiene: `Menu::confirm()` está comentado,
+  `Engine` posee y despacha `Boot`, `Legend`, `Menu` y `MenuSound` (reactivada
+  en la sección 10.3); `Game`, `MenuCredits` y `MenuDifficulty` siguen
+  existiendo como clases pero sus estados, miembros y transiciones están
+  comentados. El flujo queda `Boot` → `Legend` → `Menu` y ahí se detiene:
+  `Menu::confirm()` está comentado (la entrada a `MenuSound` no está cableada),
   `ACTION_RIGHT` solo alterna el resaltado (`_confirm`) y `ACTION_UP` devuelve
   la selección a `New`/`Continue`, así que el menú no sale hacia ninguna
   ventana.
@@ -133,7 +136,7 @@ Directorio: `D:\Documents\ESP32S3\Snake_II-OLED_128x64-I2C`
 | `Scroller.h` / `Scroller.cpp` | Clase `Scroller` (scroller de 1 bit: una sola banda, texto como array de `int8_t` donde cada byte = 1 columna de 8 px; fondo siempre negro y texto blanco; `setTexto()` compone el texto centrado, fija la fila donde se imprimirá, deriva el alto de la franja del tamaño (`8*size+2`), calcula el límite de caracteres según el tamaño y trunca silenciosamente; `update()` avanza 1 px cada 4 ms mientras `print()` la vuelca rellenando la banda; usada por `Menu` con 1 instancia —transición **activa** en `nextOption()`—, por `MenuCredits` con 2 instancias sincronizadas y por `Legend` con 1 instancia para el texto del pie). Completa. |
 | `Menu.h` / `Menu.cpp` | Clase `Menu` (menú con scroller de 1 bit —1 banda del `Scroller`—, rombos/triángulos de posición, navegación con repetición y anti-entrada `_holdButtons`). **En iteración**: `begin(showContinue, selected)` fija la lista y la selección; `navigate()` (MOVE con `holdRepeat`), `action()` (`ACTION_UP` vuelve a `New`/`Continue`, `ACTION_RIGHT` alterna `_confirm`), `holdButtons()` (bloquea hasta soltar los botones), `blink()` y `nextOption()` (vuelo lateral del `Scroller`, activo). La API anterior (`setOptions`, `setContinueAvailable`, `setBestScore`, `setSelected`, `setTitle`, `setShowFooter`, `confirm()`, `restoreDiamondBand()`) está **comentada** en `Menu.h`. |
 | `MenuDifficulty.h` / `MenuDifficulty.cpp` | Clase `MenuDifficulty` (selector de nivel 1..10, `< N >`, con repetición al mantener presionado; al mantener, solo queda fija la flecha del botón activo). Completa. Ventana hermana: vive sobre el `Menu` ya dibujado, sustituye solo la banda de rombos (45..53) y no hace `clear()`. Guarda el nivel confirmado (`difficulty()`), que el `Engine` pasa a `Game::setDifficulty`. |
-| `MenuSound.h` / `MenuSound.cpp` | Clase `MenuSound` (selector On/Off con una flecha en el lado del destino, sobre la misma banda). Completa. Ventana hermana con la misma banda y el mismo regreso que `MenuDifficulty`; el valor real se aplica al global `Sound` con `setEnabled`. |
+| `MenuSound.h` / `MenuSound.cpp` | Clase `MenuSound` (selector On/Off con una flecha en el lado del destino, sobre la misma banda). **Reactivada (fuera del aislamiento)**: el `Engine` ya la posee y despacha (`MENU_SOUND`), pero la entrada desde el `Menu` sigue pendiente. Como `Display::getWidth()`/`getTextWidth()` siguen comentadas en `Display.h`, centra a mano con `Config::Screen::WIDTH` y `strlen * 6`. El valor real se aplica al global `Sound` con `setEnabled`. |
 | `MenuCredits.h` / `MenuCredits.cpp` | Clase `MenuCredits` (ventana de créditos con 3 entradas navegables con transición lateral —2 bandas sincronizadas del `Scroller` compartido— y `SFX_CLICK` al navegar, vuelve al menú con `ACTION_UP`). Se llama así, y no `Credits`, para distinguirla de una hipotética ventana de créditos general: esta es la que se abre desde la opción "Credits" del `Menu`. Completa. |
 | `Game.h` / `Game.cpp` | Clase `Game` (ventana del juego de la serpiente: estados NEW/CONTINUE del `Engine`). **Coordina**: dificultad/velocidad, lectura de botones (MOVE → `Snake::turn`), `snake.step()` con manejo del resultado, alimento (`Food`), puntaje, sonidos, overlays y volcado del tablero con los segmentos de `Snake` (celda de `Config::Screen::CELL`, sprites escalados con `SPRITE_SCALE`). Completa. |
 | `Food.h` / `Food.cpp` | Clase `Food` (alimento del tablero, extraído de `Game`): estado (posición, presencia, tipo normal/especial), generación en celdas libres (`spawn`, que consulta la ocupación al tablero vía `Game::occupied`), dibujo del rombo (normal) o del sprite `SPECIAL_FOOD` (especial) —la celda la toma de `Config::Screen::CELL`, no declara una propia— y el temporizador de la comida especial. Completa. |
@@ -728,16 +731,20 @@ igual que `MenuCredits` (históricamente fueron una clase `SoundWindow` y luego
 edición *inline* dentro del propio `Menu`; ambas formas se eliminaron). El `Menu`
 las devuelve como cualquier otra opción en `confirm()` y el `Engine` abre la
 ventana que corresponda (`OPT_DIFFICULTY` → `MENU_DIFFICULTY`, `OPT_SOUND` →
-`MENU_SOUND`). **Estado actual:** `Menu::confirm()` y esos casos del `Engine`
-están **comentados** (aislamiento, sección 11), así que hoy ninguna de las dos
-ventanas se abre.
+`MENU_SOUND`). **Estado actual:** `MenuSound` ya está **fuera del aislamiento**
+(el `Engine` la posee y despacha su estado, sección 11), pero `Menu::confirm()`
+y la entrada desde el `Menu` siguen comentadas, así que la ventana **no se abre
+todavía**; `MenuDifficulty` sigue aislada por completo.
 
 Ambas comparten el mismo esqueleto de ventana (`begin`/`update`/`print`/`done`),
 la misma banda de dibujo (**45..53**, la de los rombos del `Menu`) y la misma
 regla de renderizado: **no borran la pantalla**, solo sustituyen esa franja. Al
 salir, el `Engine` llama a `Menu::restoreDiamondBand()` y vuelve al menú con
 `changeState(State::MENU, false)`, que evita el `clear()` completo de
-`Menu::begin()`; el `Menu` repinta la banda y la línea del pie.
+`Menu::begin()`; el `Menu` repinta la banda y la línea del pie. (Hoy, al estar
+`restoreDiamondBand()` aún comentada, el regreso de `MenuSound` hace el
+`begin()` completo: `changeState(MENU, false)` cae en la llamada incondicional
+a `_menu.begin()`.)
 
 ### `MenuDifficulty` — nivel 1..10
 
@@ -787,11 +794,12 @@ ventanas** pero las **posee como miembros**: `Boot`, `Legend`, `Menu`, `MenuCred
 `Game` son clases independientes (hermanas) declaradas como miembros `_boot`,
 `_menu`, `_menuDifficulty`, `_menuSound`, `_menuCredits`, `_game`, `_legend`. No son
 globales ni reciben las
-ventanas por referencia. **Estado actual (aislado):** en `Engine.h` solo están
-activos `_boot`, `_legend` y `_menu`; los `#include` y miembros `_game`,
-`_menuCredits`, `_menuDifficulty` y `_menuSound` y los estados `NEW`, `CONTINUE`,
-`MENU_DIFFICULTY`, `MENU_SOUND` y `MENU_CREDITS` del `enum State` están
-**comentados** (bloques `AISLADO`).
+ventanas por referencia. **Estado actual (aislado):** en `Engine.h` están activos `_boot`, `_legend`,
+`_menu` y `_menuSound`; los `#include` y miembros `_game`, `_menuCredits` y
+`_menuDifficulty` y los estados `NEW`, `CONTINUE`, `MENU_DIFFICULTY` y
+`MENU_CREDITS` del `enum State` están **comentados** (bloques `AISLADO`).
+`MENU_SOUND` está activo, pero la entrada desde el `Menu` sigue sin cablear
+(`Menu::confirm()` comentado).
 
 ### Responsabilidad
 
@@ -841,10 +849,10 @@ los globales ya construidos (misma TU, orden de definición).
    solo la banda de rombos) y su regreso previsto es
    `menu.restoreDiamondBand()` + `changeState(State::MENU, false)` —el `false`
    salta el `Menu::begin()`, que sí provocaría el `clear()` de página completa.
-   **Estado actual (aislado):** esas ventanas, `restoreDiamondBand()` y la
-   guarda `if (beginWindow)` están **comentadas**, así que hoy
-   `changeState(MENU)` llama siempre a `_menu.begin()` con `clear()` de página
-   completa. Ninguna otra ventana usa ese camino.
+   **Estado actual:** `MenuSound` ya está **activa**, pero `restoreDiamondBand()`
+   y la guarda `if (beginWindow)` siguen **comentadas**, así que hoy el regreso
+   de `MenuSound` (`changeState(MENU, false)`) llama igual a `_menu.begin()` con
+   `clear()` de página completa. `MenuDifficulty` sigue aislada.
 
 ### Estados internos
 
@@ -852,11 +860,11 @@ los globales ya construidos (misma TU, orden de definición).
 enum class State : uint8_t {
   BOOT = 0,
   LEGEND,
-  MENU
+  MENU,
+  MENU_SOUND
   // NEW,            // AISLADO: comentados junto con sus ventanas
   // CONTINUE,
   // MENU_DIFFICULTY,
-  // MENU_SOUND,
   // MENU_CREDITS
 };
 ```
@@ -869,7 +877,7 @@ enum class State : uint8_t {
 | `NEW` | `Game` | **Comentado (aislado).** Previsto: nueva partida `setDifficulty(_menuDifficulty.difficulty())` + `begin(true)`. Arranca con el conteo regresivo 3-2-1 (un `SFX_TICK` por dígito). Al salir (`done()`) suena `SFX_BACK`, el `Engine` sincroniza el récord (`menu.setBestScore(game.bestScore())`), **oculta/muestra "Continue" al volver** (`menu.setContinueAvailable(resumable)`, donde `resumable = !game.isGameOver() && game.score() > 0`: partida en curso **y** con puntos), deja la selección del menú en `Continue` si `resumable`, o en `New` en caso contrario (`menu.setSelected(...)`) y pasa a `MENU`. |
 | `CONTINUE` | `Game` | **Comentado (aislado).** Previsto: reanudar la partida anterior (`begin(false)`): queda en pausa y se retoma con `ACTION_RIGHT` (Btn2, "Select / Pause") o `ACTION_LEFT`; si no hay partida en curso arranca una nueva. Al salir (`done()`) igual que `NEW`. |
 | `MENU_DIFFICULTY` | `MenuDifficulty` | **Comentado (aislado).** Previsto: selector de nivel 1..10 **sobre el `Menu` ya dibujado**: sustituye solo la banda de rombos (45..53) por `< N >`, sin `clear()`. `MOVE_LEFT`/`MOVE_RIGHT` editan con repetición (`SFX_CLICK` por paso), `ACTION_RIGHT` aplica y `ACTION_UP` cancela. Al salir (`done()`) el `Engine` llama `menu.restoreDiamondBand()` y hace `changeState(MENU, false)`: **no** vuelve a llamar `Menu::begin()` (que haría `clear()`), solo repinta esa banda. El nivel queda en `MenuDifficulty::_difficulty` (sección 10.3). |
-| `MENU_SOUND` | `MenuSound` | **Comentado (aislado).** Previsto: selector On/Off **sobre el `Menu` ya dibujado**, misma banda y mismo regreso que `MENU_DIFFICULTY`. `MOVE_LEFT` apaga / `MOVE_RIGHT` enciende (`SFX_CLICK`), `ACTION_RIGHT` aplica con `sound.setEnabled()` (y `SFX_CONFIRM` solo si queda encendido), `ACTION_UP` cancela. El valor real vive en el servicio `Sound`, no en la ventana. |
+| `MENU_SOUND` | `MenuSound` | **Activo (fuera del aislamiento)**; la entrada desde el `Menu` sigue sin cablear (`Menu::confirm()` comentado). Selector On/Off **sobre el `Menu` ya dibujado**, misma banda que `MENU_DIFFICULTY`. `MOVE_LEFT` apaga / `MOVE_RIGHT` enciende (`SFX_CLICK`), `ACTION_RIGHT` aplica con `sound.setEnabled()` (y `SFX_CONFIRM` solo si queda encendido), `ACTION_UP` cancela. Al salir (`done()`) vuelve al `Menu` con `changeState(MENU, false)`; hoy el regreso hace el `begin()` completo porque `restoreDiamondBand()` sigue comentada. El valor real vive en el servicio `Sound`, no en la ventana. |
 | `MENU_CREDITS` | `MenuCredits` | **Comentado (aislado).** Previsto: 3 entradas navegables con `MOVE_LEFT`/`MOVE_RIGHT` y transición lateral (rol tamaño 2 **seleccionado con cuadro de borde a borde** y centrado en el alto restante del Body; nombre tamaño 1 plano en el pie). La transición usa el **mismo `Scroller` que el menú** pero con **2 instancias sincronizadas** (`_scrollerRol` 12x16 + `_scrollerNombre` 6x8): cada banda tiene su **propia tira**, que se compone **solo al entrar y al navegar** (`loadEntry()` → `Scroller::setTexto`, que además fija la fila donde se imprimirá: `roleY()` y `nameY()`). Cada `Scroller` **rellena su propia banda** antes de volcar la franja (fondo negro, texto blanco), así que la entrada anterior se mantiene hasta que la nueva la cubre (superposición al navegar rápido) y `MenuCredits::print()` ya no pinta el fondo ni llama a `redraw()` tras su `clear()`. El deslizamiento **arranca desde el borde** (fuera de escena: `setTexto(..., true, ...)` fija la dirección —entra por la derecha— y `startSlide()` lo lanza) y avanza **1 px cada 4 ms con acumulador por tiempo** (`update()`, ≈0,5 s). Al navegar suena `SFX_CLICK` y al salir (`done()`) suena `SFX_BACK` (lo toca el `Engine`) y pasa directo a `MENU`. |
 
 ### Métodos
@@ -877,12 +885,12 @@ enum class State : uint8_t {
 | Método | Descripción |
 |--------|-------------|
 | `void begin()` | Primera transición: entra al test de píxeles (`changeState(State::BOOT)`). Se llama desde `setup()`. |
-| `void update()` | Lee/actualiza la ventana activa y gestiona las transiciones de estado. Hoy solo recorren `BOOT → LEGEND → MENU` (los demás casos están comentados). Reproduce los efectos del sonido: `SFX_CONFIRM` al confirmar una opción del menú y `SFX_BACK` al volver a `MENU` desde cualquier ventana (excepto desde `Legend`, que toca su propio sonido según el botón, y desde `MENU_DIFFICULTY`/`MENU_SOUND`, que **no** los añaden: cada selector toca su propio `SFX_CONFIRM` al aplicar o `SFX_BACK` al cancelar) — **esos caminos están comentados** por el aislamiento. |
+| `void update()` | Lee/actualiza la ventana activa y gestiona las transiciones de estado. Hoy recorren `BOOT → LEGEND → MENU` y despachan `MENU_SOUND` (solo se alcanza si se entra por código: la entrada desde el `Menu` sigue comentada; los demás casos —`NEW`, `CONTINUE`, `MENU_DIFFICULTY`, `MENU_CREDITS`— están comentados). Reproduce los efectos del sonido: `SFX_CONFIRM` al confirmar una opción del menú y `SFX_BACK` al volver a `MENU` desde cualquier ventana (excepto desde `Legend`, que toca su propio sonido según el botón, y desde `MENU_DIFFICULTY`/`MENU_SOUND`, que **no** los añaden: cada selector toca su propio `SFX_CONFIRM` al aplicar o `SFX_BACK` al cancelar) — **esa entrada sigue comentada** por el aislamiento. |
 | `void print()` | Despacha el dibujo a la ventana activa. **Ya no limpia la
   pantalla (`display.clear()`)**: cada ventana la usa solo en su primer frame tras
   `begin()` y luego limpia/redibuja solo sus zonas dinámicas (sección 13). |
 | `void setBestScore(uint16_t)` | **Comentado** (aislado): reenviaría al menú para conservar el puntaje máximo entre sesiones. |
-| `void changeState(State, bool beginWindow = true)` | Transición común: guarda el estado y llama `begin()` de la ventana destino. **Hoy `_menu.begin()` es incondicional** (la guarda `if (beginWindow)` está comentada): el parámetro `beginWindow = false` —usado al volver de `MENU_DIFFICULTY`/`MENU_SOUND` para repintar solo la banda de rombos con `menu.restoreDiamondBand()` en vez del `clear()` de `Menu::begin()`— está deshabilitado con esas ventanas. El resto del cableado de la transición (p. ej. `setDifficulty` al entrar en `Game`) también está comentado. No reproduce sonidos: cada ventana toca el suyo al confirmar o cancelar. |
+| `void changeState(State, bool beginWindow = true)` | Transición común: guarda el estado y llama `begin()` de la ventana destino. `MENU_SOUND` ya la usa (`MenuSound::begin()`); `NEW`/`CONTINUE`/`MENU_DIFFICULTY`/`MENU_CREDITS` siguen comentados. **Hoy `_menu.begin()` es incondicional** (la guarda `if (beginWindow)` está comentada): el parámetro `beginWindow = false` —usado al volver de `MENU_DIFFICULTY`/`MENU_SOUND` para repintar solo la banda de rombos con `menu.restoreDiamondBand()` en vez del `clear()` de `Menu::begin()`— está deshabilitado, así que el regreso de `MenuSound` hace el `clear()` completo. El resto del cableado de la transición (p. ej. `setDifficulty` al entrar en `Game`) también está comentado. No reproduce sonidos: cada ventana toca el suyo al confirmar o cancelar. |
 
 ### Patrón de ventana
 

@@ -1,10 +1,3 @@
-// AISLADO: unidad de translation desactivada mientras se trabaja en Boot y
-// Legend. Arduino compila TODOS los .cpp de la carpeta del sketch, asi que este
-// archivo se seguiria compilando aunque Engine ya no lo incluya, y llama a la
-// API de Display que quedo comentada en Display.h.
-// Para revertir: borrar el #if 0 de aqui y el #endif del final.
-#if 0
-
 #include "esp32-hal.h"
 #include "MenuSound.h"
 #include "Globals.h"
@@ -77,7 +70,7 @@ void MenuSound::update() {
 // ========================================================
 
 void MenuSound::print() {
-  display.fillRect(0, SEL_TOP, display.getWidth(), SEL_SIZE + 1, true);
+  display.fillRect(0, SEL_TOP, Config::Screen::WIDTH, SEL_SIZE + 1, true);
   drawSelector();
 }
 
@@ -101,8 +94,10 @@ void MenuSound::drawSelector() {
   // Palabra centrada. En ambos estados mide lo mismo: "ON " lleva un
   // espacio final para emparejar el ancho con "OFF" (18 px).
   const char* label = (_enabled) ? "ON " : "OFF";
-  int16_t labelW = display.getTextWidth(label, TEXT_6x8);
-  int16_t labelX = (display.getWidth() - labelW) / 2;
+  // Ancho a mano: Display::getTextWidth() y getWidth() estan comentados en
+  // Display.h (mismo idioma que Menu y Legend: strlen * 6 px por char 6x8).
+  int16_t labelW = strlen(label) * 6;
+  int16_t labelX = ((int16_t)Config::Screen::WIDTH - labelW) / 2;
 
   // Parpadeo de la flecha: visible el 75% del período, oculta el
   // primer 25% (anclado al begin: sin salto de fase con el reloj
@@ -133,5 +128,3 @@ bool MenuSound::done() const {
 // ====================================================================================
 // Fin
 // ====================================================================================
-
-#endif  // AISLADO (ver #if 0 al principio del archivo)

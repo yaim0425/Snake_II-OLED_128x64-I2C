@@ -56,10 +56,20 @@ void Engine::update() {
       // }
       break;
 
-      // AISLADO: ventanas del Game y de los submenus. Se comentan por bloque
-      // entero, no linea por linea, para que el revert sea limpio. Al
-      // reactivar hay que volver a descomentar el enum de State y los
-      // miembros en Engine.h.
+    case State::MENU_SOUND:
+      _menuSound.update();
+      if (_menuSound.done()) {
+        // _menu.restoreDiamondBand();  // pendiente: Menu::restoreDiamondBand()
+        // sigue comentado en Menu.h/Menu.cpp; por eso changeState(MENU, false)
+        // hace igual el _menu.begin() completo (beginWindow se ignora).
+        changeState(State::MENU, false);
+      }
+      break;
+
+      // AISLADO: ventanas del Game y de los demás submenus (MenuSound ya esta
+      // activa: ver su case arriba). Se comentan por bloque entero, no linea
+      // por linea, para que el revert sea limpio. Al reactivar hay que volver
+      // a descomentar el enum de State y los miembros en Engine.h.
       //
       // case State::NEW:
       // case State::CONTINUE:
@@ -95,17 +105,6 @@ void Engine::update() {
       //     break;
       //   }
       //
-      // case State::MENU_SOUND:
-      //   {
-      //
-      //     _menuSound.update();
-      //     if (_menuSound.done()) {
-      //       _menu.restoreDiamondBand();
-      //       changeState(State::MENU, false);
-      //     }
-      //     break;
-      //   }
-      //
       // case State::MENU_CREDITS:
       //   {
       //
@@ -135,13 +134,16 @@ void Engine::print() {
     case State::MENU:
       _menu.print();
       break;
-      // AISLADO: ventanas del Game y de los submenus (ver Engine::update).
+
+    case State::MENU_SOUND: _menuSound.print(); break;
+
+      // AISLADO: ventanas del Game y de los demás submenus (MenuSound ya esta
+      // activa; ver Engine::update).
       // case State::NEW:
       // case State::CONTINUE:
       //   _game.print();
       //   break;
       // case State::MENU_DIFFICULTY: _menuDifficulty.print(); break;
-      // case State::MENU_SOUND: _menuSound.print(); break;
       // case State::MENU_CREDITS: _menuCredits.print(); break;
   }
 }
@@ -171,7 +173,11 @@ void Engine::changeState(State newState, bool beginWindow) {
       // if (beginWindow) _menu.begin();
       _menu.begin();
       break;
-      // AISLADO: ventanas del Game y de los submenus (ver Engine::update).
+
+    case State::MENU_SOUND: _menuSound.begin(); break;
+
+      // AISLADO: ventanas del Game y de los demás submenus (MenuSound ya esta
+      // activa; ver Engine::update).
       // case State::NEW:
       //   _game.setDifficulty(_menuDifficulty.difficulty());
       //   _game.begin(true);
@@ -181,7 +187,6 @@ void Engine::changeState(State newState, bool beginWindow) {
       //   _game.begin(false);
       //   break;
       // case State::MENU_DIFFICULTY: _menuDifficulty.begin(); break;
-      // case State::MENU_SOUND: _menuSound.begin(); break;
       // case State::MENU_CREDITS: _menuCredits.begin(); break;
   }
 }
