@@ -9,6 +9,8 @@ Arduino IDE. Programación orientada a objetos: cada clase en su archivo `.h` y 
 
 - **La IA no debe hacer nada sin una orden explícita del usuario.**
 - No crear, modificar ni eliminar archivos por iniciativa propia.
+- **Excepción:** la IA puede modificar el `.gitignore` en cualquier momento, sin
+  esperar una orden explícita.
 - No proponer ni iniciar fases de desarrollo por su cuenta; solo actuar cuando
   el usuario lo indique.
 - **La IA debe hacer un commit al modificar archivos** (cuando el usuario lo ordene
@@ -17,6 +19,9 @@ Arduino IDE. Programación orientada a objetos: cada clase en su archivo `.h` y 
   mismo tema (código, este documento y, si corresponde, API) queda en un commit, y
   el **mensaje del commit debe ser informativo**. Los micro-commits por cambio
   puntual ya no se usan.
+- **La IA decide cuántos commits hacen falta según los temas**, aunque el usuario
+  diga "haz un commit" o "un commit de todos los cambios": si hay varios temas, se
+  hacen varios commits (nunca se fuerza todo en uno).
 - **Si el cambio necesita más de un commit**, seguir este procedimiento: (1) crear
   un archivo `.json`; (2) escribir ahí la lista de archivos de cada commit y el
   mensaje de cada uno; (3) hacer los commits según lo indicado en el punto 2;
