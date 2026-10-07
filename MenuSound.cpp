@@ -58,6 +58,8 @@ void MenuSound::update() {
     sound.play(Sound::SFX_BACK);
     _done = true;
   }
+
+  // _blinkOption = _showOption != _timer.blinkOn(PERIOD, OFF);
 }
 
 // ========================================================
@@ -70,7 +72,7 @@ void MenuSound::update() {
 // ========================================================
 
 void MenuSound::print() {
-  display.fillRect(0, SEL_TOP, Config::Screen::WIDTH, SEL_SIZE + 1, true);
+  display.fillRect(0, VALUE_TOP, WIDTH, VALUE_TOP + VALUE_HEIGHT, SSD1306_BLACK);
   drawSelector();
 }
 
@@ -93,28 +95,40 @@ void MenuSound::print() {
 void MenuSound::drawSelector() {
   // Palabra centrada. En ambos estados mide lo mismo: "ON " lleva un
   // espacio final para emparejar el ancho con "OFF" (18 px).
-  const char* label = (_enabled) ? "ON " : "OFF";
+  const char* label = (_enabled) ? " ON  " : " OFF ";
   // Ancho a mano: Display::getTextWidth() y getWidth() estan comentados en
   // Display.h (mismo idioma que Menu y Legend: strlen * 6 px por char 6x8).
   int16_t labelW = strlen(label) * 6;
-  int16_t labelX = ((int16_t)Config::Screen::WIDTH - labelW) / 2;
+  int16_t labelX = (WIDTH - labelW) / 2;
+
+  const int16_t centerY = VALUE_TOP + 7;
 
   // Parpadeo de la flecha: visible el 75% del período, oculta el
   // primer 25% (anclado al begin: sin salto de fase con el reloj
   // de 64 bits)
-  if (_blink.blinkOn(ARROW_BLINK_PERIOD, ARROW_BLINK_OFF_PCT)) {
+  if (_blink.on(PERIOD, OFF)) {
     if (_enabled) {
       // ON: flecha a la izquierda, punta hacia la izquierda ("< ON")
-      int16_t base = labelX - ARROW_GAP;  // lado plano, pegado a la palabra
-      display.fillTriangle(base - ARROW_W, SEL_TEXT_MID, base, SEL_TEXT_TOP, base, SEL_TEXT_BOT, true);
+      // int16_t base = labelX - ARROW_GAP;  // lado plano, pegado a la palabra
+      int16_t centerX = labelX;
+      display.fillTriangle(
+        centerX, centerY - SIZE,
+        centerX - SIZE, centerY,
+        centerX, centerY + SIZE,
+        SSD1306_WHITE);
     } else {
       // OFF: flecha a la derecha, punta hacia la derecha ("OFF >")
-      int16_t base = labelX + labelW + ARROW_GAP;  // lado plano, pegado a la palabra
-      display.fillTriangle(base + ARROW_W, SEL_TEXT_MID, base, SEL_TEXT_TOP, base, SEL_TEXT_BOT, true);
+      // int16_t base = labelX + labelW + ARROW_GAP;  // lado plano, pegado a la palabra
+      int16_t centerX = labelX + labelW;
+      display.fillTriangle(
+        centerX, centerY - SIZE,
+        centerX + SIZE, centerY,
+        centerX, centerY + SIZE,
+        SSD1306_WHITE);
     }
   }
 
-  display.drawText(label, labelX, SEL_TEXT_TOP, TEXT_6x8);
+  display.drawText(label, labelX, VALUE_TOP + 4, TEXT_6x8, SSD1306_WHITE, SSD1306_BLACK);
 }
 
 // ========================================================

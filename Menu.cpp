@@ -74,23 +74,20 @@ const char* const Menu::OPTION[OPT_COUNT] = {
 // Constructor
 // ========================================================
 
-Menu::Menu(uint16_t bestScore)
-  : _bestScore(bestScore),
+Menu::Menu()
+  // : _bestScore(bestScore),
     // _version(version),
     // _title("Snake II"),
     // _showFooter(true),
     // _optionCount(OPT_NEW),
     // _optionTexts(NO_CONTINUE_OPTIONS),
-    _blinkOption(false),
-    _showOption(false),
-    _holdButtons(true),
+  : _holdButtons(true),
     _lastScroll(true),
     _showContinue(false),
     _selected(OPT_NEW),
     _lastSelected(OPT_NEW),
-    _timer(),
+    _blink(),
     _repeat(),
-    _repeatTick(),
     // _ticker(PERIOD),
     // _redraw(true),
     // _diamondsDirty(false),
@@ -105,22 +102,33 @@ Menu::Menu(uint16_t bestScore)
 // ========================================================
 
 void Menu::begin(bool showContinue, int8_t selected) {
-  _bestScore = 0;
-  _blinkOption = false;
+  // _bestScore = 0;
   _holdButtons = true;
-  _lastScroll = true;
-  _showOption = false;
   _showContinue = showContinue;
   _selected = selected;
   _lastSelected = selected;
   _space = WIDTH / (OPT_COUNT + (showContinue ? 1 : 0));
+  _blink.start(false);
+  _lastScroll = true;
   _confirm = false;
   _done = false;
-  _clear = true;
+  if(selected == OPT_NEW)
+    _clear = true;
+
+  // if (_selected == OPT_NEW && false) {
+  //   _showContinue = false;
+  //   _selected = OPT_NEW;
+  //   _lastSelected = OPT_NEW;
+  //   _space = WIDTH / OPT_COUNT;
+  // } else if(_selected == OPT_NEW && false) {
+  //   _showContinue = true;
+  //   _selected = OPT_NEW;
+  //   _lastSelected = OPT_NEW;
+  //   _space = WIDTH / (OPT_COUNT + 1);
+  // }
 
   // _scroller.begin();
   // _scroller.setTexto(OPTION_TEXT[_selected], TEXT_SEL_TOP, true, TEXT_12x16);
-  _timer.start();
   // _redraw = true;
   // // _optionCount = OPT_COUNT;
 }
@@ -230,12 +238,11 @@ void Menu::update() {
   if (_lastScroll) {
     if (_scroller.update()) return;
     _lastScroll = false;
-    _showOption = false;
     // _ticker.start();
-    _timer.start();
+    _blink.start(false);
   }
 
-  _blinkOption = _showOption != _timer.blinkOn(PERIOD, OFF);
+  _blink.update(PERIOD, OFF);
 
 
   // navigate();
@@ -261,11 +268,11 @@ void Menu::navigate() {
 
   bool moved = false;
 
-  if (holdRepeat(Buttons::MOVE_LEFT) && _selected > 0) {
+  if (_repeat.step(Buttons::MOVE_LEFT) && _selected > 0) {
     _selected--;
     if (!_showContinue && _selected == OPT_CONTINUE) _selected--;
     moved = true;
-  } else if (holdRepeat(Buttons::MOVE_RIGHT) && _selected < OPT_COUNT - 1) {
+  } else if (_repeat.step(Buttons::MOVE_RIGHT) && _selected < OPT_COUNT - 1) {
     _selected++;
     if (!_showContinue && _selected == OPT_CONTINUE) _selected++;
     moved = true;
@@ -448,7 +455,7 @@ void Menu::firstPrint() {
   // Best score
   const char* label = "Best ";
   char bestScore[9];
-  sprintf(bestScore, "%u", (unsigned)_bestScore);
+  sprintf(bestScore, "%u", (unsigned)storage.bestScore());
   display.drawText(label, 1, footTop, TEXT_6x8, SSD1306_BLACK, SSD1306_WHITE);
   display.drawText(bestScore, 1 + strlen(label) * 6, footTop, TEXT_6x8, SSD1306_BLACK, SSD1306_WHITE);
 
@@ -510,18 +517,18 @@ bool Menu::done() const {
 }
 
 void Menu::blink() {
-  if (!_blinkOption && !_confirm) return;
-  _showOption = !_showOption;
-
   if (_confirm) {
-    _showOption = true;
-    // _confirm = false;
-    // _done = true;
+    _blink.set(true);
+    _confirm = false;
+    _done = true;
+  } else if (_blink.changed()) {
+    _blink.toggle();
+  } else {
+    return;
   }
-  
-  toggleText(_showOption);
-  toggleDiamond(_selected, _showOption);
-  _blinkOption = false;
+
+  toggleText(_blink.state());
+  toggleDiamond(_selected, _blink.state());
 }
 
 void Menu::nextOption() {
@@ -593,7 +600,7 @@ void Menu::toggleText(bool show) {
 }
 
 void Menu::showOptions() {
-  display.fillRect(0, BOX_TOP + BOX_HEIGHT + 2, WIDTH, FOOT_TOP - 2, SSD1306_BLACK);
+  display.fillRect(0, VALUE_TOP, WIDTH, VALUE_TOP + VALUE_HEIGHT, SSD1306_BLACK);
   for (int8_t pos = 0; pos < OPT_COUNT; pos++) {
     if (!_showContinue && pos == OPT_CONTINUE) continue;
     if (pos != _selected) toggleTriangle(pos, true);
@@ -601,17 +608,3 @@ void Menu::showOptions() {
   toggleDiamond(_selected, true);
 }
 
-bool Menu::holdRepeat(uint8_t button) {
-  if (buttons.pressed(button)) {
-    _repeat.start();
-    _repeatTick.start();
-    return true;
-  }
-
-  if (buttons.hold(button) && _repeat.expired(DELAY) && _repeatTick.expired(TICK)) {
-    _repeatTick.start();
-    return true;
-  }
-
-  return false;
-}

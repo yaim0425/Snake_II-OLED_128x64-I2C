@@ -29,9 +29,7 @@ Legend::Legend()
   : _btn(0),
     _lastBtn(0),
     _ticker(NEXT),
-    _timer(),
-    _blinkDiamond(false),
-    _showDiamond(true),
+    _blink(),
     _lastScroll(false),
     _done(false),
     _clear(true) {}
@@ -44,9 +42,7 @@ void Legend::begin() {
   _btn = 0;
   _lastBtn = 0;
   _ticker.start();
-  _timer.start();
-  _blinkDiamond = false;
-  _showDiamond = true;
+  _blink.start(true);
   _lastScroll = false;
   _done = false;
   _clear = true;
@@ -88,14 +84,14 @@ void Legend::update() {
     if (_scroller.update()) return;
     _lastScroll = false;
     _ticker.start();
-    _timer.start();
+    _blink.restart();
   };
 
   // El rombo activo cambia cada DWELL_MS (avance lento)
   uint32_t steps = _ticker.consume();
   if (steps) _btn = (_btn + steps) % 4;
 
-  _blinkDiamond = _showDiamond != _timer.blinkOn(PERIOD, OFF);
+  _blink.update(PERIOD, OFF);
 }
 
 // ========================================================
@@ -235,7 +231,7 @@ void Legend::firstPrint() {
 }
 
 void Legend::blinkDiamond() {
-  if (!_blinkDiamond ) return;
+  if (!_blink.changed()) return;
   toggleDiamond(_btn);
 
   // int16_t centerX = 0;
@@ -293,8 +289,7 @@ void Legend::blinkDiamond() {
   //     break;
   // }
 
-  _blinkDiamond = false;
-  _showDiamond = !_showDiamond;
+  _blink.toggle();
 }
 
 void Legend::diamondCenter(int8_t diamond, int16_t& centerX, int16_t& centerY) {
@@ -331,13 +326,13 @@ void Legend::toggleDiamond(int8_t diamond, bool show) {
     centerX - SIZE, centerY,
     centerX, centerY - SIZE,
     centerX + SIZE, centerY,
-    _showDiamond || show ? SSD1306_WHITE : SSD1306_BLACK);
+    _blink.state() || show ? SSD1306_WHITE : SSD1306_BLACK);
 
   display.fillTriangle(
     centerX - SIZE, centerY,
     centerX, centerY + SIZE,
     centerX + SIZE, centerY,
-    _showDiamond || show ? SSD1306_WHITE : SSD1306_BLACK);
+    _blink.state() || show ? SSD1306_WHITE : SSD1306_BLACK);
 }
 
 // ========================================================

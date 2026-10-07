@@ -20,8 +20,7 @@ MenuDifficulty::MenuDifficulty()
     _edit(Config::Difficulty::DEFAULT_LEVEL),
     _done(false),
     _blink(),
-    _repeat(),
-    _repeatTick() {}
+    _repeat() {}
 
 // ========================================================
 // Inicialización
@@ -49,11 +48,11 @@ void MenuDifficulty::begin() {
 // ========================================================
 
 void MenuDifficulty::update() {
-  if (holdRepeat(Buttons::MOVE_RIGHT) && _edit < Config::Difficulty::MAX_LEVEL) {
+  if (_repeat.step(Buttons::MOVE_RIGHT) && _edit < Config::Difficulty::MAX_LEVEL) {
     _edit++;
     sound.play(Sound::SFX_CLICK);
   }
-  if (holdRepeat(Buttons::MOVE_LEFT) && _edit > Config::Difficulty::MIN_LEVEL) {
+  if (_repeat.step(Buttons::MOVE_LEFT) && _edit > Config::Difficulty::MIN_LEVEL) {
     _edit--;
     sound.play(Sound::SFX_CLICK);
   }
@@ -68,25 +67,6 @@ void MenuDifficulty::update() {
     sound.play(Sound::SFX_BACK);
     _done = true;
   }
-}
-
-// ========================================================
-// Repetición por mantención
-// ========================================================
-
-bool MenuDifficulty::holdRepeat(uint8_t button) {
-  if (buttons.pressed(button)) {
-    _repeat.start();
-    _repeatTick.start();
-    return true;
-  }
-
-  if (buttons.state(button) && _repeat.expired(HOLD_REPEAT_DELAY) && _repeatTick.expired(HOLD_REPEAT_TICK)) {
-    _repeatTick.start();
-    return true;
-  }
-
-  return false;
 }
 
 // ========================================================
@@ -141,7 +121,7 @@ void MenuDifficulty::drawSelector() {
   bool leftHeld  = buttons.state(Buttons::MOVE_LEFT)  && _edit > Config::Difficulty::MIN_LEVEL;
   bool rightHeld = buttons.state(Buttons::MOVE_RIGHT) && _edit < Config::Difficulty::MAX_LEVEL;
 
-  bool arrowsVisible = leftHeld || rightHeld || _blink.blinkOn(ARROW_BLINK_PERIOD, ARROW_BLINK_OFF_PCT);
+  bool arrowsVisible = leftHeld || rightHeld || _blink.on(ARROW_BLINK_PERIOD, ARROW_BLINK_OFF_PCT);
 
   if (arrowsVisible) {
     // Flecha izquierda (-1): fija al mantener MOVE_LEFT; oculta mientras se

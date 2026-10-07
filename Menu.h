@@ -3,6 +3,8 @@
 
 #include "Config.h"
 #include "Timer.h"
+#include "Blink.h"
+#include "ButtonRepeat.h"
 
 #include "Scroller.h"
 
@@ -28,7 +30,7 @@ public:
   // Display, Buttons y Sound — Globals.h)
   // ========================================================
 
-  Menu(uint16_t bestScore = 0);
+  Menu();
 
   // ========================================================
   // Inicialización
@@ -114,7 +116,6 @@ private:
   void toggleText(bool show);
   void toggleDiamond(int8_t diamond, bool show);
   void toggleTriangle(int8_t triangle, bool show);
-  bool holdRepeat(uint8_t button);
 
   // void drawDiamond(int8_t selected, bool focus, bool black);
 
@@ -149,13 +150,17 @@ private:
   static constexpr int16_t WIDTH = Config::Screen::WIDTH;
   static constexpr uint8_t SIZE = Config::Diamond::SIZE;
   static constexpr int16_t FOOT_TOP = Config::Screen::FOOT_TOP;
-  static constexpr int16_t TRIANGLE_Y = FOOT_TOP - 3;
-  static constexpr int16_t DIAMOND_Y = TRIANGLE_Y - SIZE - 3;
+
+  static constexpr int16_t TRIANGLE_Y = Config::MenuStrip::TRIANGLE_Y;
+  static constexpr int16_t DIAMOND_Y = Config::MenuStrip::DIAMOND_Y;
 
   // Cuadro de selección: fijo, ancho completo. Con el rombo activo de punta en
   // la 45: 2 filas libres (44..43) y el cuadro desde la fila 3 (42) hacia arriba
-  static constexpr int16_t BOX_HEIGHT = 16;
-  static constexpr int16_t BOX_TOP = DIAMOND_Y - SIZE - 4 - BOX_HEIGHT;
+  static constexpr int16_t BOX_HEIGHT = Config::MenuStrip::BOX_HEIGHT;
+  static constexpr int16_t BOX_TOP = Config::MenuStrip::BOX_TOP;
+  
+  static constexpr int16_t VALUE_HEIGHT = Config::MenuStrip::VALUE_HEIGHT;
+  static constexpr int16_t VALUE_TOP = Config::MenuStrip::VALUE_TOP;
 
   // Posición del texto del cuadro (1 px dentro, centrado verticalmente)
   // static constexpr int16_t TEXT_SEL_TOP = 26;
@@ -167,9 +172,6 @@ private:
   // static constexpr uint32_t HOLD = Config::DefaultTimer::HOLD;      // visible fija antes de parpadear
   static constexpr uint32_t PERIOD = Config::DefaultTimer::PERIOD;  // período del parpadeo MUY rápido (ms)
   static constexpr uint8_t OFF = Config::DefaultTimer::OFF;         // % del período en que está oculto
-
-  static constexpr uint32_t DELAY   = Config::Button::DELAY;  // mantener para empezar a repetir (ms)
-  static constexpr uint32_t TICK    = Config::Button::TICK;  // intervalo de repetición mientras se mantiene (ms)
 
   // Pie del Body: línea separadora y texto (el texto baja 1 px: 56 -> 57)
   // static constexpr int16_t PIE_LINE_ROW = 54;  // línea horizontal 1 px, a 2 px sobre el pie
@@ -187,7 +189,7 @@ private:
   // Estado
   // ========================================================
 
-  uint16_t _bestScore;
+  // uint16_t _bestScore;
   // const char* _version;
 
   // const char* _title;  // título del Header (default "Snake II")
@@ -195,8 +197,6 @@ private:
 
   // uint8_t _optionCount;
   // const char* const* _optionTexts;
-  bool _blinkOption;
-  bool _showOption;   // rombo activo visible (parpadeo)
   bool _holdButtons;     // true si el mensaje de "Press any button..." está visible
   bool _lastScroll;
   bool _showContinue;  // muestra/oculta la opción "Continue" (default: oculta)
@@ -204,11 +204,10 @@ private:
   int8_t _selected;  // opción actual (objetivo central)
   int8_t _lastSelected;
   // Ticker _ticker;    // avance de 1 px cada ANIM_TICK ms (acumulador por tiempo)
-  Stopwatch _timer;  // desde que se fijó el rombo activo (ciclo y parpadeo)
+  Blink _blink;      // parpadeo de la opción (ancla + fase + cambio pendiente)
   // bool _redraw;         // primer frame tras begin(): clear() completo + estáticos
   // bool _diamondsDirty;  // hay que repintar solo la banda de rombos (restoreDiamondBand)
-  Stopwatch _repeat;     // inicio de la mantención (repetición por hold)
-  Stopwatch _repeatTick; // último paso de la repetición
+  ButtonRepeat _repeat;  // repetición de los botones de navegación al mantenerlos
 
   Scroller _scroller;  // scroller de 1 bit del cuadro de selección (1 banda, texto 12x16)
   int8_t _space;

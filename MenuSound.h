@@ -2,6 +2,7 @@
 #define MENU_SOUND_H
 
 #include "Timer.h"
+#include "Blink.h"
 
 // ========================================================
 // MenuSound — ventana de edición del sonido
@@ -61,30 +62,39 @@ public:
 
 private:
 
-  // ========================================================
-  // Geometría
-  // ========================================================
+  // // ========================================================
+  // // Geometría
+  // // ========================================================
 
-  // La banda es la de los rombos del Menu (DIA_TOP/DIA_SIZE de
-  // Menu): las filas 45..53. Ojo a la última: la 53 es la línea
-  // separadora del pie (Config::Screen::FOOT_LINE), así que el erase
-  // se lleva por delante esa fila y el selector escribe encima
-  // (46..53). Por eso Menu::restoreDiamondBand() tiene que repintar
-  // también la línea al volver.
-  static constexpr int16_t SEL_TOP  = 45;
-  static constexpr uint8_t SEL_SIZE = 8;
+  // // La banda es la de los rombos del Menu (DIA_TOP/DIA_SIZE de
+  // // Menu): las filas 45..53. Ojo a la última: la 53 es la línea
+  // // separadora del pie (Config::Screen::FOOT_LINE), así que el erase
+  // // se lleva por delante esa fila y el selector escribe encima
+  // // (46..53). Por eso Menu::restoreDiamondBand() tiene que repintar
+  // // también la línea al volver.
+  // static constexpr int16_t SEL_TOP  = 45;
+  // static constexpr uint8_t SEL_SIZE = 8;
 
-  // Palabra centrada y su flecha, dentro de la banda.
-  static constexpr int16_t SEL_TEXT_TOP = SEL_TOP + 1;             // 46
-  static constexpr int16_t SEL_TEXT_MID = SEL_TOP + SEL_SIZE / 2;  // 49
-  static constexpr int16_t SEL_TEXT_BOT = SEL_TOP + SEL_SIZE;      // 53
+  // // Palabra centrada y su flecha, dentro de la banda.
+  // static constexpr int16_t SEL_TEXT_TOP = SEL_TOP + 1;             // 46
+  // static constexpr int16_t SEL_TEXT_MID = SEL_TOP + SEL_SIZE / 2;  // 49
+  // static constexpr int16_t SEL_TEXT_BOT = SEL_TOP + SEL_SIZE;      // 53
 
-  // Flecha: grosor horizontal, hueco con la palabra y período de
-  // parpadeo (visible 75%, oculto el 25% inicial).
-  static constexpr int16_t ARROW_GAP            = 6;    // hueco (px) entre el texto y la flecha
-  static constexpr int16_t ARROW_W              = 6;    // grosor horizontal de la flecha (px)
-  static constexpr uint32_t ARROW_BLINK_PERIOD  = 500;  // período del parpadeo de la flecha (ms)
-  static constexpr uint8_t  ARROW_BLINK_OFF_PCT = 25;   // % del período en que la flecha está oculta
+  // // Flecha: grosor horizontal, hueco con la palabra y período de
+  // // parpadeo (visible 75%, oculto el 25% inicial).
+  // static constexpr int16_t ARROW_GAP            = 6;    // hueco (px) entre el texto y la flecha
+  // static constexpr int16_t ARROW_W              = 6;    // grosor horizontal de la flecha (px)
+  // static constexpr uint32_t ARROW_BLINK_PERIOD  = 500;  // período del parpadeo de la flecha (ms)
+  // static constexpr uint8_t  ARROW_BLINK_OFF_PCT = 25;   // % del período en que la flecha está oculta
+
+  static constexpr int16_t WIDTH = Config::Screen::WIDTH;
+  static constexpr uint8_t SIZE = Config::Diamond::SIZE;                // rombo completo (SIEMPRE rombo)
+
+  static constexpr uint32_t PERIOD = Config::DefaultTimer::PERIOD;  // período del parpadeo MUY rápido (ms)
+  static constexpr uint8_t OFF = Config::DefaultTimer::OFF;         // % del período en que está oculto
+  
+  static constexpr int16_t VALUE_HEIGHT = Config::MenuStrip::VALUE_HEIGHT;
+  static constexpr int16_t VALUE_TOP = Config::MenuStrip::VALUE_TOP;
 
   // ========================================================
   // Métodos internos
@@ -99,7 +109,7 @@ private:
   bool _enabled;   // valor en edición (no aplicado hasta confirmar)
   bool _done;      // confirmó o canceló: el Engine vuelve al Menu
 
-  Stopwatch _blink;  // ancla el parpadeo de la flecha
+  Blink _blink;  // parpadeo de la flecha (fase cruda)
 };
 
 #endif

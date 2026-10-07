@@ -3,6 +3,7 @@
 
 #include "Config.h"
 #include "Timer.h"
+#include "Blink.h"
 
 // ========================================================
 // Boot — animación de arranque (franjas verticales)
@@ -98,10 +99,8 @@ private:
   // uint8_t _step;      // desplazamiento actual (0..BAR_SPACING-1)
   // uint8_t _prevStep;  // desplazamiento que se dibujó en pantalla
   // Ticker _ticker;     // avance de 1 px cada ANIM_TICK ms (acumulador por tiempo)
-  Stopwatch _timer;  // duración total desde el begin() (TOTAL_MS)
+  Blink _blink;  // parpadeo del mensaje (ancla + fase + cambio pendiente)
 
-  bool _blinkMessage;    // true si el mensaje de "Press any button..." cambió de visible a invisible o viceversa
-  bool _showMessage;  // true si el mensaje de "Press any button..." está visible
   bool _holdMessage;     // true si el mensaje de "Press any button..." está visible
 
   bool _done;
@@ -124,6 +123,7 @@ private:
   // en cada avance de 1 px)
   void firstPrint();
   void blinkMessage();
+  void drawMessage();
 
   // Dibuja todas las franjas (TITULO y CUERPO) en el desplazamiento actual:
   // imprime la columna de cabeza de cada franja y borra en negro la que

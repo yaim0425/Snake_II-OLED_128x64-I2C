@@ -38,7 +38,6 @@
 
 Display display;
 Buttons buttons(Config::Pin::BUTTONS);
-
 Sound   sound(Config::Pin::BUZZER);
 Storage storage;
 

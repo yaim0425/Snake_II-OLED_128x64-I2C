@@ -18,9 +18,7 @@ Boot::Boot()
   // : _step(0),
   // _prevStep(0),
   // : _ticker(ANIM_TICK),
-  : _timer(),
-    _showMessage(false),
-    _blinkMessage(false),
+  : _blink(),
     _holdMessage(true),
     _done(false),
     _clear(true) {}
@@ -36,12 +34,10 @@ Boot::Boot()
 void Boot::begin() {
   // _step = 0;
   // _ticker.start();
-  _timer.start();
+  _blink.start();
   // _x = 0;
   // _y = 0;
   // _bars = 0;
-  _showMessage = false;
-  _blinkMessage = false;
   _holdMessage = true;
   _done = false;
   _clear = true;
@@ -97,7 +93,7 @@ void Boot::update() {
   //   _holdMessage = false;
 
   // if (!_holdMessage)
-  _blinkMessage = _showMessage != _timer.blinkOn(PERIOD, OFF);
+  _blink.update(PERIOD, OFF);
 }
 
 // ========================================================
@@ -176,9 +172,8 @@ void Boot::firstPrint() {
 
   // ------------------------------------------------------
 
-  _showMessage = false;
-  _blinkMessage = true;
-  blinkMessage();
+  drawMessage();
+  _blink.toggle();
 
   // for (int8_t i = 0; i < MESSAGE_LINES; i++) {
   //   const char* message = MESSAGE[i];
@@ -233,21 +228,23 @@ void Boot::firstPrint() {
 }
 
 void Boot::blinkMessage() {
-  if (!_blinkMessage) return;
+  if (!_blink.changed()) return;
 
+  drawMessage();
+  _blink.toggle();
+}
+
+void Boot::drawMessage() {
   for (int8_t line = 0; line < MESSAGE_LINES; line++) {
     const char* message = MESSAGE[line];
     int16_t x = (WIDTH - strlen(message) * 6) / 2;
     int16_t y = HEADER_TOP + line * 8;
 
-    if (_showMessage)
+    if (_blink.state())
       display.drawText(message, x, y, TEXT_6x8, SSD1306_BLACK, SSD1306_BLACK);
     else
       display.drawText(message, x, y, TEXT_6x8, SSD1306_WHITE, SSD1306_BLACK);
   }
-
-  _showMessage = !_showMessage;
-  _blinkMessage = false;
 }
 
 // ========================================================

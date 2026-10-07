@@ -81,6 +81,9 @@ constexpr uint8_t FOOT_TOP = HEIGHT - FOOT_H;  // Punto Y del texto del pie
 // constexpr uint8_t BODY_MIDDLE = BODY_TOP + (BODY_H - FOOT_H - 1) / 2 - 2; // -8  5
 // constexpr uint8_t BODY_MIDDLE = BODY_TOP + (BODY_H - FOOT_H - 1) / 2 - 6;
 // constexpr uint8_t BODY_MIDDLE = BODY_TOP + (BODY_H - FOOT_H - 1) / 2 + 5;
+
+constexpr uint8_t OPTION_TOP = 16;
+constexpr uint8_t OPTION_H = 48;
 }
 
 // ========================================================
@@ -160,6 +163,17 @@ namespace DefaultTimer {
 // constexpr uint32_t HOLD = 500;    // mantener sin navegar para parpadear
 constexpr uint32_t PERIOD = 400;  // período completo del parpadeo (ms)
 constexpr uint8_t OFF = 50;       // % del período en que está oculto
+}
+
+namespace MenuStrip {
+static constexpr int16_t TRIANGLE_Y = Screen::FOOT_TOP - 1 - 2;
+static constexpr int16_t DIAMOND_Y = TRIANGLE_Y - Diamond::SIZE - 1 - 2;
+
+static constexpr int16_t VALUE_TOP = DIAMOND_Y - Diamond::SIZE - 2;
+static constexpr int16_t VALUE_HEIGHT = (Screen::FOOT_TOP - 2 - VALUE_TOP) + 1;
+
+static constexpr int16_t BOX_HEIGHT = 16;
+static constexpr int16_t BOX_TOP = VALUE_TOP - 2 - BOX_HEIGHT;
 }
 }
 

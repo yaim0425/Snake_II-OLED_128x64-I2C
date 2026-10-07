@@ -3,6 +3,8 @@
 
 #include "Config.h"
 #include "Timer.h"
+#include "Blink.h"
+#include "ButtonRepeat.h"
 
 // ========================================================
 // MenuDifficulty — ventana de edición de la dificultad
@@ -94,22 +96,12 @@ private:
   static constexpr int16_t ARROW_W              = 6;    // grosor horizontal de la flecha (px)
   static constexpr uint32_t ARROW_BLINK_PERIOD  = 500;  // período del parpadeo de las flechas (ms)
   static constexpr uint8_t  ARROW_BLINK_OFF_PCT = 25;   // % del período en que la flecha está oculta
-  static constexpr uint32_t HOLD_REPEAT_DELAY   = 400;  // mantener para empezar a repetir (ms)
-  static constexpr uint32_t HOLD_REPEAT_TICK    = 100;  // intervalo de repetición mientras se mantiene (ms)
 
   // ========================================================
   // Métodos internos
   // ========================================================
 
   void drawSelector();
-
-  // Repetición por mantención: true cuando hay que aplicar el
-  // paso del botón. El primero es inmediato (evento pressed) y,
-  // manteniéndolo presionado, los siguientes cada HOLD_REPEAT_TICK
-  // ms a partir de HOLD_REPEAT_DELAY de mantención. Dos Stopwatch
-  // compartidos (`_repeat` = retardo, `_repeatTick` = cadencia):
-  // si se suelta y se vuelve a presionar, pressed() reinicia ambos.
-  bool holdRepeat(uint8_t button);
 
   // ========================================================
   // Estado
@@ -119,9 +111,8 @@ private:
   uint8_t _edit;         // nivel en edición (se aplica al confirmar)
   bool _done;            // confirmó o canceló: el Engine vuelve al Menu
 
-  Stopwatch _blink;      // ancla el parpadeo de las flechas
-  Stopwatch _repeat;     // inicio de la mantención (repetición por hold)
-  Stopwatch _repeatTick; // último paso de la repetición
+  Blink _blink;          // parpadeo de las flechas (fase cruda)
+  ButtonRepeat _repeat;  // repetición de MOVE_LEFT/MOVE_RIGHT al mantener
 };
 
 #endif

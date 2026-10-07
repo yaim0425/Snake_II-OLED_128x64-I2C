@@ -3,6 +3,7 @@
 
 #include <Arduino.h>
 #include "Timer.h"
+#include "Blink.h"
 #include "Config.h"
 #include "Scroller.h"
 
@@ -128,12 +129,10 @@ private:
   Scroller _scroller;
 
   Ticker _ticker;    // avance de 1 px cada ANIM_TICK ms (acumulador por tiempo)
-  Stopwatch _timer;  // desde que se fijó el rombo activo (ciclo y parpadeo)
+  Blink _blink;      // parpadeo del rombo activo (ancla + fase + cambio pendiente)
   // int8_t _lastActive;  // último rombo cuya zona se gestionó (para restaurar el que deja de ser activo)
   // int8_t _lastText;    // texto del pie que se dibujó (para borrar/redibujar solo al cambiar)
 
-  bool _blinkDiamond;    // true si el mensaje de "Press any button..." cambió de visible a invisible o viceversa
-  bool _showDiamond;  // true si el mensaje de "Press any button..." está visible
   bool _lastScroll;
 
   bool _done;

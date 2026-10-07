@@ -121,7 +121,7 @@ private:
   // Es inocuo; al revertir desaparece.
   // ========================================================
 
-  void changeState(State newState, bool beginWindow = true);
+  void changeState(State newState);
 
   // ========================================================
   // Ventanas (miembros propios: las posee Engine, ninguna es global)

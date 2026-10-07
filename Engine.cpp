@@ -37,6 +37,11 @@ void Engine::update() {
 
     case State::MENU:
       _menu.update();
+      if (!_legend.done()) break;
+
+      switch (_menu.selected()) {
+        case Menu::OPT_SOUND: changeState(State::MENU_SOUND); break;
+      }
 
       // // Confirmar opción (ACTION_RIGHT) -> cambiar de ventana
       // int8_t select = _menu.confirm();
@@ -59,10 +64,12 @@ void Engine::update() {
     case State::MENU_SOUND:
       _menuSound.update();
       if (_menuSound.done()) {
+        // _menu.showOptions();
+        changeState(State::MENU);
+
         // _menu.restoreDiamondBand();  // pendiente: Menu::restoreDiamondBand()
         // sigue comentado en Menu.h/Menu.cpp; por eso changeState(MENU, false)
         // hace igual el _menu.begin() completo (beginWindow se ignora).
-        changeState(State::MENU, false);
       }
       break;
 
@@ -131,11 +138,10 @@ void Engine::print() {
   switch (_state) {
     case State::BOOT: _boot.print(); break;
     case State::LEGEND: _legend.print(); break;
-    case State::MENU:
-      _menu.print();
+    case State::MENU: _menu.print(); break;
+    case State::MENU_SOUND:
+      _menuSound.print();
       break;
-
-    case State::MENU_SOUND: _menuSound.print(); break;
 
       // AISLADO: ventanas del Game y de los demás submenus (MenuSound ya esta
       // activa; ver Engine::update).
@@ -160,7 +166,7 @@ void Engine::print() {
 // Transición (fija el estado y llama al begin() de la ventana entrante)
 // ========================================================
 
-void Engine::changeState(State newState, bool beginWindow) {
+void Engine::changeState(State newState) {
   _state = newState;
 
   switch (_state) {
@@ -171,10 +177,16 @@ void Engine::changeState(State newState, bool beginWindow) {
       // que ya dejaron repintada la banda de rombos (restoreDiamondBand) y
       // por tanto no necesitan el clear() completo de Menu::begin().
       // if (beginWindow) _menu.begin();
-      _menu.begin();
+
+      bool showContinue = false;  // !_game.isGameOver() && _game.score() > 0;
+      int8_t selected = _menu.selected() != Menu::OPT_SOUND ? _menu.selected() : Menu::OPT_SOUND;
+      // selected = selected == Menu::OPT_SOUND && showContinue ? _menu.OPT_CONTINUE : Menu::OPT_SOUND;
+      _menu.begin(showContinue, selected);
       break;
 
-    case State::MENU_SOUND: _menuSound.begin(); break;
+    case State::MENU_SOUND:
+      _menuSound.begin();
+      break;
 
       // AISLADO: ventanas del Game y de los demás submenus (MenuSound ya esta
       // activa; ver Engine::update).
