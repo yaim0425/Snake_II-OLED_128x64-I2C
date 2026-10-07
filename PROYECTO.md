@@ -1893,24 +1893,28 @@ direccional y el rombo completo (dos triángulos superpuestos). No tiene estado
 
 ```cpp
 namespace Draw {
+  enum Direction : uint8_t {
+    UP = 1, RIGHT, DOWN, LEFT
+  };
   void triangle(int8_t dir, int16_t centerX, int16_t centerY, bool show = true);
   void diamond(int16_t centerX, int16_t centerY, bool show = true);
 }
 ```
 
-- `triangle(dir, cx, cy, show)`: `display.fillTriangle` con el vértice según `dir`
-  (1↑, 2→, 3↓, 4←) y medio lado `Config::Diamond::SIZE` alrededor de `(cx, cy)`;
-  `show` elige blanco (`true`) o negro (`false`).
+- `triangle(dir, cx, cy, show)`: `display.fillTriangle` con el vértice según `dir`,
+  que es un `Draw::Direction` (`UP = 1`, `RIGHT = 2`, `DOWN = 3`, `LEFT = 4`), y
+  medio lado `Config::Diamond::SIZE` alrededor de `(cx, cy)`; `show` elige blanco
+  (`true`) o negro (`false`).
 - `diamond(cx, cy, show)`: un triángulo hacia arriba + uno hacia abajo (mismo
   centro), es decir `triangle(1, …)` + `triangle(3, …)`.
 
 ### Quién lo usa
 
 - **`Menu`**: `focused()` → `Draw::diamond(centerX, DIAMOND_Y, show)` y
-  `unfocused()` → `Draw::triangle(1, centerX, TRIANGLE_Y, show)`. Se eliminaron
+  `unfocused()` → `Draw::triangle(Draw::UP, centerX, TRIANGLE_Y, show)`. Se eliminaron
   `Menu::toggleDiamond`/`Menu::toggleTriangle` y la constante `SIZE`.
-- **`Legend`**: las flechas del pad MOVE con `Draw::triangle(1..4, …)` y el rombo
-  activo con `Draw::diamond(…)` desde `Legend::toggleDiamond`. Se eliminaron
+- **`Legend`**: las flechas del pad MOVE con `Draw::triangle(Draw::UP/RIGHT/DOWN/LEFT, …)`
+  y el rombo activo con `Draw::diamond(…)` desde `Legend::toggleDiamond`. Se eliminaron
   `Legend::toggleTriangle` y la constante `SIZE`.
 
 ### Decisiones

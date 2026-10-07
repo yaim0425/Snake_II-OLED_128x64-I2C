@@ -572,7 +572,7 @@ void Menu::unfocused(int8_t triangle, bool show) {
     centerX--;
   centerX *= _space;
 
-  Draw::triangle(1, centerX, TRIANGLE_Y, show);
+  Draw::triangle(Draw::UP, centerX, TRIANGLE_Y, show);
 }
 
 void Menu::toggleText(bool show) {
