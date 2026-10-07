@@ -13,15 +13,22 @@ Arduino IDE. Programación orientada a objetos: cada clase en su archivo `.h` y 
   el usuario lo indique.
 - **La IA debe hacer un commit al modificar archivos** (cuando el usuario lo ordene
   o como parte del flujo de trabajo ya autorizado).
-- **Agrupar los cambios en un solo commit por tarea**: los micro-commits por cambio
-  puntual ya no se usan; todo lo relacionado con una misma tarea (código, este
-  documento y, si corresponde, API) queda en un único commit.
+- **Agrupar los cambios por tema de modificación**: todo lo relacionado con un
+  mismo tema (código, este documento y, si corresponde, API) queda en un commit, y
+  el **mensaje del commit debe ser informativo**. Los micro-commits por cambio
+  puntual ya no se usan.
+- **Si el cambio necesita más de un commit**, seguir este procedimiento: (1) crear
+  un archivo `.json`; (2) escribir ahí la lista de archivos de cada commit y el
+  mensaje de cada uno; (3) hacer los commits según lo indicado en el punto 2;
+  (4) actualizar `PROYECTO.md`; (5) dar recomendaciones finales, brevemente.
 - **La IA debe actualizar este documento (`PROYECTO.md`) antes de hacer el commit**:
   toda modificación de código debe quedar reflejada (secciones/API) y ese cambio a
   `PROYECTO.md` debe incluirse en el mismo commit.
-- **Al pedir un commit, la IA no modifica el código.** No "arregla" el código de los
-  archivos para dejarlo bien antes de commitear: si algo está mal, lo señala y espera
-  orden. Lo único que puede tocar sin permiso son los archivos `.md` y los comentarios.
+- **Al pedir un commit, la IA no modifica el código** (`.ino`, `.h`, `.cpp`). No
+  "arregla" el código de los archivos para dejarlo bien antes de commitear: si algo
+  está mal, lo señala y espera orden. Sí puede, sin permiso: **modificar
+  comentarios** en `.ino`/`.h`/`.cpp`/`.md` y **mover código de posición**
+  (reordenar), pero **nunca cambiar el código**.
 - **Commit y `push` van juntos.** En cuanto se crea el commit se hace `push`
   inmediatamente, sin pedir confirmación adicional.
 - **Toda regla que el usuario dé debe quedar escrita en este documento**, para que
@@ -134,7 +141,7 @@ Directorio: `D:\Documents\ESP32S3\Snake_II-OLED_128x64-I2C`
 | `Boot.h` / `Boot.cpp` | Clase `Boot` (pantalla de arranque: Header con el mensaje "Press any button / to start" que **parpadea sin fase fija** —`PERIOD=400 ms`, oculto el 50 %, `HOLD` comentado— y Body con el logo `Sprite::LOGO` en blanco; se termina con cualquier botón con su sonido según el botón; la animación de bandas de líneas verticales anterior está comentada). Completa. |
 | `Legend.h` / `Legend.cpp` | Clase `Legend` (panel de botones: pad MOVE a la izquierda con 4 flechas, 4 rombos completos de ACTION a la derecha en las posiciones de un pad que parpadean MUY rápido uno a la vez en ciclo lento —ciclo `NEXT=2500 ms` con el `Ticker`, **sin fase fija** (`HOLD` comentado), parpadeo `PERIOD=100 ms` al 50 %— y texto de la función del rombo activo en el pie (Back, Select / Pause, None, None), compuesto y mostrado con su propio `Scroller` (`_scroller`) para que **entre deslizándose** al cambiar de rombo; cualquier botón la cierra con un sonido según el botón pulsado: MOVE = CLICK, ACTION_UP = BACK, ACTION_RIGHT = CONFIRM). Completa. |
 | `Scroller.h` / `Scroller.cpp` | Clase `Scroller` (scroller de 1 bit: una sola banda, texto como array de `int8_t` donde cada byte = 1 columna de 8 px; fondo siempre negro y texto blanco; `setTexto()` compone el texto centrado, fija la fila donde se imprimirá, deriva el alto de la franja del tamaño (`8*size+2`), calcula el límite de caracteres según el tamaño y trunca silenciosamente; `update()` avanza 1 px cada 4 ms mientras `print()` la vuelca rellenando la banda; usada por `Menu` con 1 instancia —transición **activa** en `nextOption()`—, por `MenuCredits` con 2 instancias sincronizadas y por `Legend` con 1 instancia para el texto del pie). Completa. |
-| `Menu.h` / `Menu.cpp` | Clase `Menu` (menú con scroller de 1 bit —1 banda del `Scroller`—, rombos/triángulos de posición, navegación con repetición y anti-entrada `_holdButtons`). **En iteración**: `begin(showContinue, selected)` fija la lista y la selección; `navigate()` (MOVE con el helper `ButtonRepeat`), `action()` (`ACTION_UP` vuelve a `New`/`Continue`, `ACTION_RIGHT` alterna `_confirm`), `holdButtons()` (bloquea hasta soltar los botones), `blink()` (parpadeo con el helper `Blink`) y `nextOption()` (vuelo lateral del `Scroller`, activo). La API anterior (`setOptions`, `setContinueAvailable`, `setBestScore`, `setSelected`, `setTitle`, `setShowFooter`, `confirm()`, `restoreDiamondBand()`) está **comentada** en `Menu.h`. |
+| `Menu.h` / `Menu.cpp` | Clase `Menu` (menú con scroller de 1 bit —1 banda del `Scroller`—, rombos/triángulos de posición, navegación con repetición y anti-entrada `_holdButtons`). **En iteración**: `begin(showContinue, selected)` fija la lista y la selección; `navigate()` (MOVE con el helper `ButtonRepeat`), `action()` (`ACTION_UP` vuelve a `New`/`Continue`, `ACTION_RIGHT` alterna `_confirm`), `holdButtons()` (bloquea hasta soltar los botones), `blinkOption()` (parpadeo con el helper `Blink`) y `nextOption()` (vuelo lateral del `Scroller`, activo). La API anterior (`setOptions`, `setContinueAvailable`, `setBestScore`, `setSelected`, `setTitle`, `setShowFooter`, `confirm()`, `restoreDiamondBand()`) está **comentada** en `Menu.h`. |
 | `MenuDifficulty.h` / `MenuDifficulty.cpp` | Clase `MenuDifficulty` (selector de nivel 1..10, `< N >`, con repetición al mantener presionado; al mantener, solo queda fija la flecha del botón activo). Completa. Ventana hermana: vive sobre el `Menu` ya dibujado, sustituye solo la banda de rombos (45..53) y no hace `clear()`. Guarda el nivel confirmado (`difficulty()`), que el `Engine` pasa a `Game::setDifficulty`. |
 | `MenuSound.h` / `MenuSound.cpp` | Clase `MenuSound` (selector On/Off con una flecha en el lado del destino, sobre la misma banda). **Reactivada (fuera del aislamiento)**: el `Engine` ya la posee y despacha (`MENU_SOUND`), pero la entrada desde el `Menu` sigue pendiente. Como `Display::getWidth()`/`getTextWidth()` siguen comentadas en `Display.h`, centra a mano con `Config::Screen::WIDTH` y `strlen * 6`. El valor real se aplica al global `Sound` con `setEnabled`. |
 | `MenuCredits.h` / `MenuCredits.cpp` | Clase `MenuCredits` (ventana de créditos con 3 entradas navegables con transición lateral —2 bandas sincronizadas del `Scroller` compartido— y `SFX_CLICK` al navegar, vuelve al menú con `ACTION_UP`). Se llama así, y no `Credits`, para distinguirla de una hipotética ventana de créditos general: esta es la que se abre desde la opción "Credits" del `Menu`. Completa. |
@@ -149,7 +156,8 @@ Directorio: `D:\Documents\ESP32S3\Snake_II-OLED_128x64-I2C`
 | `Sprite.h` | Namespace `Sprite` (tabla de sprites de la serpiente, estilo Nokia: cola, cuerpo, curvas, cabeza cerrada/abierta y panza; sprites de 4×4 px + sprite de la comida especial de 8×4 px + el logo del arranque `LOGO` de 80×48 px, leído con `Sprite::logoPixel(x, y)`, sección 15). Solo datos (header-only, sin `.cpp`). Adaptada al estilo del proyecto. |
 | `Timer.h` / `Timer.cpp` | Reloj de 64 bits y cronómetros compartidos (`nowMs()`, `Stopwatch`, `Ticker`), basados en `esp_timer_get_time()` (sección 21). El header solo declara; las definiciones están en el `.cpp`, porque el `inline` en el header repetía el mismo código en cada `.cpp` que lo incluye. |
 | `ButtonRepeat.h` / `ButtonRepeat.cpp` | Helper de **repetición al mantener un botón** (sección 23): primer paso inmediato (`pressed`) y, tras `Config::Button::DELAY` (400 ms), un paso cada `Config::Button::TICK` (100 ms) mientras sigue mantenido (`hold`). Encapsula los dos `Stopwatch` que antes vivían sueltos en `Menu` y `MenuDifficulty` (donde además habían divergido: `hold` vs el viejo `state`). **Sin `reset()`** (YAGNI: hoy no hay call site). Lo usan `Menu` (`_repeat`) y `MenuDifficulty` (`_repeat`). |
-| `Blink.h` / `Blink.cpp` | Helper de **parpadeo** (sección 24): extrae el trío `Stopwatch` + flag de giro (`state()`) + cambio pendiente (`changed()`) que cada ventana llevaba por separado. API: `start(state = false)`, `restart()`, `on(period, offPct)` (fase cruda), `update(period, offPct)` (recalcula el pendiente), `changed()`, `state()`, `toggle()`, `set(state)`. Lo usan `Boot`, `Legend` y `Menu` (interpretan `state()` como su flag de dibujo) y `MenuDifficulty`/`MenuSound` (solo la fase cruda `on()`). |
+| `Blink.h` / `Blink.cpp` | Helper de **parpadeo** (sección 24): encapsula el `Stopwatch` (ancla del período) + el recuerdo de la última fase (`_last`, para el flanco) que cada ventana llevaba por separado. API de 3 métodos: `start()` (ancla y olvida la fase), `isVisible(period, offPct)` (fase actual, `true` = visible) y `changed(period, offPct)` (true solo en el flanco). Lo usan `Boot`, `Legend` y `Menu` (redibujan en el flanco con `changed()`/`isVisible()`) y `MenuDifficulty`/`MenuSound` (solo la fase cruda `isVisible()`). |
+| `Draw.h` / `Draw.cpp` | Namespace de **primitivas de dibujo** (sección 25): `triangle(dir, cx, cy, show)` y `diamond(cx, cy, show)`, los marcadores de posición que `Menu` y `Legend` tenían duplicados. Sin estado (usan el global `display` y `Config::Diamond::SIZE`); `dir` = 1↑, 2→, 3↓, 4←. |
 | `PROYECTO.md` | Este documento. |
 | `LICENSE.md` | Licencia del proyecto: **MIT**, con el texto canónico en inglés (traducirlo haría que GitHub dejara de reconocerlo). Para cambiar el titular basta con editar la línea `Copyright (c) 2026 <nombre>` de ese archivo. |
 | `THIRD_PARTY_NOTICES.md` | Aviso de atribución de las dependencias de terceros (Adafruit GFX y SSD1306, BSD-3; core Arduino-ESP32, LGPL-2.1; ESP-IDF, Apache-2.0) y constancia de que **el repositorio no distribuye código ni artwork de terceros** (los sprites de `Sprite.h` son tablas de bits propias). No es una obligación legal —las librerías se enlazan, no se distribuyen— pero se mantiene al día si cambian de versión las del gestor de Arduino. |
@@ -245,11 +253,11 @@ y con cualquier tamaño (`TEXT_6x8`, `TEXT_12x16`, `TEXT_18x24`).
 | `void begin()` | `Wire.begin(sda, scl)`, crea el OLED y lo limpia. **Idempotente:** si la pantalla ya quedó inicializada (`_screen != nullptr`) no hace nada, de modo que llamarla dos veces no reasigna el OLED ni filtra memoria (si el primer intento falló, `_screen` quedó en `nullptr` y un segundo llamado reintenta). |
 | `void clear()` | Limpia el buffer de la pantalla. |
 | `void show()` | Envía el buffer al OLED. |
-| `void drawPixel(x, y, black=false)` | Dibuja 1 píxel (blanco o negro). |
-| `void fillRect(x, y, w, h, black)` | Rectángulo relleno. Reenvío directo a `Adafruit_SSD1306::fillRect` (`int16_t, int16_t, uint16_t, uint16_t, uint16_t`), con el guard de `_screen == nullptr` del resto de métodos, pero el color ya no se propaga como `uint16_t` de la pantalla: la API de `Display` lo expresa como `bool black` (`true` = `SSD1306_BLACK`, `false` = `SSD1306_WHITE`), igual que `drawPixel`, para que las ventanas no manejen las constantes de color. |
-| `void fillTriangle(x0, y0, x1, y1, x2, y2, black)` | Triángulo relleno por sus tres vértices (en cualquier orden). Reenvío directo a `Adafruit_GFX::fillTriangle` con el mismo `bool black` que `fillRect`. Quedan en `Display.cpp` los helpers estáticos `sortByY()`/`edgeAt()` de una versión anterior que rasterizaba el triángulo por filas (ordenar los vértices por `y` y cortar los dos lados activos en cada fila): ya no los usa nadie y están pendientes de borrar. |
+| `void drawPixel(x, y, white=false)` | Dibuja 1 píxel (`true` = blanco, `false` = negro). |
+| `void fillRect(x, y, w, h, white=false)` | Rectángulo relleno. Reenvío directo a `Adafruit_SSD1306::fillRect`, con el guard de `_screen == nullptr` del resto de métodos. El color no se propaga como `uint16_t` de la pantalla: la API de `Display` lo expresa como `bool white` (`true` = blanco, `false` = negro), igual que `drawPixel`, para que las ventanas no manejen las constantes de color. |
+| `void fillTriangle(x0, y0, x1, y1, x2, y2, white=false)` | Triángulo relleno por sus tres vértices (en cualquier orden). Reenvío directo a `Adafruit_GFX::fillTriangle` con el mismo `bool white` que `fillRect`. Quedan en `Display.cpp` los helpers estáticos `sortByY()`/`edgeAt()` de una versión anterior que rasterizaba el triángulo por filas (ordenar los vértices por `y` y cortar los dos lados activos en cada fila): ya no los usa nadie y están pendientes de borrar. |
 | `TextPos getTextPos(texto, align, size=1, region=FULL)` | Devuelve x,y (esquina sup-izq) según alineación y región. |
-| `void drawText(texto, x, y, size=1)` | Imprime texto en posición píxel exacta. |
+| `void drawText(texto, x, y, size=1, tColor=SSD1306_WHITE, bgColor=SSD1306_BLACK)` | Imprime texto en posición píxel exacta; `tColor` = color del texto y `bgColor` = color de fondo. |
 | `void drawTextInverted(texto, x, y, size=1)` | Imprime texto en negro (sobre cualquier fondo) en posición exacta. |
 | `void drawTextAligned(texto, align, size=1, region=FULL)` | Posición según alineación/región + imprime. |
 | `void drawHighlight(texto, x, y, size=1)` | Texto resaltado (cuadro blanco + texto invertido) en posición exacta. |
@@ -398,9 +406,9 @@ construye con `_scroller()` (constructor por defecto). El texto del pie sale de
 
 | Método | Descripción |
 |--------|-------------|
-| `void begin(bool showContinue = false, int8_t selected = OPT_NEW)` | Fija la lista visible (`showContinue`: `true` = 5 opciones con "Continue", `false` = 4 sin él) y la selección inicial (enum `Option`; si "Continue" no está visible la selección efectiva la resuelve `navigate()`), reinicia los flags (`_holdButtons`, `_lastScroll`, `_confirm`, `_done`, `_clear`), arranca el parpadeo (`_blink.start(false)`, que también reancla su ancla) y deja `_repeat` listo. `_clear` provoca el `clear()` completo + `firstPrint()` en el primer `print()` (de paso pone `_bestScore` a 0). |
-| `void update()` | `if (_done) return;` y en ese orden: `holdButtons()` (desbloqueo al soltar), `navigate()`, `action()`; si el `Scroller` está volando (`_lastScroll`) lo avanza y **congela el resto del frame** (mientras `update()` devuelva `true` sale sin más), y al terminar el vuelo reancla `_blink` (`_blink.start(false)`). Calcula el cambio pendiente de parpadeo con `_blink.update(PERIOD, OFF)`. |
-| `void print()` | `if (_done) return;` y encadena `firstPrint()` (solo el primer frame: `clear()` + título, cuadro, texto, marcadores y pie), `blink()`, `nextOption()` y `_scroller.print()` (no-op en reposo, sección 14). |
+| `void begin(bool showContinue = false, int8_t selected = OPT_NEW)` | Fija la lista visible (`showContinue`: `true` = 5 opciones con "Continue", `false` = 4 sin él) y la selección inicial (enum `Option`; si "Continue" no está visible la selección efectiva la resuelve `navigate()`), reinicia los flags (`_holdButtons`, `_lastScroll`, `_confirm`, `_done`, `_clear`), arranca el parpadeo (`_blink.start()`) y deja `_repeat` listo. `_clear` provoca el `clear()` completo + `firstPrint()` en el primer `print()` (de paso pone `_bestScore` a 0). |
+| `void update()` | `if (_done) return;` y en ese orden: `holdButtons()` (desbloqueo al soltar), `navigate()`, `action()`; si el `Scroller` está volando (`_lastScroll`) lo avanza y **congela el resto del frame** (mientras `update()` devuelva `true` sale sin más), y al terminar el vuelo reancla `_blink` (`_blink.start()`). |
+| `void print()` | `if (_done) return;` y encadena `firstPrint()` (solo el primer frame: `clear()` + título, cuadro, texto, marcadores y pie), `blinkOption()`, `nextOption()` y `_scroller.print()` (no-op en reposo, sección 14). |
 | `void showOptions()` | Borra la banda entre el cuadro y el pie y dibuja los marcadores de las opciones no seleccionadas + el rombo de la seleccionada; omite `OPT_CONTINUE` si está oculta. |
 | `int8_t selected()` | Opción seleccionada (enum `Option`; restaurado). |
 | `bool done()` | `true` cuando el menú pide salir. Hoy **nada lo pone** (`_done = true` en `action()` está comentado): con el `Engine` aislado el menú es un callejón. |
@@ -417,10 +425,10 @@ del estado `MENU` (ver bloque `AISLADO`, sección 11).
 | `void holdButtons()` | **Anti-entrada:** si `_holdButtons` está puesta, solo observa `buttons.hold()` de los 8 botones; en cuanto **todos** se liberen se apaga y quedan libres `navigate()`/`action()`. Así, entrar al menú con un botón aún pulsado (p. ej. el que cerró la ventana anterior) no mueve la selección. (`pressed()` no serviría: es evento de borde y ese pulso ya ocurrió en un frame anterior.) |
 | `void navigate()` | Si `_holdButtons` está puesta, sale sin hacer nada. `MOVE_LEFT`/`MOVE_RIGHT` con el helper `ButtonRepeat` (`_repeat.step()`): paso inmediato al pulsar y, tras `Config::Button::DELAY` (400 ms), un paso cada `Config::Button::TICK` (100 ms). Salta `OPT_CONTINUE` si `_showContinue` es `false` y toca `SFX_CLICK` al mover. Límites en `OPT_NEW`/`OPT_COUNT - 1`. |
 | `void action()` | Si `_holdButtons` está puesta, sale. `ACTION_UP` → la selección vuelve a `OPT_CONTINUE`/`OPT_NEW` con `SFX_BACK`; `ACTION_RIGHT` → alterna `_confirm` con `SFX_CONFIRM` (solo el resaltado: la salida está comentada). |
-| `void blink()` | Parpadeo de la opción: con `_confirm` fija el flag visible (`_blink.set(true)`) y sale del menú; si hay cambio pendiente (`_blink.changed()`) conmuta el flag (`_blink.toggle()`). En ambos casos repinta el texto del cuadro (`toggleText`) y el rombo (`toggleDiamond`) según `_blink.state()`. |
-| `void nextOption()` | Si la selección cambió: restaura el marcador de la anterior (`toggleTriangle(_lastSelected, true)` y borra su rombo), coloca los de la nueva, compone `OPTION[_selected]` en el `Scroller` con `setTexto(..., BOX_TOP, _lastSelected > _selected, TEXT_12x16)` y arranca `startSlide()` (dirección según el sentido del salto), marcando `_lastScroll`. |
+| `void blinkOption()` | Parpadeo de la opción: con `_confirm` sale del menú (`_confirm = false; _done = true`); si no, `if (!_blink.changed(PERIOD, OFF)) return;` y repinta el texto del cuadro (`toggleText`) y el rombo (`focused`) con `const bool visible = _done \|\| _blink.isVisible(PERIOD, OFF);`. |
+| `void nextOption()` | Si la selección cambió: restaura los marcadores de la anterior (`focused(_lastSelected, false)` + `unfocused(_lastSelected, true)`), coloca los de la nueva (`unfocused(_selected, false)` + `focused(_selected, true)`), compone `OPTION[_selected]` en el `Scroller` con `setTexto(..., BOX_TOP, _lastSelected > _selected, TEXT_12x16)` y arranca `startSlide()` (dirección según el sentido del salto), marcando `_lastScroll`. |
 | `void toggleText(bool show)` | Pinta/borra el texto de la opción dentro del cuadro (`drawText` centrado en `BOX_TOP - 1`, `TEXT_12x16`, texto negro sobre blanco cuando `show`). |
-| `void toggleDiamond(int8_t diamond, bool show)` / `void toggleTriangle(int8_t triangle, bool show)` | Pinta/borra con dos `fillTriangle` el rombo o el marcador de la opción dada (centro en `(i+1)·_space`, restando 1 si "Continue" está oculta; `toggleTriangle` sale si el índice es `OPT_COUNT`). |
+| `void focused(int8_t diamond, bool show)` / `void unfocused(int8_t triangle, bool show)` | Pinta/borra el marcador de la opción dada (centro en `(i+1)·_space`, restando 1 si "Continue" está oculta): `focused` dibuja un rombo (`Draw::diamond` en `DIAMOND_Y`) y `unfocused` el triángulo superior (`Draw::triangle` en `TRIANGLE_Y`); `unfocused` sale si el índice es `OPT_COUNT`. El dibujo de las formas vive en el namespace `Draw` (sección 25). |
 | ~~`bool holdRepeat(uint8_t button)`~~ | **Eliminado**: la repetición por mantención se extrajo al helper `ButtonRepeat` (sección 23), miembro `_repeat`; `navigate()` lo consulta con `_repeat.step(Buttons::MOVE_*)`. Ya no hay parámetros `DELAY`/`TICK` locales en `Menu` (usa los de `Config::Button`). |
 
 ### Las opciones "Difficulty" y "Sound" son ventanas
@@ -478,7 +486,7 @@ _selected--/++`). El mapeo interno `optionAt`/`indexOfOption` está comentado.
   `BOX_HEIGHT = 16` y `BOX_TOP = DIAMOND_Y - SIZE - 4 - BOX_HEIGHT` (= 24), es
   decir el blanco ocupa `22..39` (`fillRect(0, BOX_TOP-2, WIDTH, BOX_HEIGHT+2)`).
   El texto de la opción (`TEXT_12x16`) se pinta en `BOX_TOP - 1` y solo se toca
-  al cambiar de opción (vuelo del scroller) o al parpadear (`blink()` →
+  al cambiar de opción (vuelo del scroller) o al parpadear (`blinkOption()` →
   `toggleText`). **No se mueve.**
 - **Animación (scroller de 1 bit):** en la clase **`Scroller`** (ver
   sección 14, "Clase `Scroller`"), que `Menu` instancia con **1 instancia**
@@ -501,18 +509,18 @@ _selected--/++`). El mapeo interno `optionAt`/`indexOfOption` está comentado.
   **congelado** (el vuelo manda); al terminar se reinicia `_timer` para el
   parpadeo.
 - **Marcadores de posición:** dos filas sobre el pie. El **seleccionado** es un
-  **rombo completo** (dos `fillTriangle`, `SIZE = 3` de `Config::Diamond`)
-  centrado en `DIAMOND_Y = 47` (filas 44..50), dibujado por `toggleDiamond()`;
+  **rombo completo** (`Draw::diamond`)
+  centrado en `DIAMOND_Y = 47` (filas 44..50), dibujado por `focused()`;
   los **no seleccionados** son solo el **triángulo superior** con base en
-  `TRIANGLE_Y = 53` y vértice en la 50 (`toggleTriangle()`). Reparto uniforme:
+  `TRIANGLE_Y = 53` y vértice en la 50 (`unfocused()` → `Draw::triangle()`). Reparto uniforme:
   centro en `(i+1)·_space`, con `_space = WIDTH / (OPT_COUNT + (showContinue ?
   1 : 0))` y restando 1 a los índices `>= OPT_CONTINUE` si "Continue" está
-  oculta. `nextOption()` intercambia los marcadores al navegar y `blink()` hace
-  parpadear **el rombo y el texto de la opción a la vez**: `_blinkOption =
-  _showOption != _timer.blinkOn(PERIOD, OFF)` con `PERIOD = 400 ms` y oculto el
-  `50 %` (`Config::DefaultTimer`), **sin retardo inicial** (`HOLD` está
-  comentado); el ancla `_timer` se reinicia en `begin()` y al terminar cada
-  vuelo del scroller. **Zona dinámica:** el parpadeo repinta en sitio (el texto
+  oculta. `nextOption()` intercambia los marcadores al navegar y `blinkOption()` hace
+  parpadear **el rombo y el texto de la opción a la vez** con el helper `Blink`
+  (`_blink.changed(PERIOD, OFF)` marca el flanco y `_blink.isVisible(PERIOD, OFF)`
+  da la fase visible; `PERIOD`/`OFF` de `Config::DefaultTimer`), **sin retardo
+  inicial** (`HOLD` está comentado); `_blink` se ancla en `begin()` y al terminar
+  cada vuelo del scroller. **Zona dinámica:** el parpadeo repinta en sitio (el texto
   con fondo blanco y los triángulos en blanco/negro), sin `clear()` de banda.
 - Primera y última opción no conectadas (navegación con límites).
 
@@ -534,17 +542,17 @@ Sin parámetros: usa los servicios globales `Display` y `Buttons` (sección 20).
 
 | Método | Descripción |
 |--------|-------------|
-| `void begin()` | Reinicia: ancla el parpadeo (`_blink.start()`, que también deja el flag de giro en `false`), `_done` apagado, `_holdMessage` sigue en `true` (pero su comprobación `expired(HOLD)` está **comentada**, así que no hace nada) y `_clear` puesto para el primer frame. |
-| `void update()` | Cualquier botón la termina (`_done = true`) con sonido según el botón (prioridad: MOVE = `SFX_CLICK`, `ACTION_UP` = `SFX_BACK`, `ACTION_RIGHT` = `SFX_CONFIRM`, `ACTION_DOWN`/`ACTION_LEFT` = `SFX_CLICK`). Si no, actualiza el cambio pendiente de parpadeo con `_blink.update(PERIOD, OFF)`: el mensaje **parpadea desde el primer frame**, **sin fase fija inicial** (la constante `HOLD` y su comprobación están comentadas), con `PERIOD = 400 ms` y oculto el `OFF = 50 %` (`Config::DefaultTimer`). **No tiene autoavance** (`TOTAL_MS`/`ANIM_TICK` comentados): espera a un botón. |
-| `void print()` | `firstPrint()` (solo el primer frame: `clear()` + mensaje en el Header —dibujado con `drawMessage()` y `_blink.toggle()` para fijar la primera fase— + logo en el Body) y `blinkMessage()` (repinta el mensaje cuando `_blink.changed()`: blanco visible / borrado en negro sobre negro, y conmuta con `_blink.toggle()`). |
+| `void begin()` | Reinicia: ancla el parpadeo (`_blink.start()`), `_done` apagado y `_clear` puesto para el primer frame. El antiguo `_holdMessage` (fase fija del mensaje) está **comentado**, junto con su comprobación `expired(HOLD)`. |
+| `void update()` | Cualquier botón la termina (`_done = true`) con sonido según el botón (prioridad: MOVE = `SFX_CLICK`, `ACTION_UP` = `SFX_BACK`, `ACTION_RIGHT` = `SFX_CONFIRM`, `ACTION_DOWN`/`ACTION_LEFT` = `SFX_CLICK`). El mensaje **parpadea desde el primer frame**, **sin fase fija inicial** (la constante `HOLD` y su comprobación están comentadas), con `PERIOD = 400 ms` y oculto el `OFF = 50 %` (`Config::DefaultTimer`); ya no actualiza nada en `update()` (la fase la lee `blinkMessage()` con `_blink.changed(PERIOD, OFF)`). **No tiene autoavance** (`TOTAL_MS`/`ANIM_TICK` comentados): espera a un botón. |
+| `void print()` | `firstPrint()` (solo el primer frame: `clear()` + mensaje en el Header —`drawMessage(true)`— + logo en el Body) y `blinkMessage()` (repinta el mensaje cuando `_blink.changed(PERIOD, OFF)` con `drawMessage(_blink.isVisible(PERIOD, OFF))`: blanco visible / borrado en negro sobre negro). |
 | `bool done()` | `true` cuando se pulsó cualquier botón (`Engine` pasa a `LEGEND`). |
 
 ### Pantalla de arranque (mensaje + logo)
 
 - **Header (0..15):** el mensaje `MESSAGE` = `"Press any button"` / `"to start"`
   (2 líneas de `TEXT_6x8` centradas) que **parpadea** con el helper `Blink`
-  (`_blink`, sección 24; `drawMessage()` lo dibuja según `_blink.state()` y
-  `blinkMessage()` lo repinta cuando `_blink.changed()`). Sin fase fija: empieza a
+  (`_blink`, sección 24; `drawMessage(bool)` lo dibuja según el `bool` visible y
+  `blinkMessage()` lo repinta cuando `_blink.changed(PERIOD, OFF)`). Sin fase fija: empieza a
   parpadear en cuanto entra.
 - **Body (16..63):** fondo blanco con el logo `Sprite::LOGO` (80×48) centrado,
   dibujado px a px con `Sprite::logoPixel(x, y)`.
@@ -572,9 +580,9 @@ Sin parámetros: usa los servicios globales `Display`, `Buttons` y `Sound`
 
 | Método | Descripción |
 |--------|-------------|
-| `void begin()` | Reinicia la ventana: `_btn`/`_lastBtn = 0` (rombo activo = `Btn1`), arranca `_ticker` y el parpadeo (`_blink.start(true)`, flag visible), `_lastScroll`/`_done` apagados y `_clear` puesto (el primer frame hace `clear()` + estáticos). |
-| `void update()` | Lee botones y avanza el ciclo. **El sonido depende del botón presionado** (`done() = true`): `MOVE_*` (navegación) = `SFX_CLICK`, `ACTION_UP` (Back) = `SFX_BACK`, `ACTION_RIGHT` (Select / Pause) = `SFX_CONFIRM`, `ACTION_DOWN`/`ACTION_LEFT` (None) = `SFX_CLICK`. El rombo activo avanza cada `NEXT = 2500 ms` (`_ticker`); **no hay fase fija**: el parpadeo se recalcula con `_blink.update(PERIOD = 100 ms, OFF = 50 %)`, ~10 Hz (`HOLD` comentado). **Si el texto del pie sigue entrando** (`_scroller.update()` devuelve `true`), el ciclo se **congela** y, al terminar el vuelo, se reanclan `_ticker` y `_blink.restart()`. |
-| `void print()` | `firstPrint()` (solo el primer frame: `clear()` + banda blanca `3..11` con "Move"/"Action", pad MOVE, los 4 rombos de ACTION y la banda blanca del pie con `BTN_FUNC[0]`) + por frame `blinkDiamond()` (repinta el rombo activo cuando `_blink.changed()`) y `nextBtn()`/`_scroller.print()` (el texto del pie con vuelo del `Scroller`). |
+| `void begin()` | Reinicia la ventana: `_btn`/`_lastBtn = 0` (rombo activo = `Btn1`), arranca `_ticker` y el parpadeo (`_blink.start()`), `_lastScroll`/`_done` apagados y `_clear` puesto (el primer frame hace `clear()` + estáticos). |
+| `void update()` | Lee botones y avanza el ciclo. **El sonido depende del botón presionado** (`done() = true`): `MOVE_*` (navegación) = `SFX_CLICK`, `ACTION_UP` (Back) = `SFX_BACK`, `ACTION_RIGHT` (Select / Pause) = `SFX_CONFIRM`, `ACTION_DOWN`/`ACTION_LEFT` (None) = `SFX_CLICK`. El rombo activo avanza cada `NEXT = 2500 ms` (`_ticker`); **no hay fase fija**: el parpadeo se lee cada frame con `_blink.isVisible(PERIOD = 100 ms, OFF = 50 %)`, ~10 Hz (`HOLD` comentado). **Si el texto del pie sigue entrando** (`_scroller.update()` devuelve `true`), el ciclo se **congela** y, al terminar el vuelo, se reanclan `_ticker` y `_blink.start()`. |
+| `void print()` | `firstPrint()` (solo el primer frame: `clear()` + banda blanca `3..11` con "Move"/"Action", pad MOVE, los 4 rombos de ACTION y la banda blanca del pie con `BTN_FUNC[0]`) + por frame `blinkDiamond()` (repinta el rombo activo cuando `_blink.changed(PERIOD, OFF)`) y `nextBtn()`/`_scroller.print()` (el texto del pie con vuelo del `Scroller`). |
 | `bool done()` | `true` cuando se pidió ir al menú. `Engine` solo cambia de estado; **la Legend ya reprodujo su sonido** (Engine no toca `SFX_BACK` en esta transición). |
 
 ### Dibujo (leyenda de botones)
@@ -582,19 +590,19 @@ Sin parámetros: usa los servicios globales `Display`, `Buttons` y `Sound`
 - **Título (Header):** banda blanca `TEXT_Y-1..TEXT_Y+8` con **"Move"** (mitad
   izquierda) y **"Action"** (mitad derecha) en `TEXT_6x8` negro sobre blanco;
   estático.
-- **Pad MOVE (izquierda):** las 4 flechas son triángulos sólidos (`fillTriangle`
-  con `SIZE = 3`) en cruz alrededor de `(PAD_LEFT_X=32, PAD_Y=33)` con radio
-  `PAD_RADIO = 10` (↑ en `PAD_Y-10`, → en `PAD_LEFT_X+10`, ↓ y ← análogos).
-- **Pad ACTION (derecha):** **4 rombos completos** (dos `fillTriangle` cada uno,
+- **Pad MOVE (izquierda):** las 4 flechas son triángulos sólidos (`Draw::triangle`,
+  lado `Config::Diamond::SIZE = 3`) en cruz alrededor de `(PAD_LEFT_X=32, PAD_Y=33)`
+  con radio `PAD_RADIO = 10` (↑ en `PAD_Y-10`, → en `PAD_LEFT_X+10`, ↓ y ← análogos).
+- **Pad ACTION (derecha):** **4 rombos completos** (`Draw::diamond`: dos triángulos,
   SIEMPRE rombo simétrico de `SIZE = 3`, nunca triángulos) en cruz alrededor de
   `(PAD_RIGHT_X=96, PAD_Y=33)` con radio `PAD_RADIO = 10`: ↑ (`Btn1`), →
   (`Btn2`), ↓ (`Btn3`), ← (`Btn4`).
 - **Parpadeo (uno a la vez, MUY rápido):** el rombo activo recorre `Btn1 → Btn4`
   en **ciclo lento** (avanza cada `NEXT = 2500 ms` con el `_ticker`) y
-  **parpadea sin espera**: `_blink.update(PERIOD, OFF)` con `PERIOD = 100 ms` y
+  **parpadea sin espera**: `_blink.isVisible(PERIOD, OFF)` con `PERIOD = 100 ms` y
   oculto el `OFF = 50 %` de cada período (~10 Hz, `HOLD` comentado);
-  `blinkDiamond()` repinta con `toggleDiamond(_btn)` cuando `_blink.changed()` y
-  conmuta con `_blink.toggle()`. Los rombos inactivos se quedan fijos y
+  `blinkDiamond()` repinta con `toggleDiamond(_btn, _blink.isVisible(PERIOD, OFF))` cuando
+  `_blink.changed(PERIOD, OFF)` (y sale si `_lastScroll`). Los rombos inactivos se quedan fijos y
   completos; al cambiar se restaura el anterior completo (`toggleDiamond(_lastBtn,
   true)`), evitando que se quede borrado si lo pilló la fase oculta.
 - **Texto del pie (centrado):** banda blanca `FOOT_TOP-1..63` con
@@ -613,13 +621,13 @@ Sin parámetros: usa los servicios globales `Display`, `Buttons` y `Sound`
   de volcar). Mientras la franja se mueve (`_lastScroll`), el ciclo de rombos
   **se congela** (`_scroller.update() && ...`): el texto no se queda a medio
   entrar cuando el rombo avanza, y al terminar el vuelo se reinician `_ticker` y
-  `_blink.restart()`.
+  `_blink.start()`.
 - **Salida:** cualquier botón cierra la leyenda (`done()`) con su sonido según el
   botón. `Engine` solo la muestra al arranque (después del `Boot`); ya no se repite
   al volver al menú.
 - **Renderizado (sin `clear()` por frame):** banda de título, pads, rombos y pie
   se dibujan una sola vez al entrar (`firstPrint()`, tras el `clear()` completo).
-  Por frame solo se repintan **el rombo activo** (según `_blink.changed()`) y **el
+  Por frame solo se repintan **el rombo activo** (según `_blink.changed(PERIOD, OFF)`) y **el
   texto del pie** cuando cambia el rombo, a través del `Scroller`.
 
 ---
@@ -760,9 +768,9 @@ a `_menu.begin()`.)
 | `void print()` | Borra la banda 45..53 y llama a `drawSelector()` (cada frame: las flechas parpadean, el número no). |
 | `bool done()` | `true` tras confirmar o cancelar. |
 | `uint8_t difficulty()` | Nivel **confirmado**: lo lee el `Engine` en `changeState(NEW/CONTINUE)` para pasárselo a `Game::setDifficulty` (antes vivía en `Menu::difficulty()`). |
-| `void drawSelector()` | Número 1..10 en `TEXT_6x8` centrado con **ancho constante** (`" 5"` mide lo mismo que `"10"`, 12 px) y **dos flechas** a los lados (`"< 5 >"`), **pegadas** al número (hueco `ARROW_GAP = 6` px, grosor `ARROW_W = 6`), que **parpadean juntas** (visible 75% / oculto 25% de `ARROW_BLINK_PERIOD = 500` ms) con la fase cruda de `Blink` (`_blink.on(...)`). En el **límite** la flecha de ese lado se oculta. **Al mantener** `MOVE_LEFT`/`MOVE_RIGHT` el parpadeo se detiene: solo queda fija la flecha del botón activo y la contraria se oculta; al llegar al límite se dibuja como siempre (sin marcar la repetición). |
+| `void drawSelector()` | Número 1..10 en `TEXT_6x8` centrado con **ancho constante** (`" 5"` mide lo mismo que `"10"`, 12 px) y **dos flechas** a los lados (`"< 5 >"`), **pegadas** al número (hueco `ARROW_GAP = 6` px, grosor `ARROW_W = 6`), que **parpadean juntas** (visible 75% / oculto 25% de `ARROW_BLINK_PERIOD = 500` ms) con la fase cruda de `Blink` (`_blink.isVisible(...)`). En el **límite** la flecha de ese lado se oculta. **Al mantener** `MOVE_LEFT`/`MOVE_RIGHT` el parpadeo se detiene: solo queda fija la flecha del botón activo y la contraria se oculta; al llegar al límite se dibuja como siempre (sin marcar la repetición). |
 | ~~`bool holdRepeat(uint8_t)`~~ | **Eliminado**: la repetición se extrajo al helper `ButtonRepeat` (sección 23). |
-| `_blink` | `Blink`: fase del parpadeo de las flechas (`on()`). Antes era un `Stopwatch`. |
+| `_blink` | `Blink`: fase del parpadeo de las flechas (`isVisible()`). Antes era un `Stopwatch`. |
 | `_repeat` | `ButtonRepeat`: repetición de `MOVE_LEFT`/`MOVE_RIGHT` al mantener (usa `Config::Button::DELAY`/`TICK`; se eliminaron las constantes locales `HOLD_REPEAT_DELAY`/`HOLD_REPEAT_TICK`). |
 
 ### `MenuSound` — On/Off
@@ -774,8 +782,8 @@ a `_menu.begin()`.)
 | `void update()` | Solo actúa la tecla del lado de la flecha: `MOVE_LEFT` apaga si está ON y `MOVE_RIGHT` enciende si está OFF (cada uno con `SFX_CLICK`). `ACTION_RIGHT` **aplica** (`sound.setEnabled(_enabled)`, con `SFX_CONFIRM` solo si queda encendido) y marca `done()`; `ACTION_UP` cancela. |
 | `void print()` | Borra la banda 45..53 y llama a `drawSelector()` (cada frame: la flecha parpadea, la palabra no). |
 | `bool done()` | `true` tras confirmar o cancelar. |
-| `void drawSelector()` | `"ON "` o `"OFF"` en `TEXT_6x8` centrado (ambos miden 18 px, así el centrado no se desplaza) y **una sola flecha** pegada a la palabra, en el **lado del destino**: `"OFF >"` (apunta a `MOVE_RIGHT`, que enciende) y `"< ON"` (apunta a `MOVE_LEFT`, que apaga). Parpadea visible 75% / oculto 25% de `ARROW_BLINK_PERIOD = 500` ms (fase cruda de `Blink`, `_blink.on(...)`); la palabra no. |
-| `_blink` | `Blink`: fase del parpadeo de la flecha (`on()`). Antes era un `Stopwatch`. |
+| `void drawSelector()` | `"ON "` o `"OFF"` en `TEXT_6x8` centrado (ambos miden 18 px, así el centrado no se desplaza) y **una sola flecha** pegada a la palabra, en el **lado del destino**: `"OFF >"` (apunta a `MOVE_RIGHT`, que enciende) y `"< ON"` (apunta a `MOVE_LEFT`, que apaga). Parpadea visible 75% / oculto 25% de `ARROW_BLINK_PERIOD = 500` ms (fase cruda de `Blink`, `_blink.isVisible(...)`); la palabra no. |
+| `_blink` | `Blink`: fase del parpadeo de la flecha (`isVisible()`). Antes era un `Stopwatch`. |
 
 El valor del sonido **no es propio de la ventana**: el estado real vive en el
 servicio global `Sound` (`setEnabled`/`enabled`), así que `MenuSound` solo lleva
@@ -879,7 +887,7 @@ enum class State : uint8_t {
 |--------|---------|-------|
 | `BOOT` | `Boot` | Pantalla de arranque: logo + mensaje que parpadea. Al terminar (`done()`, cualquier botón) pasa a `LEGEND`. |
 | `LEGEND` | `Legend` | Panel de botones: pad MOVE con 4 flechas + 4 rombos completos de ACTION en las posiciones de un pad que parpadean MUY rápido uno a la vez (ciclo lento) con la función del rombo activo en el pie, que entra deslizándose al cambiar de rombo (`Scroller` propio) y congela el ciclo mientras se mueve. Cualquier botón la cierra → menú (suena el efecto según el botón —CLICK/BACK/CONFIRM—; `Engine` no añade `SFX_BACK`). Solo se muestra tras el arranque. |
-| `MENU` | `Menu` | **Aislado:** `ACTION_RIGHT` no sale del menú (`_menu.confirm()` y el `switch` de destinos —`NEW`/`CONTINUE`/`MENU_DIFFICULTY`/`MENU_SOUND`/`MENU_CREDITS`— están comentados). Hoy `Menu` solo navega con MOVE (`SFX_CLICK`), `ACTION_RIGHT` alterna el estado `_confirm` (`SFX_CONFIRM`, la opción queda marcada/parpadeando en `blink()`) y `ACTION_UP` devuelve la selección a `New`/`Continue` (`SFX_BACK`). |
+| `MENU` | `Menu` | **Aislado:** `ACTION_RIGHT` no sale del menú (`_menu.confirm()` y el `switch` de destinos —`NEW`/`CONTINUE`/`MENU_DIFFICULTY`/`MENU_SOUND`/`MENU_CREDITS`— están comentados). Hoy `Menu` solo navega con MOVE (`SFX_CLICK`), `ACTION_RIGHT` alterna el estado `_confirm` (`SFX_CONFIRM`, la opción queda marcada/parpadeando en `blinkOption()`) y `ACTION_UP` devuelve la selección a `New`/`Continue` (`SFX_BACK`). |
 | `NEW` | `Game` | **Comentado (aislado).** Previsto: nueva partida `setDifficulty(_menuDifficulty.difficulty())` + `begin(true)`. Arranca con el conteo regresivo 3-2-1 (un `SFX_TICK` por dígito). Al salir (`done()`) suena `SFX_BACK`, el `Engine` sincroniza el récord (`menu.setBestScore(game.bestScore())`), **oculta/muestra "Continue" al volver** (`menu.setContinueAvailable(resumable)`, donde `resumable = !game.isGameOver() && game.score() > 0`: partida en curso **y** con puntos), deja la selección del menú en `Continue` si `resumable`, o en `New` en caso contrario (`menu.setSelected(...)`) y pasa a `MENU`. |
 | `CONTINUE` | `Game` | **Comentado (aislado).** Previsto: reanudar la partida anterior (`begin(false)`): queda en pausa y se retoma con `ACTION_RIGHT` (Btn2, "Select / Pause") o `ACTION_LEFT`; si no hay partida en curso arranca una nueva. Al salir (`done()`) igual que `NEW`. |
 | `MENU_DIFFICULTY` | `MenuDifficulty` | **Comentado (aislado).** Previsto: selector de nivel 1..10 **sobre el `Menu` ya dibujado**: sustituye solo la banda de rombos (45..53) por `< N >`, sin `clear()`. `MOVE_LEFT`/`MOVE_RIGHT` editan con repetición (`SFX_CLICK` por paso), `ACTION_RIGHT` aplica y `ACTION_UP` cancela. Al salir (`done()`) el `Engine` llama `menu.restoreDiamondBand()` y hace `changeState(MENU, false)`: **no** vuelve a llamar `Menu::begin()` (que haría `clear()`), solo repinta esa banda. El nivel queda en `MenuDifficulty::_difficulty` (sección 10.3). |
@@ -1019,12 +1027,12 @@ llama a `display.clear()`, lo decide cada ventana.
 
    | Ventana | Estáticos (una vez) | Dinámicos por frame |
    |---------|---------------------|---------------------|
-   | `Boot` | Primer frame: clear completo + `firstPrint()` (banda blanca del mensaje en el Header + logo en el Body) | Solo el mensaje del Header cuando `_blink.changed()` (`blinkMessage()`: se repinta con `TEXT_6x8` blanco o se borra en negro); el logo no se toca |
-     | `Menu` | Cuadro blanco `22..39`, texto de la opción en `23..38`, título y pie (banda blanca `55..63` con "Best" + versión) | Banda de la opción (`Scroller::print` con vuelo **activo** en `nextOption()`) + marcadores de posición (rombo del seleccionado en `44..50` y triángulos superiores en `50..53` de los no seleccionados) + parpadeo de la opción (`blink()`: repinta texto y rombo según `_blink.changed()`/`_blink.state()`, y mantiene el texto si `_confirm` está puesto) |
+   | `Boot` | Primer frame: clear completo + `firstPrint()` (banda blanca del mensaje en el Header + logo en el Body) | Solo el mensaje del Header cuando `_blink.changed(PERIOD, OFF)` (`blinkMessage()`: se repinta con `TEXT_6x8` blanco o se borra en negro); el logo no se toca |
+     | `Menu` | Cuadro blanco `22..39`, texto de la opción en `23..38`, título y pie (banda blanca `55..63` con "Best" + versión) | Banda de la opción (`Scroller::print` con vuelo **activo** en `nextOption()`) + marcadores de posición (rombo del seleccionado en `44..50` y triángulos superiores en `50..53` de los no seleccionados) + parpadeo de la opción (`blinkOption()`: repinta texto y rombo según `_blink.changed(PERIOD, OFF)`/`_blink.isVisible(PERIOD, OFF)`, y reafirma visible si `_confirm` está puesto) |
     | `MenuDifficulty` | — (entra sobre el `Menu` ya dibujado, no borra nada) | Selector `< N >`: borra y redibuja **cada frame** la banda 45..53 (número centrado estático con ancho constante + dos flechas laterales que parpadean juntas, ocultas en su límite; al mantener un botón el parpadeo se detiene y solo queda fija la flecha del botón activo, ocultándose la contraria; al llegar al límite se procesa igual que haber soltado el botón, volviendo el parpadeo normal) |
     | `MenuSound` | — (entra sobre el `Menu` ya dibujado, no borra nada) | Selector ON/OFF: borra y redibuja **cada frame** la banda 45..53 (palabra centrada estática + flecha única en el lado del destino, que parpadea) |
 | `MenuCredits` | Título del Header (el cuadro blanco del rol lo pinta ahora el propio `Scroller` al rellenar su banda) | Bandas rol/nombre (`Scroller`, 2 instancias sincronizadas; cada una rellena su banda y se vuelca juntas en el mismo frame, y solo si hay algo nuevo que pintar, sección 14) |
-| `Legend` | Primer frame: clear + banda de título con "Move"/"Action", pad MOVE, los 4 rombos de ACTION y la banda del pie con `BTN_FUNC[0]` | Rombo activo (repintado cuando `_blink.changed()`, `blinkDiamond()`/`toggleDiamond`) + texto del pie (banda `FOOT_TOP-1..63`) por medio de su propio `Scroller` (`_scroller`): al cambiar de rombo **entra deslizándose** (`setTexto()` + `startSlide()`); mientras la franja se mueve, el ciclo de rombos se congela (`_scroller.update()` devuelve `true`) y al terminar se reanclan `_ticker` y `_blink.restart()`. Al cambiar, se restaura completo el rombo que deja de ser activo (evita que quede borrado si el cambio lo pilló en su fase oculta) |
+| `Legend` | Primer frame: clear + banda de título con "Move"/"Action", pad MOVE, los 4 rombos de ACTION y la banda del pie con `BTN_FUNC[0]` | Rombo activo (repintado cuando `_blink.changed(PERIOD, OFF)`, `blinkDiamond()`/`toggleDiamond`) + texto del pie (banda `FOOT_TOP-1..63`) por medio de su propio `Scroller` (`_scroller`): al cambiar de rombo **entra deslizándose** (`setTexto()` + `startSlide()`); mientras la franja se mueve, el ciclo de rombos se congela (`_scroller.update()` devuelve `true`) y al terminar se reanclan `_ticker` y `_blink.start()`. Al cambiar, se restaura completo el rombo que deja de ser activo (evita que quede borrado si el cambio lo pilló en su fase oculta) |
    | `Game` | Primer frame: clear completo + Header (puntaje 12x16 izq., segundos restantes de la comida especial 12x16 der.) y alimento y serpiente | Header solo si cambia el puntaje o `_food.specialTime()` (banda 0..15); tablero (Body 16..63) solo si `_dirtyBoard` (movimiento, comida nueva, transición de estado): borra el Body, redibuja alimento + serpiente; overlay "3-2-1"/"PAUSA"/"GAME OVER"/festejo de récord (texto invertido sobre banda blanca: cuadro centrado para el conteo, de lado a lado para PAUSA, GAME OVER y los letreros del festejo "BUT"/"YOU ARE"/"THE BEST") en cada frame según el estado —en el conteo, al final de cada dígito el número y su cuadro se ocultan (`COUNT_HIDE_MS`), marcando `_dirtyBoard` una sola vez para restaurar el tablero —; al morir superando el récord, el "GAME OVER" es un ciclo "GAME OVER" → "BUT" → "YOU ARE" → "THE BEST" (`NEW_BEST_SIGN_MS` cada uno) que se repite hasta que se presiona un botón, y el `SFX_NEW_BEST` suena solo la primera vez que aparece el letrero "THE BEST" |
 
 4. Las ventanas `MenuDifficulty` y `MenuSound` **no hacen `clear()`**: son
@@ -1700,18 +1708,18 @@ class Ticker {
    seleccionada con las mismas; `MenuDifficulty`/`MenuSound`: flechas de sus
    selectores; `Legend`: parpadeo del rombo activo con `PERIOD=100`/`OFF=50`). El
    `Blink` se ancla al entrar en la ventana (`begin()`) y se reancla
-   (`restart()`) al terminar el vuelo del `Scroller`, así la fase del parpadeo no
+   (`start()`) al terminar el vuelo del `Scroller`, así la fase del parpadeo no
    salta nunca.
 
 ### Quién lo usa
 
 | Clase | Reloj/cronómetro | Cambio |
 |-------|------------------|--------|
-| `Boot` | `Blink _blink` (parpadeo del mensaje) | El mensaje parpadea con `Blink` (`update`/`changed`/`toggle`/`state`), anclado al `begin()` (`PERIOD`/`OFF` de `Config::DefaultTimer`; `HOLD` comentado). El antiguo `Stopwatch _timer` quedó encapsulado en el helper. El antiguo `Ticker _ticker` + plazo `TOTAL_MS` de las bandas están **comentados**. |
+| `Boot` | `Blink _blink` (parpadeo del mensaje) | El mensaje parpadea con `Blink` (`changed(PERIOD, OFF)` / `on(PERIOD, OFF)`), anclado al `begin()` (`PERIOD`/`OFF` de `Config::DefaultTimer`; `HOLD` comentado). El antiguo `Stopwatch _timer` quedó encapsulado en el helper. El antiguo `Ticker _ticker` + plazo `TOTAL_MS` de las bandas están **comentados**. |
 | `Menu` | `Blink _blink` (parpadeo de la opción) + `ButtonRepeat _repeat` (repetición por mantención) | El parpadeo pasa al helper `Blink` (sección 24), anclado a `begin()` y al final de cada vuelo del scroller; la navegación con mantención usa el helper `ButtonRepeat` (sección 23, `expired(DELAY)`/`expired(TICK)` internamente). El `Ticker` de la animación vieja está comentado. |
 | `MenuDifficulty` | `Blink _blink` (flechas), `ButtonRepeat _repeat` (repetición por mantención) | Extraído de `Menu` con el selector: `Blink` (`on()`) y `ButtonRepeat`; se eliminaron las constantes locales `HOLD_REPEAT_DELAY`/`HOLD_REPEAT_TICK` y el viejo `holdRepeat`. |
 | `MenuSound` | `Blink _blink` (flecha) | Extraído de `Menu` con el selector: `Blink` (`on()`). |
-| `Legend` | `Ticker _ticker` (`NEXT`) + `Blink _blink` (`PERIOD`/`OFF`) | El ciclo de rombos avanza con `ticker.consume()` cada `NEXT = 2500 ms` y el parpadeo usa el helper `Blink`, anclado al `begin()` y reanclado (`restart()`) al terminar el vuelo del scroller. `HOLD` (fase fija) y los viejos `DWELL_MS`/`HOLD_MS` ya no existen. |
+| `Legend` | `Ticker _ticker` (`NEXT`) + `Blink _blink` (`PERIOD`/`OFF`) | El ciclo de rombos avanza con `ticker.consume()` cada `NEXT = 2500 ms` y el parpadeo usa el helper `Blink`, anclado al `begin()` y reanclado (`start()`) al terminar el vuelo del scroller. `HOLD` (fase fija) y los viejos `DWELL_MS`/`HOLD_MS` ya no existen. |
 | `Scroller` | `Ticker _timer` (`ANIM_TICK`) | El acumulador `_colAcc`/`_animLast` pasa a `consume()` (misma cadencia, sin `while`). |
 | `Game` | `nowMs()` en `_moveLast`/`_startMs`/`_gameOverMs` (uint64_t) | Plazos y módulos del conteo/festejo sobre el reloj de 64 bits (mismo comportamiento; sin techo de 49,7 días). |
 | `Buzzer` | `_startMs` (uint64_t) + `nowMs()` | El fin de la duración se compara con resta de 64 bits. |
@@ -1816,59 +1824,97 @@ public:
 
 ---
 
-## 24. `Blink.h` — parpadeo con ancla y cambio pendiente
+## 24. `Blink.h` — parpadeo con ancla y detección de flanco
 
-Ubicación: `Blink.h` / `Blink.cpp`. Helper **por composición** que extrae el trío
-que cada ventana llevaba por separado: un `Stopwatch` (ancla del período) + el
-flag de giro de la ventana + el "hay que repintar" pendiente. Así el parpadeo deja
-de repetirse (y de divergir) entre `Boot`, `Legend`, `Menu`, `MenuDifficulty` y
-`MenuSound`.
+Ubicación: `Blink.h` / `Blink.cpp`. Helper **por composición** que encapsula un
+`Stopwatch` (ancla del período) + el recuerdo de la última fase (`_last`, para
+detectar el flanco). Así el parpadeo deja de repetirse (y de divergir) entre
+`Boot`, `Legend`, `Menu`, `MenuDifficulty` y `MenuSound`, y las ventanas ya no
+llevan su propio flag de giro.
 
 ### API
 
 ```cpp
 class Blink {
 public:
-  void start(bool state = false);           // ancla el período y fija el flag
-  void restart();                           // reancla el período (no toca el flag)
-  bool on(uint32_t period, uint8_t offPct) const;   // fase cruda (¿visible?)
-  void update(uint32_t period, uint8_t offPct);     // recalcula el pendiente
-  bool changed() const;                     // ¿hay cambio pendiente?
-  bool state() const;                       // flag de giro de la ventana
-  void toggle();                            // invierte el flag y consume el pendiente
-  void set(bool state);                     // fija el flag y consume el pendiente
+  void start();                                       // ancla el período y olvida la fase (_last = false)
+  bool isVisible(uint32_t period, uint8_t offPct) const;  // fase actual (true = visible)
+  bool changed(uint32_t period, uint8_t offPct);      // true solo en el flanco
 };
 ```
 
-- `start(state)`: `_timer.start()` + `_state = state` + `_pending = false`.
-- `on(period, offPct)`: fase cruda del período (`Stopwatch::blinkOn`); visible salvo
-  el primer `offPct%`.
-- `update(period, offPct)`: `_pending = (_state != on(...))`. Se llama una vez por
-  `update()` de la ventana; `changed()` devuelve ese pendiente y `toggle()`/`set()`
-  lo consumen.
+- `start()`: `_timer.start()` + `_last = false` (única forma de anclar; se usa en
+  `begin()` y al reanclar tras el vuelo del `Scroller`).
+- `isVisible(period, offPct)`: fase cruda del período (`Stopwatch::blinkOn`); visible salvo
+  el primer `offPct%`. No modifica nada (const): para quien repinta cada frame
+  (`MenuDifficulty`, `MenuSound`).
+- `changed(period, offPct)`: `now = isVisible(period, offPct)`; si `now == _last` devuelve
+  `false`; si no, guarda `_last = now` y devuelve `true`. Quien redibuja solo en el
+  flanco (`Boot`, `Legend`, `Menu`) consulta esta.
 
 ### Cómo lo interpreta cada ventana
 
-- **`Boot`** (`_blink`): `_state` es "mensaje visible". `update()` →
-  `_blink.update(PERIOD, OFF)`; `blinkMessage()` repinta con `drawMessage()` (usa
-  `state()`) cuando `changed()` y luego `toggle()`. En `firstPrint()` se dibuja con
-  `drawMessage()` y `_blink.toggle()` para fijar la primera fase (visible).
-- **`Legend`** (`_blink`): `_state` es "rombo visible", arranca en `true`
-  (`start(true)`). `blinkDiamond()` repinta `toggleDiamond(_btn)` cuando
-  `changed()` y luego `toggle()`. Al terminar el vuelo del texto del pie se
-  reancla con `restart()` (antes `_timer.start()`).
-- **`Menu`** (`_blink`): `_state` es "opción visible". `blink()` usa
-  `set(true)` cuando `_confirm` (y sale del menú) o `toggle()` cuando `changed()`,
-  y repinta con `toggleText`/`toggleDiamond` según `state()`.
+- **`Boot`** (`_blink`): `changed(PERIOD, OFF)` decide si repintar y `isVisible(PERIOD, OFF)`
+  es "mensaje visible". `blinkMessage()` → `if (!_blink.changed(PERIOD, OFF)) return;
+  drawMessage(_blink.isVisible(PERIOD, OFF))`; `firstPrint()` dibuja con `drawMessage(true)`.
+- **`Legend`** (`_blink`): `blinkDiamond()` sale si `_lastScroll` o si
+  `!changed(PERIOD, OFF)`, y repinta con `toggleDiamond(_btn, _blink.isVisible(PERIOD, OFF))`.
+  Al terminar el vuelo del texto del pie se reancla con `start()`.
+- **`Menu`** (`_blink`): `blinkOption()` con `_confirm` sale del menú; si no, `if
+  (!changed(PERIOD, OFF)) return; const bool visible = isVisible(PERIOD, OFF);
+  toggleText(visible); focused(_selected, visible);`. Se ancla en `begin()` (`start()`)
+  y se reancla al terminar el vuelo (`start()`).
 - **`MenuDifficulty`** y **`MenuSound`** (`_blink`): solo usan la **fase cruda**
-  `on(period, offPct)` para sus flechas; no llevan flag de giro propio.
+  `isVisible(period, offPct)` para sus flechas.
 
 ### Decisiones
 
-- El flag de giro vive en el helper (`state()`), pero **cada ventana decide qué
-  significa** (mensaje/rombo/opción visibles): el helper no dibuja nada ni conoce
-  la pantalla. Esto reproduce byte a byte el patrón original de cada ventana.
-- `restart()` (no `start()`) al reanclar tras el vuelo del `Scroller`: conserva el
-  flag de giro y solo reancla el período, sin resetear la fase interpretada.
+- `isVisible()` devuelve la fase **visible** (`true` = visible); antes el flag de la ventana
+  se interpretaba invertido en `Boot`, que ahora pasa la fase directamente a
+  `drawMessage(bool)`.
+- `changed()` lleva internamente `_last`, así que el redibujo en el flanco no necesita
+  que la ventana guarde ningún flag de giro.
+- `start()` (la única forma de anclar) reancla tras el vuelo del `Scroller` y olvida
+  la fase (`_last = false`).
+
+## 25. `Draw.h` — primitivas de dibujo (namespace)
+
+Ubicación: `Draw.h` / `Draw.cpp`. Namespace con las dos formas que `Menu` y
+`Legend` tenían **duplicadas** (los marcadores de posición): un triángulo
+direccional y el rombo completo (dos triángulos superpuestos). No tiene estado
+(no es una clase): usa el global `display` y el lado `Config::Diamond::SIZE`.
+
+### API
+
+```cpp
+namespace Draw {
+  void triangle(int8_t dir, int16_t centerX, int16_t centerY, bool show = true);
+  void diamond(int16_t centerX, int16_t centerY, bool show = true);
+}
+```
+
+- `triangle(dir, cx, cy, show)`: `display.fillTriangle` con el vértice según `dir`
+  (1↑, 2→, 3↓, 4←) y medio lado `Config::Diamond::SIZE` alrededor de `(cx, cy)`;
+  `show` elige blanco (`true`) o negro (`false`).
+- `diamond(cx, cy, show)`: un triángulo hacia arriba + uno hacia abajo (mismo
+  centro), es decir `triangle(1, …)` + `triangle(3, …)`.
+
+### Quién lo usa
+
+- **`Menu`**: `focused()` → `Draw::diamond(centerX, DIAMOND_Y, show)` y
+  `unfocused()` → `Draw::triangle(1, centerX, TRIANGLE_Y, show)`. Se eliminaron
+  `Menu::toggleDiamond`/`Menu::toggleTriangle` y la constante `SIZE`.
+- **`Legend`**: las flechas del pad MOVE con `Draw::triangle(1..4, …)` y el rombo
+  activo con `Draw::diamond(…)` desde `Legend::toggleDiamond`. Se eliminaron
+  `Legend::toggleTriangle` y la constante `SIZE`.
+
+### Decisiones
+
+- **Sin estado → función libre**, no método de instancia: por eso es un namespace
+  (no encaja como método de `Menu`/`Legend`, que solo lo reusaban). El único
+  estado que toca (`display`, la constante `SIZE`) es global/compartido.
+- El nombre es a nivel de **intención** (`triangle`/`diamond`), no de primitiva GFX
+  (`fillTriangle`), para que las ventanas no repitan las coordenadas relativas.
+
 
 

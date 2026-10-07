@@ -72,7 +72,11 @@ void MenuSound::update() {
 // ========================================================
 
 void MenuSound::print() {
-  display.fillRect(0, VALUE_TOP, WIDTH, VALUE_TOP + VALUE_HEIGHT, SSD1306_BLACK);
+  display.fillRect(
+    0, VALUE_TOP,
+    WIDTH, VALUE_TOP + VALUE_HEIGHT,
+    SSD1306_BLACK);
+
   drawSelector();
 }
 
@@ -98,15 +102,14 @@ void MenuSound::drawSelector() {
   const char* label = (_enabled) ? " ON  " : " OFF ";
   // Ancho a mano: Display::getTextWidth() y getWidth() estan comentados en
   // Display.h (mismo idioma que Menu y Legend: strlen * 6 px por char 6x8).
-  int16_t labelW = strlen(label) * 6;
-  int16_t labelX = (WIDTH - labelW) / 2;
-
-  const int16_t centerY = VALUE_TOP + 7;
+  const int16_t labelW = strlen(label) * 6;
+  const int16_t labelX = (WIDTH - labelW) / 2;
+  const int16_t centerY = DIAMOND_Y;
 
   // Parpadeo de la flecha: visible el 75% del período, oculta el
   // primer 25% (anclado al begin: sin salto de fase con el reloj
   // de 64 bits)
-  if (_blink.on(PERIOD, OFF)) {
+  if (_blink.isVisible(PERIOD, OFF)) {
     if (_enabled) {
       // ON: flecha a la izquierda, punta hacia la izquierda ("< ON")
       // int16_t base = labelX - ARROW_GAP;  // lado plano, pegado a la palabra
@@ -128,7 +131,7 @@ void MenuSound::drawSelector() {
     }
   }
 
-  display.drawText(label, labelX, VALUE_TOP + 4, TEXT_6x8, SSD1306_WHITE, SSD1306_BLACK);
+  display.drawText(label, labelX, DIAMOND_Y - 3, TEXT_6x8);
 }
 
 // ========================================================

@@ -64,26 +64,26 @@ void Display::show() {
 
 void Display::drawPixel(
   int16_t x, int16_t y,
-  bool color) {
+  bool white) {
   if (_screen == nullptr) return;
-  _screen->drawPixel(x, y, color);
+  _screen->drawPixel(x, y, white);
 }
 
 void Display::fillRect(
   int16_t x, int16_t y,
   uint16_t width, uint16_t height,
-  bool color) {
+  bool white) {
   if (_screen == nullptr) return;
-  _screen->fillRect(x, y, width, height, color);
+  _screen->fillRect(x, y, width, height, white);
 }
 
 void Display::fillTriangle(
   int16_t x0, int16_t y0,
   int16_t x1, int16_t y1,
   int16_t x2, int16_t y2,
-  bool color) {
+  bool white) {
   if (_screen == nullptr) return;
-  _screen->fillTriangle(x0, y0, x1, y1, x2, y2, color);
+  _screen->fillTriangle(x0, y0, x1, y1, x2, y2, white);
 }
 
 // ========================================================

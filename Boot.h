@@ -99,9 +99,9 @@ private:
   // uint8_t _step;      // desplazamiento actual (0..BAR_SPACING-1)
   // uint8_t _prevStep;  // desplazamiento que se dibujó en pantalla
   // Ticker _ticker;     // avance de 1 px cada ANIM_TICK ms (acumulador por tiempo)
-  Blink _blink;  // parpadeo del mensaje (ancla + fase + cambio pendiente)
+  Blink _blink;  // parpadeo del mensaje (ancla + fase + flanco)
 
-  bool _holdMessage;     // true si el mensaje de "Press any button..." está visible
+  // bool _holdMessage;     // true si el mensaje de "Press any button..." está visible
 
   bool _done;
   bool _clear;  // primer frame: clear() completo + dibujar todo
@@ -123,7 +123,7 @@ private:
   // en cada avance de 1 px)
   void firstPrint();
   void blinkMessage();
-  void drawMessage();
+  void drawMessage(bool show);
 
   // Dibuja todas las franjas (TITULO y CUERPO) en el desplazamiento actual:
   // imprime la columna de cabeza de cada franja y borra en negro la que

@@ -139,9 +139,7 @@ void Engine::print() {
     case State::BOOT: _boot.print(); break;
     case State::LEGEND: _legend.print(); break;
     case State::MENU: _menu.print(); break;
-    case State::MENU_SOUND:
-      _menuSound.print();
-      break;
+    case State::MENU_SOUND: _menuSound.print(); break;
 
       // AISLADO: ventanas del Game y de los demás submenus (MenuSound ya esta
       // activa; ver Engine::update).
@@ -172,7 +170,7 @@ void Engine::changeState(State newState) {
   switch (_state) {
     case State::BOOT: _boot.begin(); break;
     case State::LEGEND: _legend.begin(); break;
-    case State::MENU:
+    case State::MENU: {
       // beginWindow=false: solo se usa al volver de MenuDifficulty/MenuSound,
       // que ya dejaron repintada la banda de rombos (restoreDiamondBand) y
       // por tanto no necesitan el clear() completo de Menu::begin().
@@ -183,10 +181,9 @@ void Engine::changeState(State newState) {
       // selected = selected == Menu::OPT_SOUND && showContinue ? _menu.OPT_CONTINUE : Menu::OPT_SOUND;
       _menu.begin(showContinue, selected);
       break;
+    }
 
-    case State::MENU_SOUND:
-      _menuSound.begin();
-      break;
+    case State::MENU_SOUND: _menuSound.begin(); break;
 
       // AISLADO: ventanas del Game y de los demás submenus (MenuSound ya esta
       // activa; ver Engine::update).

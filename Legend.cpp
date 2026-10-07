@@ -1,5 +1,6 @@
 #include "Legend.h"
 #include "Globals.h"
+#include "Draw.h"
 
 #include <Adafruit_GFX.h>
 #include <stdio.h>
@@ -42,7 +43,7 @@ void Legend::begin() {
   _btn = 0;
   _lastBtn = 0;
   _ticker.start();
-  _blink.start(true);
+  _blink.start();
   _lastScroll = false;
   _done = false;
   _clear = true;
@@ -84,14 +85,12 @@ void Legend::update() {
     if (_scroller.update()) return;
     _lastScroll = false;
     _ticker.start();
-    _blink.restart();
+    _blink.start();
   };
 
   // El rombo activo cambia cada DWELL_MS (avance lento)
   uint32_t steps = _ticker.consume();
   if (steps) _btn = (_btn + steps) % 4;
-
-  _blink.update(PERIOD, OFF);
 }
 
 // ========================================================
@@ -155,67 +154,81 @@ void Legend::firstPrint() {
   // ------------------------------------------------------
 
   char* text = "Move / Action";
-  int16_t centerX = 0;
-  int16_t centerY = 0;
+  // int16_t centerX = 0;
+  // int16_t centerY = 0;
 
-  int16_t middleX = WIDTH / 2;
+  const int16_t middleX = WIDTH / 2;
   int16_t textX = 0;
 
   // ------------------------------------------------------
 
-  display.fillRect(0, TEXT_Y - 1, WIDTH, 8 + 1, SSD1306_WHITE);
+  display.fillRect(0, TEXT_Y - 1, WIDTH, 8 + 1, true);
 
   // ------------------------------------------------------
 
   text = "Move";
   textX = (middleX - strlen(text) * 6) / 2;
-  display.drawText(text, textX, TEXT_Y, TEXT_6x8, SSD1306_BLACK, SSD1306_WHITE);
+  display.drawText(text, textX, TEXT_Y, TEXT_6x8, false, true);
+  Draw::triangle(1, PAD_LEFT_X, PAD_Y - PAD_RADIO);        // Arriba (↑)
+  Draw::triangle(2, PAD_LEFT_X + PAD_RADIO, PAD_Y);        // Derecha (→)
+  Draw::triangle(3, PAD_LEFT_X, PAD_Y + PAD_RADIO);        // Abajo (↓)
+  Draw::triangle(4, PAD_LEFT_X - PAD_RADIO, PAD_Y);        // Izquierda (←)
+
+
 
   // Arriba (↑)
-  centerX = PAD_LEFT_X;
-  centerY = PAD_Y - PAD_RADIO;
-  display.fillTriangle(
-    centerX - SIZE, centerY,
-    centerX, centerY - SIZE,
-    centerX + SIZE, centerY,
-    SSD1306_WHITE);
+  // toggleTriangle(1, PAD_LEFT_X, PAD_Y - PAD_RADIO, SSD1306_WHITE);
+  // centerX = PAD_LEFT_X;
+  // centerY = PAD_Y - PAD_RADIO;
+  // toggleTriangle(1, centerX, centerY, SSD1306_WHITE);
+  // display.fillTriangle(
+  //   centerX - SIZE, centerY,
+  //   centerX, centerY - SIZE,
+  //   centerX + SIZE, centerY,
+  //   SSD1306_WHITE);
 
   // Derecha (→)
-  centerX = PAD_LEFT_X + PAD_RADIO;
-  centerY = PAD_Y;
-  display.fillTriangle(
-    centerX, centerY - SIZE,
-    centerX + SIZE, centerY,
-    centerX, centerY + SIZE,
-    SSD1306_WHITE);
+  // toggleTriangle(2, PAD_LEFT_X + PAD_RADIO, PAD_Y, SSD1306_WHITE);
+  // centerX = PAD_LEFT_X + PAD_RADIO;
+  // centerY = PAD_Y;
+  // toggleTriangle(2, centerX, centerY, SSD1306_WHITE);
+  // display.fillTriangle(
+  //   centerX, centerY - SIZE,
+  //   centerX + SIZE, centerY,
+  //   centerX, centerY + SIZE,
+  //   SSD1306_WHITE);
 
   // Abajo (↓)
-  centerX = PAD_LEFT_X;
-  centerY = PAD_Y + PAD_RADIO;
-  display.fillTriangle(
-    centerX - SIZE, centerY,
-    centerX, centerY + SIZE,
-    centerX + SIZE, centerY,
-    SSD1306_WHITE);
+  // toggleTriangle(3, PAD_LEFT_X, PAD_Y + PAD_RADIO, SSD1306_WHITE);
+  // centerX = PAD_LEFT_X;
+  // centerY = PAD_Y + PAD_RADIO;
+  // toggleTriangle(3, centerX, centerY, SSD1306_WHITE);
+  // display.fillTriangle(
+  //   centerX - SIZE, centerY,
+  //   centerX, centerY + SIZE,
+  //   centerX + SIZE, centerY,
+  //   SSD1306_WHITE);
 
   // Izquierda (←)
-  centerX = PAD_LEFT_X - PAD_RADIO;
-  centerY = PAD_Y;
-  display.fillTriangle(
-    centerX, centerY - SIZE,
-    centerX - SIZE, centerY,
-    centerX, centerY + SIZE,
-    SSD1306_WHITE);
+  // toggleTriangle(4, PAD_LEFT_X - PAD_RADIO, PAD_Y, SSD1306_WHITE);
+  // centerX = PAD_LEFT_X - PAD_RADIO;
+  // centerY = PAD_Y;
+  // toggleTriangle(4, centerX, centerY, SSD1306_WHITE);
+  // display.fillTriangle(
+  //   centerX, centerY - SIZE,
+  //   centerX - SIZE, centerY,
+  //   centerX, centerY + SIZE,
+  //   SSD1306_WHITE);
 
   // ------------------------------------------------------
 
   // Rótulo y rombos de ACTION (derecha): las posiciones de un pad
   text = "Action";
   textX = (middleX + (middleX - strlen(text) * 6) / 2);
-  display.drawText(text, textX, TEXT_Y, TEXT_6x8, SSD1306_BLACK, SSD1306_WHITE);
+  display.drawText(text, textX, TEXT_Y, TEXT_6x8, false, true);
 
   for (int8_t i = 0; i < 4; i++)
-    toggleDiamond(i);
+    toggleDiamond(i, true);
 
   // for (uint8_t step = 0; step < 4; step++) {
   //   int16_t cx, cy;
@@ -226,13 +239,14 @@ void Legend::firstPrint() {
   // ------------------------------------------------------
 
   const char* pieText = BTN_FUNC[_btn];
-  display.fillRect(0, FOOT_TOP - 1, WIDTH, Config::Screen::FOOT_H + 1, SSD1306_WHITE);
-  display.drawText(pieText, (WIDTH - strlen(pieText) * 6) / 2, FOOT_TOP, TEXT_6x8, SSD1306_BLACK, SSD1306_WHITE);
+  display.fillRect(0, FOOT_TOP - 1, WIDTH, Config::Screen::FOOT_H + 1, true);
+  display.drawText(pieText, (WIDTH - strlen(pieText) * 6) / 2, FOOT_TOP, TEXT_6x8, false, true);
 }
 
 void Legend::blinkDiamond() {
-  if (!_blink.changed()) return;
-  toggleDiamond(_btn);
+  if (_lastScroll) return;
+  else if (!_blink.changed(PERIOD, OFF)) return;
+  toggleDiamond(_btn, _blink.isVisible(PERIOD, OFF));
 
   // int16_t centerX = 0;
   // int16_t centerY = 0;
@@ -288,8 +302,6 @@ void Legend::blinkDiamond() {
   //       _showDiamond ? SSD1306_BLACK : SSD1306_WHITE);
   //     break;
   // }
-
-  _blink.toggle();
 }
 
 void Legend::diamondCenter(int8_t diamond, int16_t& centerX, int16_t& centerY) {
@@ -317,22 +329,10 @@ void Legend::diamondCenter(int8_t diamond, int16_t& centerX, int16_t& centerY) {
 }
 
 void Legend::toggleDiamond(int8_t diamond, bool show) {
- 
   int16_t centerX = 0;
   int16_t centerY = 0;
   diamondCenter(diamond, centerX, centerY);
-
-  display.fillTriangle(
-    centerX - SIZE, centerY,
-    centerX, centerY - SIZE,
-    centerX + SIZE, centerY,
-    _blink.state() || show ? SSD1306_WHITE : SSD1306_BLACK);
-
-  display.fillTriangle(
-    centerX - SIZE, centerY,
-    centerX, centerY + SIZE,
-    centerX + SIZE, centerY,
-    _blink.state() || show ? SSD1306_WHITE : SSD1306_BLACK);
+  Draw::diamond(centerX, centerY, show);
 }
 
 // ========================================================

@@ -90,7 +90,6 @@ public:
   // Accesos
   // ========================================================
 
-  int8_t selected() const;
   // void setBestScore(uint16_t value);
 
   // Devuelve la opción elegida si se confirma (ACTION_RIGHT), o -1
@@ -107,15 +106,18 @@ public:
   // borra la pantalla: solo la banda.
   // void restoreDiamondBand();
   bool done() const;
+  int8_t selected() const;
 
 private:
   void action();
   void firstPrint();
-  void blink();
+  void blinkOption();
   void nextOption();
   void toggleText(bool show);
-  void toggleDiamond(int8_t diamond, bool show);
-  void toggleTriangle(int8_t triangle, bool show);
+  void holdButtons();
+  void navigate();
+  void focused(int8_t diamond, bool show);
+  void unfocused(int8_t triangle, bool show);
 
   // void drawDiamond(int8_t selected, bool focus, bool black);
 
@@ -148,7 +150,6 @@ private:
   // ========================================================
 
   static constexpr int16_t WIDTH = Config::Screen::WIDTH;
-  static constexpr uint8_t SIZE = Config::Diamond::SIZE;
   static constexpr int16_t FOOT_TOP = Config::Screen::FOOT_TOP;
 
   static constexpr int16_t TRIANGLE_Y = Config::MenuStrip::TRIANGLE_Y;
@@ -181,8 +182,6 @@ private:
   // Métodos internos
   // ========================================================
 
-  void holdButtons();
-  void navigate();
   // void blink();
 
   // ========================================================
@@ -204,7 +203,7 @@ private:
   int8_t _selected;  // opción actual (objetivo central)
   int8_t _lastSelected;
   // Ticker _ticker;    // avance de 1 px cada ANIM_TICK ms (acumulador por tiempo)
-  Blink _blink;      // parpadeo de la opción (ancla + fase + cambio pendiente)
+  Blink _blink;      // parpadeo de la opción (ancla + fase + flanco)
   // bool _redraw;         // primer frame tras begin(): clear() completo + estáticos
   // bool _diamondsDirty;  // hay que repintar solo la banda de rombos (restoreDiamondBand)
   ButtonRepeat _repeat;  // repetición de los botones de navegación al mantenerlos

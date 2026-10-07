@@ -19,7 +19,7 @@ Boot::Boot()
   // _prevStep(0),
   // : _ticker(ANIM_TICK),
   : _blink(),
-    _holdMessage(true),
+    // _holdMessage(true),
     _done(false),
     _clear(true) {}
 // _x(0),
@@ -38,7 +38,7 @@ void Boot::begin() {
   // _x = 0;
   // _y = 0;
   // _bars = 0;
-  _holdMessage = true;
+  // _holdMessage = true;
   _done = false;
   _clear = true;
 }
@@ -91,9 +91,6 @@ void Boot::update() {
 
   // if (_holdMessage && _timer.expired(HOLD))
   //   _holdMessage = false;
-
-  // if (!_holdMessage)
-  _blink.update(PERIOD, OFF);
 }
 
 // ========================================================
@@ -172,8 +169,7 @@ void Boot::firstPrint() {
 
   // ------------------------------------------------------
 
-  drawMessage();
-  _blink.toggle();
+  drawMessage(true);
 
   // for (int8_t i = 0; i < MESSAGE_LINES; i++) {
   //   const char* message = MESSAGE[i];
@@ -196,9 +192,7 @@ void Boot::firstPrint() {
   // ------------------------------------------------------
 
   display.fillRect(0, bodyTop, WIDTH, Config::Screen::BODY_H, SSD1306_WHITE);
-
   const int16_t midX = (WIDTH - Sprite::LOGO_W) / 2;
-
   for (int16_t y = 0; y < Sprite::LOGO_H; y++)
     for (int16_t x = 0; x < Sprite::LOGO_W; x++)
       display.drawPixel(midX + x, bodyTop + y, Sprite::logoPixel(x, y));
@@ -228,22 +222,16 @@ void Boot::firstPrint() {
 }
 
 void Boot::blinkMessage() {
-  if (!_blink.changed()) return;
-
-  drawMessage();
-  _blink.toggle();
+  if (!_blink.changed(PERIOD, OFF)) return;
+  drawMessage(_blink.isVisible(PERIOD, OFF));
 }
 
-void Boot::drawMessage() {
+void Boot::drawMessage(bool show) {
   for (int8_t line = 0; line < MESSAGE_LINES; line++) {
     const char* message = MESSAGE[line];
-    int16_t x = (WIDTH - strlen(message) * 6) / 2;
-    int16_t y = HEADER_TOP + line * 8;
-
-    if (_blink.state())
-      display.drawText(message, x, y, TEXT_6x8, SSD1306_BLACK, SSD1306_BLACK);
-    else
-      display.drawText(message, x, y, TEXT_6x8, SSD1306_WHITE, SSD1306_BLACK);
+    const int16_t x = (WIDTH - strlen(message) * 6) / 2;
+    const int16_t y = HEADER_TOP + line * 8;
+    display.drawText(message, x, y, TEXT_6x8, show);
   }
 }
 

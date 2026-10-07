@@ -1,6 +1,7 @@
 #include "esp32-hal.h"
 #include "Menu.h"
 #include "Globals.h"
+#include "Draw.h"
 
 #include <stdio.h>
 
@@ -108,12 +109,15 @@ void Menu::begin(bool showContinue, int8_t selected) {
   _selected = selected;
   _lastSelected = selected;
   _space = WIDTH / (OPT_COUNT + (showContinue ? 1 : 0));
-  _blink.start(false);
+  _blink.start();
   _lastScroll = true;
   _confirm = false;
   _done = false;
-  if(selected == OPT_NEW)
+
+  if(selected == OPT_NEW || selected == OPT_CREDITS)
     _clear = true;
+  else
+    showOptions();
 
   // if (_selected == OPT_NEW && false) {
   //   _showContinue = false;
@@ -239,10 +243,8 @@ void Menu::update() {
     if (_scroller.update()) return;
     _lastScroll = false;
     // _ticker.start();
-    _blink.start(false);
+    _blink.start();
   }
-
-  _blink.update(PERIOD, OFF);
 
 
   // navigate();
@@ -290,8 +292,8 @@ void Menu::action() {
     sound.play(Sound::SFX_BACK);
   } else if (buttons.pressed(Buttons::ACTION_RIGHT)) {
     sound.play(Sound::SFX_CONFIRM);
-    // _confirm = true;
-    _confirm = !_confirm;
+    _confirm = true;
+    // _confirm = !_confirm;
   }
 }
 
@@ -350,7 +352,7 @@ void Menu::print() {
   // if (_redraw) {
   //   display.clear();
   firstPrint();
-  blink();
+  blinkOption();
   nextOption();
   _scroller.print();
   //   _redraw = false;
@@ -423,7 +425,7 @@ void Menu::firstPrint() {
   // Título
   const char* name = Config::Version::NAME;
   const int16_t headerW = Config::Screen::HEADER_TOP;
-  display.drawText(name, (WIDTH - strlen(name) * 12) / 2, headerW, TEXT_12x16, SSD1306_WHITE, SSD1306_BLACK);
+  display.drawText(name, (WIDTH - strlen(name) * 12) / 2, headerW, TEXT_12x16, true, false);
 
   // const int16_t SIZE = Config::Diamond::SIZE;
   // const int16_t centerX = WIDTH / 2;
@@ -444,24 +446,24 @@ void Menu::firstPrint() {
   //   SSD1306_WHITE);
 
   // Cuadro de selección (banda de la opción actual)
-  display.fillRect(0, BOX_TOP - 2, WIDTH, BOX_HEIGHT + 2, SSD1306_WHITE);
+  display.fillRect(0, BOX_TOP - 2, WIDTH, BOX_HEIGHT + 2, true);
   toggleText(true);
   showOptions();
 
   const int16_t footTop = Config::Screen::FOOT_TOP;
   const int16_t footH = Config::Screen::FOOT_H;
-  display.fillRect(0, footTop - 1, WIDTH, footH + 1, SSD1306_WHITE);
+  display.fillRect(0, footTop - 1, WIDTH, footH + 1, true);
 
   // Best score
   const char* label = "Best ";
   char bestScore[9];
   sprintf(bestScore, "%u", (unsigned)storage.bestScore());
-  display.drawText(label, 1, footTop, TEXT_6x8, SSD1306_BLACK, SSD1306_WHITE);
-  display.drawText(bestScore, 1 + strlen(label) * 6, footTop, TEXT_6x8, SSD1306_BLACK, SSD1306_WHITE);
+  display.drawText(label, 1, footTop, TEXT_6x8, false, true);
+  display.drawText(bestScore, 1 + strlen(label) * 6, footTop, TEXT_6x8, false, true);
 
   // Versión
   const char* version = Config::Version::VERSION;
-  display.drawText(version, WIDTH - strlen(version) * 6, footTop, TEXT_6x8, SSD1306_BLACK, SSD1306_WHITE);
+  display.drawText(version, WIDTH - strlen(version) * 6, footTop, TEXT_6x8, false, true);
 
   // for (uint8_t selected = 0; selected < OPT_COUNT; selected++)
   //   drawDiamond(selected, selected == _selected, false);
@@ -516,29 +518,23 @@ bool Menu::done() const {
   return _done;
 }
 
-void Menu::blink() {
-  if (_confirm) {
-    _blink.set(true);
-    _confirm = false;
-    _done = true;
-  } else if (_blink.changed()) {
-    _blink.toggle();
-  } else {
-    return;
-  }
+void Menu::blinkOption() {
+  if (_confirm) { _confirm = false; _done = true;
+  } else if (!_blink.changed(PERIOD, OFF)) return;
 
-  toggleText(_blink.state());
-  toggleDiamond(_selected, _blink.state());
+  const bool visible = _done || _blink.isVisible(PERIOD, OFF);
+  toggleText(visible);
+  focused(_selected, visible);
 }
 
 void Menu::nextOption() {
   if (_lastSelected == _selected) return;
 
-  toggleDiamond(_lastSelected, false);
-  toggleTriangle(_lastSelected, true);
+  focused(_lastSelected, false);
+  unfocused(_lastSelected, true);
 
-  toggleTriangle(_selected, false);
-  toggleDiamond(_selected, true);
+  unfocused(_selected, false);
+  focused(_selected, true);
 
   // int8_t op = _selected;
   // if (!_visibleContinue && op >= OPT_CONTINUE) op++;
@@ -558,27 +554,17 @@ void Menu::nextOption() {
   _lastSelected = _selected;
 }
 
-void Menu::toggleDiamond(int8_t diamond, bool show) {
+void Menu::focused(int8_t diamond, bool show) {
 
   int16_t centerX = diamond + 1;
   if (!_showContinue && diamond >= OPT_CONTINUE)
     centerX--;
   centerX *= _space;
 
-  display.fillTriangle(
-    centerX - SIZE, DIAMOND_Y,
-    centerX, DIAMOND_Y - SIZE,
-    centerX + SIZE, DIAMOND_Y,
-    show ? SSD1306_WHITE : SSD1306_BLACK);
-
-  display.fillTriangle(
-    centerX - SIZE, DIAMOND_Y,
-    centerX, DIAMOND_Y + SIZE,
-    centerX + SIZE, DIAMOND_Y,
-    show ? SSD1306_WHITE : SSD1306_BLACK);
+  Draw::diamond(centerX, DIAMOND_Y, show);
 }
 
-void Menu::toggleTriangle(int8_t triangle, bool show) {
+void Menu::unfocused(int8_t triangle, bool show) {
   if (triangle >= OPT_COUNT) return;
 
   int16_t centerX = triangle + 1;
@@ -586,25 +572,23 @@ void Menu::toggleTriangle(int8_t triangle, bool show) {
     centerX--;
   centerX *= _space;
 
-  display.fillTriangle(
-    centerX - SIZE, TRIANGLE_Y,
-    centerX, TRIANGLE_Y - SIZE,
-    centerX + SIZE, TRIANGLE_Y,
-    show ? SSD1306_WHITE : SSD1306_BLACK);
+  Draw::triangle(1, centerX, TRIANGLE_Y, show);
 }
 
 void Menu::toggleText(bool show) {
   const char* text = OPTION[_selected];
-  const bool Color = show ? SSD1306_BLACK : SSD1306_WHITE;
-  display.drawText(text, (WIDTH - strlen(text) * 12) / 2, BOX_TOP - 1, TEXT_12x16, Color, SSD1306_WHITE);
+  display.drawText(text, (WIDTH - strlen(text) * 12) / 2, BOX_TOP - 1, TEXT_12x16, !show, true);
 }
 
 void Menu::showOptions() {
-  display.fillRect(0, VALUE_TOP, WIDTH, VALUE_TOP + VALUE_HEIGHT, SSD1306_BLACK);
+  display.fillRect(0, VALUE_TOP, WIDTH, VALUE_TOP + VALUE_HEIGHT, false);
   for (int8_t pos = 0; pos < OPT_COUNT; pos++) {
     if (!_showContinue && pos == OPT_CONTINUE) continue;
-    if (pos != _selected) toggleTriangle(pos, true);
+    if (pos != _selected) unfocused(pos, true);
   }
-  toggleDiamond(_selected, true);
+  focused(_selected, true);
 }
 
+// ====================================================================================
+// Fin
+// ====================================================================================

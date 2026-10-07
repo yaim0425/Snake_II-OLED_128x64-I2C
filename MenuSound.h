@@ -1,6 +1,7 @@
 #ifndef MENU_SOUND_H
 #define MENU_SOUND_H
 
+#include "Config.h"
 #include "Timer.h"
 #include "Blink.h"
 
@@ -95,6 +96,8 @@ private:
   
   static constexpr int16_t VALUE_HEIGHT = Config::MenuStrip::VALUE_HEIGHT;
   static constexpr int16_t VALUE_TOP = Config::MenuStrip::VALUE_TOP;
+
+  static constexpr int16_t DIAMOND_Y = Config::MenuStrip::DIAMOND_Y;
 
   // ========================================================
   // Métodos internos

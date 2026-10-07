@@ -71,6 +71,8 @@ private:
   void firstPrint();
   void diamondCenter(int8_t diamond, int16_t& centerX, int16_t& centerY);
   void toggleDiamond(int8_t diamond, bool show = false);
+  void blinkDiamond();
+  void nextBtn();
 
   // ========================================================
   // Geometría del pad MOVE (rombo de 4 flechas)
@@ -89,7 +91,6 @@ private:
   // ========================================================
 
   static constexpr int16_t WIDTH = Config::Screen::WIDTH;
-  static constexpr uint8_t SIZE = Config::Diamond::SIZE;                // rombo completo (SIEMPRE rombo)
   static constexpr int16_t PAD_RADIO = 10;                              // radio del pad (centro-rombo)
   static constexpr int16_t PAD_RIGHT_X = Config::Screen::WIDTH * 0.75;  // centro del pad de rombos
   // static constexpr uint8_t BODY_MIDDLE = Config::Screen::BODY_TOP + (Config::Screen::BODY_H - Config::Screen::FOOT_H - 1) / 2 - 2; // -8  5
@@ -128,8 +129,8 @@ private:
   // texto entra deslizándose en lugar de aparecer de golpe.
   Scroller _scroller;
 
-  Ticker _ticker;    // avance de 1 px cada ANIM_TICK ms (acumulador por tiempo)
-  Blink _blink;      // parpadeo del rombo activo (ancla + fase + cambio pendiente)
+  Ticker _ticker;  // avance de 1 px cada ANIM_TICK ms (acumulador por tiempo)
+  Blink _blink;    // parpadeo del rombo activo (ancla + fase + flanco)
   // int8_t _lastActive;  // último rombo cuya zona se gestionó (para restaurar el que deja de ser activo)
   // int8_t _lastText;    // texto del pie que se dibujó (para borrar/redibujar solo al cambiar)
 
@@ -153,10 +154,8 @@ private:
 
   // Rombo completo de DIA_SIZE centrado en (cx, cy); si black es true no se dibuja
   // void dDiamond(int16_t cx, int16_t cy, bool color);
-  void blinkDiamond();
 
   // Compone el texto del nuevo rombo y arranca su vuelo lateral
-  void nextBtn();
 
   // // ¿El rombo activo está visible? (fijo durante HOLD_MS, luego parpadeo rápido)
   // bool blinkVisible() const;

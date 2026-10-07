@@ -6,50 +6,35 @@
 #include "Timer.h"
 
 // ========================================================
-// Blink — parpadeo con ancla temporal y cambio pendiente
+// Blink — parpadeo anclado con detección de flanco
 //
-// Extrae el trío que cada ventana llevaba por separado:
-// Stopwatch + el flag de giro (`state()`) + el "hay que
-// repintar" (`changed()`). `update()` recalcula el pendiente
-// comparando el flag con la fase del período; `toggle()` lo
-// invierte y lo consume; `set()` lo fija (p. ej. al confirmar
-// en el Menu). `on()` es la fase cruda para quien repinta
-// visible/oculto en cada frame (MenuSound, MenuDifficulty).
+// Ancla un período (start) y expone dos lecturas:
+//   - isVisible(period, offPct): fase actual (true = visible).
+//     Para quien repinta cada frame (MenuDifficulty, MenuSound).
+//   - changed(period, offPct): true solo cuando la fase cambió
+//     respecto de la última consulta. Para quien redibuja solo
+//     en el flanco (Boot, Legend, Menu).
+//
+// El recuerdo de la última fase (`_last`) vive aquí: las
+// ventanas ya no llevan su propio flag de giro.
 // ========================================================
 
 class Blink {
 public:
 
-  // Ancla el período (llamar en begin()) y fija el flag de giro
-  void start(bool state = false);
+  // Ancla el período (llamar en begin())
+  void start();
 
-  // Reancla el período sin tocar el flag (p. ej. al terminar
-  // un vuelo del Scroller)
-  void restart();
+  // Fase actual del período: ¿toca visible? (oculto el primer offPct%)
+  bool isVisible(uint32_t period, uint8_t offPct) const;
 
-  // Fase cruda del período: ¿toca visible? (oculto el primer offPct%)
-  bool on(uint32_t period, uint8_t offPct) const;
-
-  // Recalcula el cambio pendiente (flag != fase). Una vez por update()
-  void update(uint32_t period, uint8_t offPct);
-
-  // ¿Hay cambio pendiente? (lo consume toggle()/set())
-  bool changed() const;
-
-  // Flag de giro (cada ventana lo interpreta como su estado de dibujo)
-  bool state() const;
-
-  // Invierte el flag y consume el pendiente
-  void toggle();
-
-  // Fija el flag y consume el pendiente
-  void set(bool state);
+  // ¿Cambió la fase desde la última consulta? (una vez por flanco)
+  bool changed(uint32_t period, uint8_t offPct);
 
 private:
 
   Stopwatch _timer;
-  bool _state = false;    // flag de giro (interpretación de cada ventana)
-  bool _pending = false;  // cambio de fase pendiente de aplicar
+  bool _last = false;  // última fase consultada (para el flanco)
 };
 
 #endif

@@ -75,14 +75,14 @@ public:
 
   void drawPixel(
     int16_t x, int16_t y,
-    bool color = SSD1306_BLACK);
+    bool white = false);
 
   // Rectángulo relleno: misma firma que Adafruit_SSD1306::fillRect
   // (reenvío directo a la pantalla)
   void fillRect(
     int16_t x, int16_t y,
     uint16_t width, uint16_t height,
-    bool color = SSD1306_WHITE);
+    bool white = false);
 
   // Triángulo relleno por sus tres vértices. No existe en
   // Adafruit_GFX (solo el contorno, drawTriangle), así que se
@@ -93,7 +93,7 @@ public:
     int16_t x0, int16_t y0,
     int16_t x1, int16_t y1,
     int16_t x2, int16_t y2,
-    bool color = SSD1306_WHITE);
+    bool white = false);
 
   // ========================================================
   // Texto
