@@ -31,7 +31,7 @@ public:
   // Inicialización (al entrar en la ventana)
   // ========================================================
 
-  // void begin();
+  void begin();
 
   // ========================================================
   // Componer el texto en la franja (texto centrado) y
@@ -87,6 +87,7 @@ public:
   // entra en pantalla). false = la animación finalizó y la
   // franja ya está pintada en su sitio.
   bool print();
+  bool done() const;
 private:
   // ========================================================
   // Acceso a la franja (_strip)
@@ -121,15 +122,15 @@ private:
   // ========================================================
 
   uint8_t _strip[STRIP_H / 8][BUFFER_W];  // franja: cada byte = 1 columna de 8 px
-  uint8_t _height;                       // alto actual de la franja en px
+  uint8_t _height;                        // alto actual de la franja en px
   int8_t _size;
-  int16_t _y;                            // fila de pantalla donde se vuelca la franja
-  bool _toLeft;                          // true: entra por la derecha; false: por la izquierda
+  int16_t _y;    // fila de pantalla donde se vuelca la franja
+  bool _toLeft;  // true: entra por la derecha; false: por la izquierda
   bool _isStopNow;
-  int16_t _x;                            // borde izquierdo de la franja en pantalla
-  int16_t _lastX;                        // borde izquierdo de la franja en pantalla
-  bool _done;                            // true: _slideX llegó a 0 y ese frame ya se pintó
-  Ticker _timer;                        // avance de 1 px por ANIM_TICK ms
+  int16_t _x;      // borde izquierdo de la franja en pantalla
+  int16_t _lastX;  // borde izquierdo de la franja en pantalla
+  bool _done;      // true: _slideX llegó a 0 y ese frame ya se pintó
+  Ticker _timer;   // avance de 1 px por ANIM_TICK ms
 };
 
 #endif

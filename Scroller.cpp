@@ -26,15 +26,15 @@ Scroller::Scroller()
 // vuelque en el primer frame.
 // ========================================================
 
-// void Scroller::begin() {
-//     _height = 16;
-//     _size = 2;
-//     _y = 0;
-//     _toLeft = true;
-//     _x = 0;
-//     _lastX = 0;
-//     _done = true;
-// }
+void Scroller::begin() {
+    _height = 16;
+    _size = 2;
+    _y = 0;
+    _toLeft = true;
+    _x = 0;
+    _lastX = 0;
+    _done = true;
+}
 
 // ========================================================
 // Componer el texto en la franja (texto centrado) y
@@ -228,6 +228,10 @@ void Scroller::setStripPixel(uint16_t x, uint8_t y, bool color) {
   } else {
     _strip[rowBytes][x] &= (int8_t) ~(1 << bit);
   }
+}
+
+bool Scroller::done() const {
+  return _done;
 }
 
 // ====================================================================================

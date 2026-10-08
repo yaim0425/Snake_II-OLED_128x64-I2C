@@ -77,11 +77,11 @@ const char* const Menu::OPTION[OPT_COUNT] = {
 
 Menu::Menu()
   // : _bestScore(bestScore),
-    // _version(version),
-    // _title("Snake II"),
-    // _showFooter(true),
-    // _optionCount(OPT_NEW),
-    // _optionTexts(NO_CONTINUE_OPTIONS),
+  // _version(version),
+  // _title("Snake II"),
+  // _showFooter(true),
+  // _optionCount(OPT_NEW),
+  // _optionTexts(NO_CONTINUE_OPTIONS),
   : _holdButtons(true),
     _lastScroll(true),
     _showContinue(false),
@@ -114,7 +114,7 @@ void Menu::begin(bool showContinue, int8_t selected) {
   _confirm = false;
   _done = false;
 
-  if(selected == OPT_NEW || selected == OPT_CREDITS)
+  if (selected == OPT_NEW || selected == OPT_CREDITS)
     _clear = true;
   else
     showOptions();
@@ -519,8 +519,16 @@ bool Menu::done() const {
 }
 
 void Menu::blinkOption() {
-  if (_confirm) { _confirm = false; _done = true;
-  } else if (!_blink.changed(PERIOD, OFF)) return;
+  if (_confirm) {
+    _done = true;
+    _confirm = false;
+  } else if (!_scroller.done()) return;
+  else if (!_blink.changed(PERIOD, OFF)) return;
+  
+  if (!_scroller.done()) {
+    display.fillRect(0, BOX_TOP - 1, WIDTH, BOX_HEIGHT + 1, true);
+    _scroller.begin();
+  }
 
   const bool visible = _done || _blink.isVisible(PERIOD, OFF);
   toggleText(visible);
@@ -572,7 +580,7 @@ void Menu::unfocused(int8_t triangle, bool show) {
     centerX--;
   centerX *= _space;
 
-  Draw::triangle(Draw::UP, centerX, TRIANGLE_Y, show);
+  Draw::triangle(Draw::DIR_UP, centerX, TRIANGLE_Y, show);
 }
 
 void Menu::toggleText(bool show) {
@@ -581,7 +589,7 @@ void Menu::toggleText(bool show) {
 }
 
 void Menu::showOptions() {
-  display.fillRect(0, VALUE_TOP, WIDTH, VALUE_TOP + VALUE_HEIGHT, false);
+  display.fillRect(0, VALUE_TOP, WIDTH, VALUE_HEIGHT, false);
   for (int8_t pos = 0; pos < OPT_COUNT; pos++) {
     if (!_showContinue && pos == OPT_CONTINUE) continue;
     if (pos != _selected) unfocused(pos, true);

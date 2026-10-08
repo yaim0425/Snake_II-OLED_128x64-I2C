@@ -37,10 +37,11 @@ void Engine::update() {
 
     case State::MENU:
       _menu.update();
-      if (!_legend.done()) break;
+      if (!_menu.done()) break;
 
       switch (_menu.selected()) {
         case Menu::OPT_SOUND: changeState(State::MENU_SOUND); break;
+        default: changeState(State::LEGEND); break;
       }
 
       // // Confirmar opción (ACTION_RIGHT) -> cambiar de ventana
@@ -63,15 +64,13 @@ void Engine::update() {
 
     case State::MENU_SOUND:
       _menuSound.update();
-      if (_menuSound.done()) {
+      if (_menuSound.done()) changeState(State::MENU); break;
         // _menu.showOptions();
-        changeState(State::MENU);
+        // changeState(State::MENU);
 
         // _menu.restoreDiamondBand();  // pendiente: Menu::restoreDiamondBand()
         // sigue comentado en Menu.h/Menu.cpp; por eso changeState(MENU, false)
         // hace igual el _menu.begin() completo (beginWindow se ignora).
-      }
-      break;
 
       // AISLADO: ventanas del Game y de los demás submenus (MenuSound ya esta
       // activa: ver su case arriba). Se comentan por bloque entero, no linea
@@ -170,18 +169,19 @@ void Engine::changeState(State newState) {
   switch (_state) {
     case State::BOOT: _boot.begin(); break;
     case State::LEGEND: _legend.begin(); break;
-    case State::MENU: {
-      // beginWindow=false: solo se usa al volver de MenuDifficulty/MenuSound,
-      // que ya dejaron repintada la banda de rombos (restoreDiamondBand) y
-      // por tanto no necesitan el clear() completo de Menu::begin().
-      // if (beginWindow) _menu.begin();
+    case State::MENU:
+      {
+        // beginWindow=false: solo se usa al volver de MenuDifficulty/MenuSound,
+        // que ya dejaron repintada la banda de rombos (restoreDiamondBand) y
+        // por tanto no necesitan el clear() completo de Menu::begin().
+        // if (beginWindow) _menu.begin();
 
-      bool showContinue = false;  // !_game.isGameOver() && _game.score() > 0;
-      int8_t selected = _menu.selected() != Menu::OPT_SOUND ? _menu.selected() : Menu::OPT_SOUND;
-      // selected = selected == Menu::OPT_SOUND && showContinue ? _menu.OPT_CONTINUE : Menu::OPT_SOUND;
-      _menu.begin(showContinue, selected);
-      break;
-    }
+        bool showContinue = false;  // !_game.isGameOver() && _game.score() > 0;
+        int8_t selected = _menu.selected() != Menu::OPT_SOUND ? _menu.selected() : Menu::OPT_SOUND;
+        // selected = selected == Menu::OPT_SOUND && showContinue ? _menu.OPT_CONTINUE : Menu::OPT_SOUND;
+        _menu.begin(showContinue, selected);
+        break;
+      }
 
     case State::MENU_SOUND: _menuSound.begin(); break;
 
