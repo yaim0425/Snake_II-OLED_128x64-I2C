@@ -23,9 +23,17 @@ Arduino IDE. Programación orientada a objetos: cada clase en su archivo `.h` y 
   diga "haz un commit" o "un commit de todos los cambios": si hay varios temas, se
   hacen varios commits (nunca se fuerza todo en uno).
 - **Si el cambio necesita más de un commit**, seguir este procedimiento: (1) crear
-  un archivo `.json`; (2) escribir ahí la lista de archivos de cada commit y el
-  mensaje de cada uno; (3) hacer los commits según lo indicado en el punto 2;
-  (4) actualizar `PROYECTO.md`; (5) dar recomendaciones finales, brevemente.
+  un archivo `.json` (junto a `PROYECTO.md`, en la raíz del proyecto) que registre
+  los commits **pendientes** (futuros), con la lista de archivos de cada commit y el
+  mensaje de cada uno; (2) ir haciendo los commits según lo indicado en el punto 2;
+  **por cada commit hecho se borra ese commit del `.json`**; (3) cuando el `.json`
+  quede vacío (**todos los commits hechos), se elimina el archivo**; (4) actualizar
+  `PROYECTO.md`; (5) dar recomendaciones finales, brevemente.
+- **El `.json` es un punto de control (checkpoint):** si los commits se detienen por
+  cualquier razón, la siguiente sesión se retoma leyendo `PROYECTO.md` + el `.json`
+  (los commits pendientes que aún estén listados) y se continúa donde se quedó. Por
+  eso el `.json` se debe mantener al día tras cada commit y no debe borrarse hasta
+  haber completado todos.
 - **La IA debe actualizar este documento (`PROYECTO.md`) antes de hacer el commit**:
   toda modificación de código debe quedar reflejada (secciones/API) y ese cambio a
   `PROYECTO.md` debe incluirse en el mismo commit.
