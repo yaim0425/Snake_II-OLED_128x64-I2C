@@ -116,8 +116,8 @@ private:
   void toggleText(bool show);
   void holdButtons();
   void navigate();
-  void focused(int8_t diamond, bool show);
-  void unfocused(int8_t triangle, bool show);
+  void toggleDiamond(int8_t diamond, bool show);
+  void toggleTriangle(int8_t triangle, bool show);
 
   // void drawDiamond(int8_t selected, bool focus, bool black);
 

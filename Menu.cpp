@@ -446,7 +446,7 @@ void Menu::firstPrint() {
   //   SSD1306_WHITE);
 
   // Cuadro de selección (banda de la opción actual)
-  display.fillRect(0, BOX_TOP - 2, WIDTH, BOX_HEIGHT + 2, true);
+  display.fillRect(0, BOX_TOP - 1, WIDTH, BOX_HEIGHT + 2, true);
   toggleText(true);
   showOptions();
 
@@ -526,23 +526,23 @@ void Menu::blinkOption() {
   else if (!_blink.changed(PERIOD, OFF)) return;
   
   if (!_scroller.done()) {
-    display.fillRect(0, BOX_TOP - 1, WIDTH, BOX_HEIGHT + 1, true);
+    display.fillRect(0, BOX_TOP - 1, WIDTH, BOX_HEIGHT + 2, true);
     _scroller.begin();
   }
 
   const bool visible = _done || _blink.isVisible(PERIOD, OFF);
-  toggleText(visible);
-  focused(_selected, visible);
+  // toggleText(visible);
+  toggleDiamond(_selected, visible);
 }
 
 void Menu::nextOption() {
   if (_lastSelected == _selected) return;
 
-  focused(_lastSelected, false);
-  unfocused(_lastSelected, true);
+  toggleDiamond(_lastSelected, false);
+  toggleTriangle(_lastSelected, true);
 
-  unfocused(_selected, false);
-  focused(_selected, true);
+  toggleTriangle(_selected, false);
+  toggleDiamond(_selected, true);
 
   // int8_t op = _selected;
   // if (!_visibleContinue && op >= OPT_CONTINUE) op++;
@@ -562,7 +562,7 @@ void Menu::nextOption() {
   _lastSelected = _selected;
 }
 
-void Menu::focused(int8_t diamond, bool show) {
+void Menu::toggleDiamond(int8_t diamond, bool show) {
 
   int16_t centerX = diamond + 1;
   if (!_showContinue && diamond >= OPT_CONTINUE)
@@ -572,7 +572,7 @@ void Menu::focused(int8_t diamond, bool show) {
   Draw::diamond(centerX, DIAMOND_Y, show);
 }
 
-void Menu::unfocused(int8_t triangle, bool show) {
+void Menu::toggleTriangle(int8_t triangle, bool show) {
   if (triangle >= OPT_COUNT) return;
 
   int16_t centerX = triangle + 1;
@@ -585,16 +585,16 @@ void Menu::unfocused(int8_t triangle, bool show) {
 
 void Menu::toggleText(bool show) {
   const char* text = OPTION[_selected];
-  display.drawText(text, (WIDTH - strlen(text) * 12) / 2, BOX_TOP - 1, TEXT_12x16, !show, true);
+  display.drawText(text, (WIDTH - strlen(text) * 12) / 2, BOX_TOP, TEXT_12x16, !show, true);
 }
 
 void Menu::showOptions() {
   display.fillRect(0, VALUE_TOP, WIDTH, VALUE_HEIGHT, false);
   for (int8_t pos = 0; pos < OPT_COUNT; pos++) {
     if (!_showContinue && pos == OPT_CONTINUE) continue;
-    if (pos != _selected) unfocused(pos, true);
+    if (pos != _selected) toggleTriangle(pos, true);
   }
-  focused(_selected, true);
+  toggleDiamond(_selected, true);
 }
 
 // ====================================================================================

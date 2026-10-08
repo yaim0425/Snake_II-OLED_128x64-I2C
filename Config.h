@@ -155,7 +155,8 @@ constexpr uint32_t TICK = 100;   // intervalo de repetición mientras se mantien
 }
 
 namespace Scroller {
-constexpr int16_t TOP = 28;        // fila superior de la franja de texto (banda del menú)
+constexpr int8_t MAX_H = 32;
+// constexpr int16_t TOP = 28;        // fila superior de la franja de texto (banda del menú)
 constexpr uint32_t ANIMATION = 4;  // ms por px de desplazamiento lateral
 }
 
@@ -167,13 +168,31 @@ constexpr uint8_t OFF = 20;       // % del período en que está oculto
 
 namespace MenuStrip {
 static constexpr int16_t TRIANGLE_Y = Screen::FOOT_TOP - 3;
-static constexpr int16_t DIAMOND_Y = TRIANGLE_Y - 2 * Diamond::SIZE;
 
-static constexpr int16_t BOX_TOP = Screen::BODY_TOP + 8;
+static constexpr int16_t BODY_H = (Screen::FOOT_TOP - 2) - Screen::BODY_TOP + 1;  // Alto del cuerpo (sin el pie)
+static constexpr int16_t B = (int16_t)(BODY_H / 2);                   // Aux mitad del alto del cuerpo
+static constexpr int16_t C = 2 * B == BODY_H ? B : B - 1;             // Mitad del alto del cuerpo
+static constexpr int16_t BODY_MIDDLE = Screen::BODY_TOP + C;          // Posición mitad del alto del cuerpo
+
 static constexpr int16_t BOX_HEIGHT = 16;
+static constexpr int16_t BOX_TOP = BODY_MIDDLE - BOX_HEIGHT / 2;
 
-static constexpr int16_t VALUE_TOP = BOX_TOP + BOX_HEIGHT + 2;
-static constexpr int16_t VALUE_HEIGHT = TRIANGLE_Y - VALUE_TOP + 1;
+static constexpr int16_t VALUE_TOP = BODY_MIDDLE + BOX_HEIGHT / 2 + 2;
+static constexpr int16_t VALUE_HEIGHT = (Screen::FOOT_TOP - 2) - VALUE_TOP + 1;
+
+static constexpr int16_t DIAMOND_Y = VALUE_TOP + (int16_t)(VALUE_HEIGHT / 2);
+
+
+
+// static constexpr int16_t TRIANGLE_Y = Screen::FOOT_TOP - 3;
+
+// static constexpr int16_t BOX_HEIGHT = 16;
+// static constexpr int16_t BOX_TOP = Screen::BODY_TOP + 8;
+
+// static constexpr int16_t VALUE_TOP = BOX_TOP + BOX_HEIGHT + 2;
+// static constexpr int16_t VALUE_HEIGHT = TRIANGLE_Y - VALUE_TOP;
+
+// static constexpr int16_t DIAMOND_Y = VALUE_TOP + ceil(VALUE_HEIGHT/2);
 }
 }
 

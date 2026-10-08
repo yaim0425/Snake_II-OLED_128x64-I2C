@@ -89,6 +89,7 @@ public:
   bool print();
   bool done() const;
 private:
+  void curtain();
   // ========================================================
   // Acceso a la franja (_strip)
   // ========================================================
@@ -106,22 +107,22 @@ private:
   // ========================================================
 
   // Ancho de la franja (ancho de pantalla)
-  static constexpr uint8_t STRIP_W = Config::Screen::WIDTH;
+  static constexpr uint8_t WIDTH = Config::Screen::WIDTH;
 
   // Alto máximo de la franja (texto 18x24)
-  static constexpr uint8_t STRIP_H = 32;
+  static constexpr uint8_t STRIP_H = Config::Scroller::MAX_H;
 
   // Avance de 1 px cada ANIM_TICK ms (acumulador por tiempo)
   static constexpr uint32_t ANIM_TICK = Config::Scroller::ANIMATION;
 
-  static constexpr int8_t CURTAIN_W = 3;
-  static constexpr int16_t BUFFER_W = STRIP_W + CURTAIN_W;
+  // static constexpr int8_t CURTAIN_W = 3;
+  // static constexpr int16_t BUFFER_W = WIDTH + CURTAIN_W;
 
   // ========================================================
   // Estado interno
   // ========================================================
 
-  uint8_t _strip[STRIP_H / 8][BUFFER_W];  // franja: cada byte = 1 columna de 8 px
+  uint8_t _strip[STRIP_H / 8][WIDTH];  // franja: cada byte = 1 columna de 8 px
   uint8_t _height;                        // alto actual de la franja en px
   int8_t _size;
   int16_t _y;    // fila de pantalla donde se vuelca la franja
