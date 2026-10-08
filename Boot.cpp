@@ -150,7 +150,7 @@ void Boot::firstPrint() {
   // int16_t footLine = Config::Screen::FOOT_LINE;
   // display.fillRect(0, footLine, w, 1, false);
 
-  const int16_t bodyTop = Config::Screen::BODY_TOP;
+  // const int16_t bodyTop = Config::Screen::BODY_TOP;
   // display.fillRect(0, bodyTop, w, 1, false);
   // display.fillRect(0, bodyTop - 1, w, 1, false);
 
@@ -191,11 +191,11 @@ void Boot::firstPrint() {
 
   // ------------------------------------------------------
 
-  display.fillRect(0, bodyTop, WIDTH, Config::Screen::BODY_H, SSD1306_WHITE);
-  const int16_t midX = (WIDTH - Sprite::LOGO_W) / 2;
-  for (int16_t y = 0; y < Sprite::LOGO_H; y++)
-    for (int16_t x = 0; x < Sprite::LOGO_W; x++)
-      display.drawPixel(midX + x, bodyTop + y, Sprite::logoPixel(x, y));
+  display.fillRect(0, BODY_TOP, WIDTH, BODY_H, true);
+  display.drawBitmap(
+    (WIDTH - Sprite::LOGO_W) / 2, BODY_TOP,
+    Sprite::LOGO, Sprite::LOGO_W, Sprite::LOGO_H,
+    SSD1306_WHITE, SSD1306_BLACK);
 
   // ------------------------------------------------------
 
@@ -230,9 +230,10 @@ void Boot::drawMessage(bool show) {
   for (int8_t line = 0; line < MESSAGE_LINES; line++) {
     const char* message = MESSAGE[line];
     const int16_t x = (WIDTH - strlen(message) * 6) / 2;
-    const int16_t y = HEADER_TOP + line * 8;
+    const int16_t y = HEADER_TOP + line * 9;
     display.drawText(message, x, y, TEXT_6x8, show);
   }
+  display.fillRect(0, BODY_TOP, WIDTH, 1, true);
 }
 
 // ========================================================

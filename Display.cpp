@@ -205,6 +205,13 @@ void Display::drawText(
   _screen->print(text);
 }
 
+void Display::drawBitmap(
+  int16_t x, int16_t y,
+  const uint8_t *bitmap, int16_t w, int16_t h,
+  bool color, bool bgColor) {
+    _screen->drawBitmap(x, y, bitmap, w, h, color, bgColor);
+}
+
 // void Display::drawTextInverted(const char* text, int16_t x, int16_t y, uint8_t size) {
 //   if (_screen == nullptr) return;
 //   _screen->setTextSize(size);

@@ -151,10 +151,10 @@ Directorio: `D:\Documents\ESP32S3\Snake_II-OLED_128x64-I2C`
 | `Config.h` | Constantes compartidas del proyecto (namespace `Config`, sección 19): pines (`Config::Pin`: botones, buzzer, SDA/SCL), geometría y regiones de la pantalla (`Config::Screen`: 128×64, celda 8, dirección I2C, Header/Body), límites de la dificultad (`Config::Difficulty`), la versión del firmware (`Config::Version`: VERSION/RELEASE_DATE, la usa el pie del menú; NAME lo dibuja `Boot`), créditos (`Config::Credits`), tiempos de `Legend` (`Config::Legend`: NEXT/PERIOD/OFF, `HOLD` comentado), tamaño de rombo (`Config::Diamond`), repetición de botones (`Config::Button`: DELAY/TICK, **nuevo**), animación del `Scroller` (`Config::Scroller`) y parpadeo genérico (`Config::DefaultTimer`: PERIOD/OFF, `HOLD` comentado). Solo lo verdaderamente compartido; el resto es `static constexpr` en su clase. Sin `#define` para valores (constantes con tipo y ámbito). |
 | `Globals.h` | Declara `extern` los **globales del proyecto**: `Display display;`, `Buttons buttons;` y `Sound sound;` (servicios) más `Storage storage;` (almacén de estado, sección 22), todos definidos en `Snake_II-OLED_128x64-I2C.ino` (sección 20). **No** declara el `Buzzer` (es interno de `Sound`). No define las ventanas: esas viven dentro de `Engine`. |
 | `Buttons.h` / `Buttons.cpp` | Clase `Buttons` (lectura con debounce, `hold`/`pressed`/`released`; `MAX_BUTTONS` es el contador final del enum `Button`; `isSet` declarado en el header y definido en el `.cpp`). Completa. |
-| `Boot.h` / `Boot.cpp` | Clase `Boot` (pantalla de arranque: Header con el mensaje "Press any button / to start" que **parpadea sin fase fija** —`PERIOD=400 ms`, oculto el 50 %, `HOLD` comentado— y Body con el logo `Sprite::LOGO` en blanco; se termina con cualquier botón con su sonido según el botón; la animación de bandas de líneas verticales anterior está comentada). Completa. |
+| `Boot.h` / `Boot.cpp` | Clase `Boot` (pantalla de arranque: Header con el mensaje "Press any button / to start" que **parpadea sin fase fija** —`PERIOD=500 ms`, oculto el 20 % (`Config::DefaultTimer`), `HOLD` comentado— y Body con el logo `Sprite::LOGO` (bloque 1bpp, 80×48) en blanco, volcado con `Display::drawBitmap(..., SSD1306_WHITE, SSD1306_BLACK)`; se termina con cualquier botón con su sonido según el botón; la animación de bandas de líneas verticales anterior está comentada). Completa. |
 | `Legend.h` / `Legend.cpp` | Clase `Legend` (panel de botones: pad MOVE a la izquierda con 4 flechas, 4 rombos completos de ACTION a la derecha en las posiciones de un pad que parpadean MUY rápido uno a la vez en ciclo lento —ciclo `NEXT=2500 ms` con el `Ticker`, **sin fase fija** (`HOLD` comentado), parpadeo `PERIOD=100 ms` al 50 %— y texto de la función del rombo activo en el pie (Back, Select / Pause, None, None), compuesto y mostrado con su propio `Scroller` (`_scroller`) para que **entre deslizándose** al cambiar de rombo; cualquier botón la cierra con un sonido según el botón pulsado: MOVE = CLICK, ACTION_UP = BACK, ACTION_RIGHT = CONFIRM). Completa. |
-| `Scroller.h` / `Scroller.cpp` | Clase `Scroller` (scroller de 1 bit: una sola banda, texto como array de `int8_t` donde cada byte = 1 columna de 8 px; fondo siempre negro y texto blanco; `setTexto()` compone el texto centrado, fija la fila donde se imprimirá, deriva el alto de la franja del tamaño (`8*size+2`), calcula el límite de caracteres según el tamaño y trunca silenciosamente; `update()` avanza 1 px cada 4 ms mientras `print()` la vuelca rellenando la banda; usada por `Menu` con 1 instancia —transición **activa** en `nextOption()`—, por `MenuCredits` con 2 instancias sincronizadas y por `Legend` con 1 instancia para el texto del pie). Completa. |
-| `Menu.h` / `Menu.cpp` | Clase `Menu` (menú con scroller de 1 bit —1 banda del `Scroller`—, rombos/triángulos de posición, navegación con repetición y anti-entrada `_holdButtons`). **En iteración**: `begin(showContinue, selected)` fija la lista y la selección; `navigate()` (MOVE con el helper `ButtonRepeat`), `action()` (`ACTION_UP` vuelve a `New`/`Continue`, `ACTION_RIGHT` alterna `_confirm`), `holdButtons()` (bloquea hasta soltar los botones), `blinkOption()` (parpadeo con el helper `Blink`) y `nextOption()` (vuelo lateral del `Scroller`, activo). La API anterior (`setOptions`, `setContinueAvailable`, `setBestScore`, `setSelected`, `setTitle`, `setShowFooter`, `confirm()`, `restoreDiamondBand()`) está **comentada** en `Menu.h`. |
+| `Scroller.h` / `Scroller.cpp` | Clase `Scroller` (scroller de 1 bit: una sola banda de **ancho completo de pantalla** —sin la cortina anterior—, texto como array de `int8_t` donde cada byte = 1 columna de 8 px; fondo siempre negro y texto blanco; `setTexto()` compone el texto centrado, fija la fila donde se imprimirá, deriva el alto de la franja del tamaño (`8 * size`, máx. `Config::Scroller::MAX_H` = 32), calcula el límite de caracteres según el tamaño y trunca silenciosamente; `startSlide()` además limpia 1 px justo sobre/bajo la franja; `update()` avanza 1 px cada 4 ms mientras `print()` la vuelca rellenando la banda; usada por `Menu` con 1 instancia —transición **activa** en `nextOption()`—, por `MenuCredits` con 2 instancias sincronizadas y por `Legend` con 1 instancia para el texto del pie). Completa. |
+| `Menu.h` / `Menu.cpp` | Clase `Menu` (menú con scroller de 1 bit —1 banda del `Scroller`—, rombos/triángulos de posición marcados con `toggleDiamond()`/`toggleTriangle()` sobre la geometría centrada en el Body de `Config::MenuStrip`, navegación con repetición y anti-entrada `_holdButtons`). **En iteración**: `begin(showContinue, selected)` fija la lista y la selección; `navigate()` (MOVE con el helper `ButtonRepeat`), `action()` (`ACTION_UP` vuelve a `New`/`Continue`, `ACTION_RIGHT` alterna `_confirm`), `holdButtons()` (bloquea hasta soltar los botones), `blinkOption()` (parpadeo con el helper `Blink`) y `nextOption()` (vuelo lateral del `Scroller`, activo). La API anterior (`setOptions`, `setContinueAvailable`, `setBestScore`, `setSelected`, `setTitle`, `setShowFooter`, `confirm()`, `restoreDiamondBand()`) está **comentada** en `Menu.h`. |
 | `MenuDifficulty.h` / `MenuDifficulty.cpp` | Clase `MenuDifficulty` (selector de nivel 1..10, `< N >`, con repetición al mantener presionado; al mantener, solo queda fija la flecha del botón activo). Completa. Ventana hermana: vive sobre el `Menu` ya dibujado, sustituye solo la banda de rombos (45..53) y no hace `clear()`. Guarda el nivel confirmado (`difficulty()`), que el `Engine` pasa a `Game::setDifficulty`. |
 | `MenuSound.h` / `MenuSound.cpp` | Clase `MenuSound` (selector On/Off con una flecha en el lado del destino, sobre la misma banda). **Reactivada (fuera del aislamiento)**: el `Engine` ya la posee y despacha (`MENU_SOUND`), pero la entrada desde el `Menu` sigue pendiente. Como `Display::getWidth()`/`getTextWidth()` siguen comentadas en `Display.h`, centra a mano con `Config::Screen::WIDTH` y `strlen * 6`. El valor real se aplica al global `Sound` con `setEnabled`. |
 | `MenuCredits.h` / `MenuCredits.cpp` | Clase `MenuCredits` (ventana de créditos con 3 entradas navegables con transición lateral —2 bandas sincronizadas del `Scroller` compartido— y `SFX_CLICK` al navegar, vuelve al menú con `ACTION_UP`). Se llama así, y no `Credits`, para distinguirla de una hipotética ventana de créditos general: esta es la que se abre desde la opción "Credits" del `Menu`. Completa. |
@@ -166,7 +166,7 @@ Directorio: `D:\Documents\ESP32S3\Snake_II-OLED_128x64-I2C`
 | `Buzzer.h` / `Buzzer.cpp` | Clase `Buzzer` (capa de hardware de sonido: un tono no bloqueante vía LEDC). **No es un servicio global**: la posee `Sound` por valor (sección 10.2). Completa. |
 | `Sound.h` / `Sound.cpp` | Classe `Sound` (secuencias de los efectos del juego sobre su `Buzzer` interno —miembro por valor, inicializado en `begin()`—, con `setEnabled` para silenciar). Completa. |
 | `Storage.h` / `Storage.cpp` | Clase `Storage` (almacén de estado compartido **fuera de las ventanas**): mejor puntaje, sonido activo y dificultad, con valores por defecto tomados de `Config` (`_bestScore = 0`, `_soundEnabled = true`, `_difficulty = DEFAULT_LEVEL`) y clamp en `setDifficulty`. Contenedor de datos puro: sin `begin()`/`update()`/`print()` y sin dependencias de hardware. La **instancia** —no los métodos— es global (`storage`, sección 22). Completa; **pendiente de integrar**: todavía no la lee ni la escribe nadie. |
-| `Sprite.h` | Namespace `Sprite` (tabla de sprites de la serpiente, estilo Nokia: cola, cuerpo, curvas, cabeza cerrada/abierta y panza; sprites de 4×4 px + sprite de la comida especial de 8×4 px + el logo del arranque `LOGO` de 80×48 px, leído con `Sprite::logoPixel(x, y)`, sección 15). Solo datos (header-only, sin `.cpp`). Adaptada al estilo del proyecto. |
+| `Sprite.h` | Namespace `Sprite` (tabla de sprites de la serpiente, estilo Nokia: cola, cuerpo, curvas, cabeza cerrada/abierta y panza; sprites de 4×4 px + sprite de la comida especial de 8×4 px + el logo del arranque `LOGO` de 80×48 px como bloque 1bpp, dibujado con `Display::drawBitmap()`, sección 15). Solo datos (header-only, sin `.cpp`). Adaptada al estilo del proyecto. |
 | `Timer.h` / `Timer.cpp` | Reloj de 64 bits y cronómetros compartidos (`nowMs()`, `Stopwatch`, `Ticker`), basados en `esp_timer_get_time()` (sección 21). El header solo declara; las definiciones están en el `.cpp`, porque el `inline` en el header repetía el mismo código en cada `.cpp` que lo incluye. |
 | `ButtonRepeat.h` / `ButtonRepeat.cpp` | Helper de **repetición al mantener un botón** (sección 23): primer paso inmediato (`pressed`) y, tras `Config::Button::DELAY` (400 ms), un paso cada `Config::Button::TICK` (100 ms) mientras sigue mantenido (`hold`). Encapsula los dos `Stopwatch` que antes vivían sueltos en `Menu` y `MenuDifficulty` (donde además habían divergido: `hold` vs el viejo `state`). **Sin `reset()`** (YAGNI: hoy no hay call site). Lo usan `Menu` (`_repeat`) y `MenuDifficulty` (`_repeat`). |
 | `Blink.h` / `Blink.cpp` | Helper de **parpadeo** (sección 24): encapsula el `Stopwatch` (ancla del período) + el recuerdo de la última fase (`_last`, para el flanco) que cada ventana llevaba por separado. API de 3 métodos: `start()` (ancla y olvida la fase), `isVisible(period, offPct)` (fase actual, `true` = visible) y `changed(period, offPct)` (true solo en el flanco). Lo usan `Boot`, `Legend` y `Menu` (redibujan en el flanco con `changed()`/`isVisible()`) y `MenuDifficulty`/`MenuSound` (solo la fase cruda `isVisible()`). |
@@ -438,10 +438,10 @@ del estado `MENU` (ver bloque `AISLADO`, sección 11).
 | `void holdButtons()` | **Anti-entrada:** si `_holdButtons` está puesta, solo observa `buttons.hold()` de los 8 botones; en cuanto **todos** se liberen se apaga y quedan libres `navigate()`/`action()`. Así, entrar al menú con un botón aún pulsado (p. ej. el que cerró la ventana anterior) no mueve la selección. (`pressed()` no serviría: es evento de borde y ese pulso ya ocurrió en un frame anterior.) |
 | `void navigate()` | Si `_holdButtons` está puesta, sale sin hacer nada. `MOVE_LEFT`/`MOVE_RIGHT` con el helper `ButtonRepeat` (`_repeat.step()`): paso inmediato al pulsar y, tras `Config::Button::DELAY` (400 ms), un paso cada `Config::Button::TICK` (100 ms). Salta `OPT_CONTINUE` si `_showContinue` es `false` y toca `SFX_CLICK` al mover. Límites en `OPT_NEW`/`OPT_COUNT - 1`. |
 | `void action()` | Si `_holdButtons` está puesta, sale. `ACTION_UP` → la selección vuelve a `OPT_CONTINUE`/`OPT_NEW` con `SFX_BACK`; `ACTION_RIGHT` → alterna `_confirm` con `SFX_CONFIRM` (solo el resaltado: la salida está comentada). |
-| `void blinkOption()` | Parpadeo de la opción: con `_confirm` sale del menú (`_confirm = false; _done = true`); si no, `if (!_blink.changed(PERIOD, OFF)) return;` y repinta el texto del cuadro (`toggleText`) y el rombo (`focused`) con `const bool visible = _done \|\| _blink.isVisible(PERIOD, OFF);`. |
-| `void nextOption()` | Si la selección cambió: restaura los marcadores de la anterior (`focused(_lastSelected, false)` + `unfocused(_lastSelected, true)`), coloca los de la nueva (`unfocused(_selected, false)` + `focused(_selected, true)`), compone `OPTION[_selected]` en el `Scroller` con `setTexto(..., BOX_TOP, _lastSelected > _selected, TEXT_12x16)` y arranca `startSlide()` (dirección según el sentido del salto), marcando `_lastScroll`. |
-| `void toggleText(bool show)` | Pinta/borra el texto de la opción dentro del cuadro (`drawText` centrado en `BOX_TOP - 1`, `TEXT_12x16`, texto negro sobre blanco cuando `show`). |
-| `void focused(int8_t diamond, bool show)` / `void unfocused(int8_t triangle, bool show)` | Pinta/borra el marcador de la opción dada (centro en `(i+1)·_space`, restando 1 si "Continue" está oculta): `focused` dibuja un rombo (`Draw::diamond` en `DIAMOND_Y`) y `unfocused` el triángulo superior (`Draw::triangle` en `TRIANGLE_Y`); `unfocused` sale si el índice es `OPT_COUNT`. El dibujo de las formas vive en el namespace `Draw` (sección 25). |
+| `void blinkOption()` | Parpadeo de la opción: con `_confirm` sale del menú (`_confirm = false; _done = true`); si no, `if (!_scroller.done()) return;` y `if (!_blink.changed(PERIOD, OFF)) return;`. Si el `Scroller` está aún volando (confirmación a media animación) borra el cuadro (`fillRect(0, BOX_TOP-1, WIDTH, BOX_HEIGHT+2)`, blanco) y lo re-compone (`_scroller.begin()`); luego repinta el rombo (`toggleDiamond`) con `const bool visible = _done \|\| _blink.isVisible(PERIOD, OFF);`. El repintado del texto (`toggleText`) quedó **comentado** (el cuadro blanco ya lo dejó el nuevo vuelo). |
+| `void nextOption()` | Si la selección cambió: restaura los marcadores de la anterior (`toggleDiamond(_lastSelected, false)` + `toggleTriangle(_lastSelected, true)`), coloca los de la nueva (`toggleTriangle(_selected, false)` + `toggleDiamond(_selected, true)`), compone `OPTION[_selected]` en el `Scroller` con `setTexto(..., BOX_TOP, _lastSelected > _selected, TEXT_12x16)` y arranca `startSlide()` (dirección según el sentido del salto), marcando `_lastScroll`. |
+| `void toggleText(bool show)` | Pinta/borra el texto de la opción dentro del cuadro (`drawText` centrado en `BOX_TOP`, `TEXT_12x16`, texto negro sobre blanco cuando `show`). |
+| `void toggleDiamond(int8_t diamond, bool show)` / `void toggleTriangle(int8_t triangle, bool show)` | Pinta/borra el marcador de la opción dada (centro en `(i+1)·_space`, restando 1 si "Continue" está oculta): `toggleDiamond` dibuja un rombo (`Draw::diamond` en `DIAMOND_Y`) y `toggleTriangle` el triángulo superior (`Draw::triangle` en `TRIANGLE_Y`); `toggleTriangle` sale si el índice es `OPT_COUNT`. El dibujo de las formas vive en el namespace `Draw` (sección 25). |
 | ~~`bool holdRepeat(uint8_t button)`~~ | **Eliminado**: la repetición por mantención se extrajo al helper `ButtonRepeat` (sección 23), miembro `_repeat`; `navigate()` lo consulta con `_repeat.step(Buttons::MOVE_*)`. Ya no hay parámetros `DELAY`/`TICK` locales en `Menu` (usa los de `Config::Button`). |
 
 ### Las opciones "Difficulty" y "Sound" son ventanas
@@ -495,10 +495,11 @@ _selected--/++`). El mapeo interno `optionAt`/`indexOfOption` está comentado.
   con "Best " + puntaje a la izquierda y la versión a la derecha, ambos en
   `TEXT_6x8` sobre blanco en la fila `FOOT_TOP = 56`. **Estático** (se dibuja en
   `firstPrint()`; `setBestScore` está comentado, así que no cambia tras entrar).
-- **Cuadro de selección:** **fijo** y de **ancho completo** (128 px),
-  `BOX_HEIGHT = 16` y `BOX_TOP = DIAMOND_Y - SIZE - 4 - BOX_HEIGHT` (= 24), es
-  decir el blanco ocupa `22..39` (`fillRect(0, BOX_TOP-2, WIDTH, BOX_HEIGHT+2)`).
-  El texto de la opción (`TEXT_12x16`) se pinta en `BOX_TOP - 1` y solo se toca
+- **Cuadro de selección:** **fijo**, de **ancho completo** (128 px) y
+  **centrado en la mitad del Body**: `BOX_HEIGHT = 16` y
+  `BOX_TOP = BODY_MIDDLE - BOX_HEIGHT/2` (= 26), es
+  decir el blanco ocupa `25..42` (`fillRect(0, BOX_TOP-1, WIDTH, BOX_HEIGHT+2)`).
+  El texto de la opción (`TEXT_12x16`) se pinta en `BOX_TOP` = 26 y solo se toca
   al cambiar de opción (vuelo del scroller) o al parpadear (`blinkOption()` →
   `toggleText`). **No se mueve.**
 - **Animación (scroller de 1 bit):** en la clase **`Scroller`** (ver
@@ -523,13 +524,14 @@ _selected--/++`). El mapeo interno `optionAt`/`indexOfOption` está comentado.
   parpadeo.
 - **Marcadores de posición:** dos filas sobre el pie. El **seleccionado** es un
   **rombo completo** (`Draw::diamond`)
-  centrado en `DIAMOND_Y = 47` (filas 44..50), dibujado por `focused()`;
+  centrado en `DIAMOND_Y = VALUE_TOP + VALUE_HEIGHT/2` (= 49, filas 46..52),
+  dibujado por `toggleDiamond()`;
   los **no seleccionados** son solo el **triángulo superior** con base en
-  `TRIANGLE_Y = 53` y vértice en la 50 (`unfocused()` → `Draw::triangle()`). Reparto uniforme:
+  `TRIANGLE_Y = 53` y vértice en la 50 (`toggleTriangle()` → `Draw::triangle()`). Reparto uniforme:
   centro en `(i+1)·_space`, con `_space = WIDTH / (OPT_COUNT + (showContinue ?
   1 : 0))` y restando 1 a los índices `>= OPT_CONTINUE` si "Continue" está
   oculta. `nextOption()` intercambia los marcadores al navegar y `blinkOption()` hace
-  parpadear **el rombo y el texto de la opción a la vez** con el helper `Blink`
+  parpadear **el rombo** (el repintado del texto quedó comentado) con el helper `Blink`
   (`_blink.changed(PERIOD, OFF)` marca el flanco y `_blink.isVisible(PERIOD, OFF)`
   da la fase visible; `PERIOD`/`OFF` de `Config::DefaultTimer`), **sin retardo
   inicial** (`HOLD` está comentado); `_blink` se ancla en `begin()` y al terminar
@@ -556,7 +558,7 @@ Sin parámetros: usa los servicios globales `Display` y `Buttons` (sección 20).
 | Método | Descripción |
 |--------|-------------|
 | `void begin()` | Reinicia: ancla el parpadeo (`_blink.start()`), `_done` apagado y `_clear` puesto para el primer frame. El antiguo `_holdMessage` (fase fija del mensaje) está **comentado**, junto con su comprobación `expired(HOLD)`. |
-| `void update()` | Cualquier botón la termina (`_done = true`) con sonido según el botón (prioridad: MOVE = `SFX_CLICK`, `ACTION_UP` = `SFX_BACK`, `ACTION_RIGHT` = `SFX_CONFIRM`, `ACTION_DOWN`/`ACTION_LEFT` = `SFX_CLICK`). El mensaje **parpadea desde el primer frame**, **sin fase fija inicial** (la constante `HOLD` y su comprobación están comentadas), con `PERIOD = 400 ms` y oculto el `OFF = 50 %` (`Config::DefaultTimer`); ya no actualiza nada en `update()` (la fase la lee `blinkMessage()` con `_blink.changed(PERIOD, OFF)`). **No tiene autoavance** (`TOTAL_MS`/`ANIM_TICK` comentados): espera a un botón. |
+| `void update()` | Cualquier botón la termina (`_done = true`) con sonido según el botón (prioridad: MOVE = `SFX_CLICK`, `ACTION_UP` = `SFX_BACK`, `ACTION_RIGHT` = `SFX_CONFIRM`, `ACTION_DOWN`/`ACTION_LEFT` = `SFX_CLICK`). El mensaje **parpadea desde el primer frame**, **sin fase fija inicial** (la constante `HOLD` y su comprobación están comentadas), con `PERIOD = 500 ms` y oculto el `OFF = 20 %` (`Config::DefaultTimer`); ya no actualiza nada en `update()` (la fase la lee `blinkMessage()` con `_blink.changed(PERIOD, OFF)`). **No tiene autoavance** (`TOTAL_MS`/`ANIM_TICK` comentados): espera a un botón. |
 | `void print()` | `firstPrint()` (solo el primer frame: `clear()` + mensaje en el Header —`drawMessage(true)`— + logo en el Body) y `blinkMessage()` (repinta el mensaje cuando `_blink.changed(PERIOD, OFF)` con `drawMessage(_blink.isVisible(PERIOD, OFF))`: blanco visible / borrado en negro sobre negro). |
 | `bool done()` | `true` cuando se pulsó cualquier botón (`Engine` pasa a `LEGEND`). |
 
@@ -567,8 +569,11 @@ Sin parámetros: usa los servicios globales `Display` y `Buttons` (sección 20).
   (`_blink`, sección 24; `drawMessage(bool)` lo dibuja según el `bool` visible y
   `blinkMessage()` lo repinta cuando `_blink.changed(PERIOD, OFF)`). Sin fase fija: empieza a
   parpadear en cuanto entra.
-- **Body (16..63):** fondo blanco con el logo `Sprite::LOGO` (80×48) centrado,
-  dibujado px a px con `Sprite::logoPixel(x, y)`.
+- **Body (16..63):** fondo blanco (`fillRect(0, BODY_TOP, WIDTH, BODY_H, true)`)
+  con el logo `Sprite::LOGO` (80×48) centrado, volcado con
+  `Display::drawBitmap(..., SSD1306_WHITE, SSD1306_BLACK)`: el logo guarda la
+  **polaridad original** (1 = fondo, 0 = glifo), así que el glifo sale negro
+  sobre el fondo blanco.
 - La animación anterior de **bandas de líneas verticales** (`BAR_W`,
   `BAR_SPACING`, `ANIM_TICK`, `TOTAL_MS`, `drawBars()`, rebalse por el borde)
   está **comentada** en `Boot.h`/`Boot.cpp` (lo mismo los helpers
@@ -1041,9 +1046,9 @@ llama a `display.clear()`, lo decide cada ventana.
    | Ventana | Estáticos (una vez) | Dinámicos por frame |
    |---------|---------------------|---------------------|
    | `Boot` | Primer frame: clear completo + `firstPrint()` (banda blanca del mensaje en el Header + logo en el Body) | Solo el mensaje del Header cuando `_blink.changed(PERIOD, OFF)` (`blinkMessage()`: se repinta con `TEXT_6x8` blanco o se borra en negro); el logo no se toca |
-     | `Menu` | Cuadro blanco `22..39`, texto de la opción en `23..38`, título y pie (banda blanca `55..63` con "Best" + versión) | Banda de la opción (`Scroller::print` con vuelo **activo** en `nextOption()`) + marcadores de posición (rombo del seleccionado en `44..50` y triángulos superiores en `50..53` de los no seleccionados) + parpadeo de la opción (`blinkOption()`: repinta texto y rombo según `_blink.changed(PERIOD, OFF)`/`_blink.isVisible(PERIOD, OFF)`, y reafirma visible si `_confirm` está puesto) |
-    | `MenuDifficulty` | — (entra sobre el `Menu` ya dibujado, no borra nada) | Selector `< N >`: borra y redibuja **cada frame** la banda 45..53 (número centrado estático con ancho constante + dos flechas laterales que parpadean juntas, ocultas en su límite; al mantener un botón el parpadeo se detiene y solo queda fija la flecha del botón activo, ocultándose la contraria; al llegar al límite se procesa igual que haber soltado el botón, volviendo el parpadeo normal) |
-    | `MenuSound` | — (entra sobre el `Menu` ya dibujado, no borra nada) | Selector ON/OFF: borra y redibuja **cada frame** la banda 45..53 (palabra centrada estática + flecha única en el lado del destino, que parpadea) |
+     | `Menu` | Cuadro blanco `25..42`, texto de la opción en `26..41`, título y pie (banda blanca `55..63` con "Best" + versión) | Banda de la opción (`Scroller::print` con vuelo **activo** en `nextOption()`) + marcadores de posición (rombo del seleccionado en `46..52` y triángulos superiores en `50..53` de los no seleccionados) + parpadeo del rombo (`blinkOption()`: repinta el marcador según `_blink.changed(PERIOD, OFF)`/`_blink.isVisible(PERIOD, OFF)`, y reafirma visible si `_confirm` está puesto; el repintado del texto quedó **comentado**) |
+    | `MenuDifficulty` | — (entra sobre el `Menu` ya dibujado, no borra nada) | Selector `< N >`: borra y redibuja **cada frame** la banda 44..54 (número centrado estático con ancho constante + dos flechas laterales que parpadean juntas, ocultas en su límite; al mantener un botón el parpadeo se detiene y solo queda fija la flecha del botón activo, ocultándose la contraria; al llegar al límite se procesa igual que haber soltado el botón, volviendo el parpadeo normal) |
+    | `MenuSound` | — (entra sobre el `Menu` ya dibujado, no borra nada) | Selector ON/OFF: borra y redibuja **cada frame** la banda 44..54 (palabra centrada estática + flecha única en el lado del destino, que parpadea) |
 | `MenuCredits` | Título del Header (el cuadro blanco del rol lo pinta ahora el propio `Scroller` al rellenar su banda) | Bandas rol/nombre (`Scroller`, 2 instancias sincronizadas; cada una rellena su banda y se vuelca juntas en el mismo frame, y solo si hay algo nuevo que pintar, sección 14) |
 | `Legend` | Primer frame: clear + banda de título con "Move"/"Action", pad MOVE, los 4 rombos de ACTION y la banda del pie con `BTN_FUNC[0]` | Rombo activo (repintado cuando `_blink.changed(PERIOD, OFF)`, `blinkDiamond()`/`toggleDiamond`) + texto del pie (banda `FOOT_TOP-1..63`) por medio de su propio `Scroller` (`_scroller`): al cambiar de rombo **entra deslizándose** (`setTexto()` + `startSlide()`); mientras la franja se mueve, el ciclo de rombos se congela (`_scroller.update()` devuelve `true`) y al terminar se reanclan `_ticker` y `_blink.start()`. Al cambiar, se restaura completo el rombo que deja de ser activo (evita que quede borrado si el cambio lo pilló en su fase oculta) |
    | `Game` | Primer frame: clear completo + Header (puntaje 12x16 izq., segundos restantes de la comida especial 12x16 der.) y alimento y serpiente | Header solo si cambia el puntaje o `_food.specialTime()` (banda 0..15); tablero (Body 16..63) solo si `_dirtyBoard` (movimiento, comida nueva, transición de estado): borra el Body, redibuja alimento + serpiente; overlay "3-2-1"/"PAUSA"/"GAME OVER"/festejo de récord (texto invertido sobre banda blanca: cuadro centrado para el conteo, de lado a lado para PAUSA, GAME OVER y los letreros del festejo "BUT"/"YOU ARE"/"THE BEST") en cada frame según el estado —en el conteo, al final de cada dígito el número y su cuadro se ocultan (`COUNT_HIDE_MS`), marcando `_dirtyBoard` una sola vez para restaurar el tablero —; al morir superando el récord, el "GAME OVER" es un ciclo "GAME OVER" → "BUT" → "YOU ARE" → "THE BEST" (`NEW_BEST_SIGN_MS` cada uno) que se repite hasta que se presiona un botón, y el `SFX_NEW_BEST` suena solo la primera vez que aparece el letrero "THE BEST" |
@@ -1068,7 +1073,8 @@ Encapsula la animación "scroller de 1 bit": compone un texto en un **array de
 bit 7 = fila 7) y lo desliza lateralmente. **Una sola banda** por instancia.
 La franja es siempre **fondo negro y texto blanco** (sin parámetros de color).
 
-- **Constantes:** `STRIP_W = Config::Screen::WIDTH` (128), `STRIP_H = 24` (máx.
+- **Constantes:** `WIDTH = Config::Screen::WIDTH` (128, **ancho completo de
+  pantalla**), `STRIP_H = Config::Scroller::MAX_H` (32, máx.
   altura de texto 18x24), `ANIM_TICK = 4` ms por píxel (vuelo ≈ 0,5 s).
 - **Constructor:** `Scroller()` — sin parámetros. No reserva memoria dinámica
   (el array `_strip` es un miembro por valor), así que la copia está permitida
@@ -1078,16 +1084,19 @@ La franja es siempre **fondo negro y texto blanco** (sin parámetros de color).
   - `void setTexto(const char* text, int16_t y, bool toLeft = true, uint8_t size = 2)`
     — compone el texto centrado en el array de `int8_t`
     (cada byte = 1 columna de 8 px), **fija la fila de pantalla donde se
-    imprimirá** (`y`, guardada como `_y = y - size`), **la dirección** (`toLeft`:
+    imprimirá** (`y`, se guarda tal cual: `_y = y`), **la dirección** (`toLeft`:
     `true` entra por la derecha) y **el alto de la franja**
-    (`_height = 8 * size + 2`), calcula el **límite de caracteres**
-    (`floor(STRIP_W / (6 * size))`) y **trunca silenciosamente** si el texto
-    excede el límite. El texto se compone en un canvas auxiliar (`GFXcanvas8`,
-    cursor en la fila 1) y luego se extraen las columnas. Acaba poniendo
+    (`_height = 8 * size`), calcula el **límite de caracteres**
+    (`floor(WIDTH / (6 * size))`) y **trunca silenciosamente** si el texto
+    excede el límite. El texto se compone centrado en un canvas auxiliar
+    (`GFXcanvas8(WIDTH, _height)`, cursor en la fila 0) y luego se extraen las
+    columnas. Acaba poniendo
     `_done` (texto nuevo ya centrado, sin vuelo).
   - `void startSlide()` — **sin parámetros**: la dirección ya la fijó
-    `setTexto()`. Arranca **fuera de pantalla**, baja `_done`, limpia el nuevo
-    `_isStopNow` y arranca el reloj.
+    `setTexto()`. Arranca **fuera de pantalla**, baja `_done`, limpia el
+    `_isStopNow` y arranca el reloj. Además borra en blanco la **fila de 1 px**
+    justo encima (`_y - 1`) y debajo (`_y + _height`) de la franja (si quedan
+    dentro del Body), para que no quede resto de la banda anterior al asentarse.
   - `bool update()` — avanza 1 px por `ANIM_TICK` ms (acumulador por tiempo); a
     llamar en `update()` de la ventana. Devuelve `true` mientras la animación
     sigue su curso (la franja aún entra en pantalla) y `false` en cuanto
@@ -1109,8 +1118,13 @@ La franja es siempre **fondo negro y texto blanco** (sin parámetros de color).
   columna calculando su equivalente en la franja (`screenX - _slideX`) y pinta
   los 8 px de cada byte, con lo que el texto nuevo **tapa** al anterior a medida
   que entra.
+- **Iteración actual:** se eliminó la **cortina** (las constantes `CURTAIN_W` y
+  `BUFFER_W`, y el damero de la entrada, quedaron **comentados**): la franja
+  ocupa el **ancho completo** de la pantalla y el texto entra centrado desde el
+  primer px. `curtain()` (triángulos que tapan la franja por delante) es un
+  método **nuevo aún sin usar**.
 - **Usos:**
-  - `Menu` = 1 instancia (16 px, fila `BOX_TOP` = 24, fijada por
+  - `Menu` = 1 instancia (16 px, fila `BOX_TOP` = 26, fijada por
     `setTexto()`): **transición activa**. `nextOption()` compone la opción con
     `setTexto(OPTION[_selected], BOX_TOP, _lastSelected > _selected,
     TEXT_12x16)` y llama `startSlide()` al cambiar la selección; mientras
@@ -1125,7 +1139,7 @@ La franja es siempre **fondo negro y texto blanco** (sin parámetros de color).
     deslizándose en lugar de aparecer de golpe.
 - **Detalle de diseño:** `setTexto()` usa `display.getTextWidth()` para el
   centrado y `display.getWidth()` para el límite de caracteres. El array
-  `_strip[STRIP_H / 8][STRIP_W]` almacena las columnas: `_strip[row][col]` es
+  `_strip[STRIP_H / 8][WIDTH]` almacena las columnas: `_strip[row][col]` es
   un byte con los 8 píxeles de esa columna en ese grupo de filas. `Boot`
   **no** usa `Scroller`: su mensaje y su logo son estáticos con parpadeo
   propio (sección 8).
@@ -1138,7 +1152,8 @@ Ubicación: `Sprite.h`. Tabla estática con los sprites de las partes de la
 serpiente (estilo Nokia) y el sprite de la **comida especial**. Es un
 **namespace de solo datos** (no una clase): no necesita instancia
 ni archivo `.cpp`; los sprites se leen con `Sprite::pixel(part, x, y)` y
-`Sprite::specialPixel(x, y)`.
+`Sprite::specialPixel(x, y)`. El **logo** del arranque (`LOGO`, sección 8) se
+dibuja por bloques con `Display::drawBitmap()`.
 
 **Empaquetado a 1 bit por píxel.** Ninguna tabla guarda un byte por píxel: cada
 sprite se escribe **directamente como un literal binario** del tamaño exacto de sus
@@ -1195,6 +1210,8 @@ enum Part : uint8_t {
 | `SPECIAL_FOOD_W` / `SPECIAL_FOOD_H` | Ancho (8) y alto (4) en píxeles del sprite de la comida especial. |
 | `SPECIAL_FOOD[SPECIAL_FOOD_H]` | Sprite de 1 bit de la **comida especial** (8×4 px) **empaquetado por fila**: un literal binario de 8 px por fila (px `(0,0)` = bit 7) = 4 bytes en total, tabla aparte por no encajar en los 4×4 de la serpiente. |
 | `specialPixel(x, y)` | `constexpr`: píxel de la comida especial (`x` = columna, `y` = fila). |
+| `LOGO_W` / `LOGO_H` | Ancho (80) y alto (48) en píxeles del logo del arranque. |
+| `LOGO[LOGO_H * (LOGO_W / 8)]` | Logo de 1 bit **empaquetado por fila** en el formato de bloques de `drawBitmap()` (1bpp, MSB primero: el px `(0,0)` de cada byte es su **bit 7**): 10 bytes por fila = **480 bytes** (frente a 3840 si cada px ocupase un byte). **Polaridad inversa al resto del archivo** (conserva la del original: **1 = fondo, 0 = glifo**), por eso `Boot` lo pinta con `Display::drawBitmap(..., SSD1306_WHITE, SSD1306_BLACK)` y **no tiene** función de lectura (`logoPixel` eliminado). |
 
 La panza recta comparte sprite por par de direcciones: `BELLY_TO_RIGHT` =
 `BELLY_TO_UP` y `BELLY_TO_LEFT` = `BELLY_TO_DOWN`.
@@ -1570,7 +1587,7 @@ namespace Button {          // repetición al mantener un botón (nuevo)
 
 Estilo del archivo: los namespaces internos (`Pin`, `Screen`, `Difficulty`,
 `Version`, `Credits`, `Legend`, `Diamond`, `Button`, `Scroller`,
-`DefaultTimer`) van en
+`MenuStrip`, `DefaultTimer`) van en
 columna 0, sin indentar respecto de `namespace Config {`.
 
 ### Qué contiene y quién lo usa
@@ -1584,8 +1601,9 @@ columna 0, sin indentar respecto de `namespace Config {`.
 | `Config::Button` | `DELAY` (400 ms) / `TICK` (100 ms) | Helper `ButtonRepeat` (secciones 23): mantiene un botón `DELAY` ms para empezar a repetir y luego un paso cada `TICK` ms; lo usan `Menu` y `MenuDifficulty` a través suyo. (`Menu` ya no copia `DELAY`/`TICK` a constantes propias.) **Nuevo** en este cambio. |
 | `Config::Legend` | `NEXT` (2500 ms) / `PERIOD` (100 ms) / `OFF` (50 %); `HOLD` **comentado** | `Legend` (ciclo de rombos con `_ticker` y parpadeo con `_blink`, helper `Blink`): `HOLD` pasó de 900 ms (visible fija) a estar comentado, y `NEXT` subió de 2200 a 2500 ms. |
 | `Config::Diamond` | `SIZE` (3 px) | `Menu` (rombo marcador y triángulos: `Menu::SIZE`) y `Legend` (rombos de ACTION: `Legend::SIZE`). |
-| `Config::Scroller` | `TOP` (28) / `ANIMATION` (4 ms/px) | `Scroller` (`ANIM_TICK = ANIMATION`, ms por píxel de desplazamiento). `TOP` (fila por defecto de la franja del menú) hoy solo aparece comentado en `Boot`. |
-| `Config::DefaultTimer` | `PERIOD` (400 ms) / `OFF` (50 %); `HOLD` **comentado** | Parpadeo de "cualquier ventana" sin cronómetro propio: hoy `Boot` (mensaje) y `Menu` (opción seleccionada). `HOLD` pasó de 1000 ms (visible fija) a estar comentado, `PERIOD` de 1000 a 400 y `OFF` de 20 % a 50 %. |
+| `Config::Scroller` | `MAX_H` (32) / `ANIMATION` (4 ms/px); `TOP` **comentado** | `Scroller` (`STRIP_H = MAX_H`, alto máximo de la franja; `ANIM_TICK = ANIMATION`, ms por píxel de desplazamiento). `TOP` (fila por defecto de la franja del menú) quedó **comentado**. |
+| `Config::MenuStrip` | `BODY_H` (39, alto del Body sin el pie) / `BODY_MIDDLE` (34, mitad del Body) / `BOX_HEIGHT` (16) / `BOX_TOP` (= `BODY_MIDDLE - BOX_HEIGHT/2` = 26) / `VALUE_TOP` (44) / `VALUE_HEIGHT` (11) / `DIAMOND_Y` (= `VALUE_TOP + VALUE_HEIGHT/2` = 49) / `TRIANGLE_Y` (= `Screen::FOOT_TOP - 3` = 53) | `Menu` (cuadro de la opción y marcadores, sección 7) y `MenuSound` (banda del selector ON/OFF). Geometría **centrada en la mitad del Body** (`B`/`C` son auxiliares para `BODY_MIDDLE`). |
+| `Config::DefaultTimer` | `PERIOD` (500 ms) / `OFF` (20 %); `HOLD` **comentado** | Parpadeo de "cualquier ventana" sin cronómetro propio: hoy `Boot` (mensaje) y `Menu` (rombo de la opción seleccionada). `HOLD` está comentado (sin fase fija inicial). |
 
 Las regiones `HEADER_TOP/H` y `BODY_TOP/H` reemplazan las constantes repetidas
 `BODY_TOP`/`BODY_H`/`TITLE_TOP`/`TITLE_H` de `Menu`, `Game`, `Boot` y `MenuCredits`.
@@ -1716,9 +1734,9 @@ class Ticker {
    está **comentado** (sus animaciones cambiaron).
 4. **`blinkOn(period, offPct)`** reemplaza al `millis() % período` absoluto de
    los parpadeos. Ya no lo llaman las ventanas directamente: lo encapsula el
-   helper `Blink` (sección 24), que las ventanas usan igual que antes (`Boot`:
-   mensaje con `PERIOD=400`/`OFF=50` de `Config::DefaultTimer`; `Menu`: opción
-   seleccionada con las mismas; `MenuDifficulty`/`MenuSound`: flechas de sus
+helper `Blink` (sección 24), que las ventanas usan igual que antes (`Boot`:
+    mensaje con `PERIOD=500`/`OFF=20` de `Config::DefaultTimer`; `Menu`: rombo
+    de la opción seleccionada con las mismas; `MenuDifficulty`/`MenuSound`: flechas de sus
    selectores; `Legend`: parpadeo del rombo activo con `PERIOD=100`/`OFF=50`). El
    `Blink` se ancla al entrar en la ventana (`begin()`) y se reancla
    (`start()`) al terminar el vuelo del `Scroller`, así la fase del parpadeo no
@@ -1875,8 +1893,8 @@ public:
   Al terminar el vuelo del texto del pie se reancla con `start()`.
 - **`Menu`** (`_blink`): `blinkOption()` con `_confirm` sale del menú; si no, `if
   (!changed(PERIOD, OFF)) return; const bool visible = isVisible(PERIOD, OFF);
-  toggleText(visible); focused(_selected, visible);`. Se ancla en `begin()` (`start()`)
-  y se reancla al terminar el vuelo (`start()`).
+  toggleDiamond(_selected, visible);` (el `toggleText` quedó comentado). Se
+  ancla en `begin()` (`start()`) y se reancla al terminar el vuelo (`start()`).
 - **`MenuDifficulty`** y **`MenuSound`** (`_blink`): solo usan la **fase cruda**
   `isVisible(period, offPct)` para sus flechas.
 
@@ -1918,9 +1936,10 @@ namespace Draw {
 
 ### Quién lo usa
 
-- **`Menu`**: `focused()` → `Draw::diamond(centerX, DIAMOND_Y, show)` y
-  `unfocused()` → `Draw::triangle(Draw::DIR_UP, centerX, TRIANGLE_Y, show)`. Se eliminaron
-  `Menu::toggleDiamond`/`Menu::toggleTriangle` y la constante `SIZE`.
+- **`Menu`**: `toggleDiamond()` → `Draw::diamond(centerX, DIAMOND_Y, show)` y
+  `toggleTriangle()` → `Draw::triangle(Draw::DIR_UP, centerX, TRIANGLE_Y, show)`.
+  (Reintroducidos en esta iteración en lugar de `focused`/`unfocused`.) La
+  constante `SIZE` se eliminó.
 - **`Legend`**: las flechas del pad MOVE con `Draw::triangle(Draw::DIR_UP/DIR_RIGHT/DIR_DOWN/DIR_LEFT, …)`
   y el rombo activo con `Draw::diamond(…)` desde `Legend::toggleDiamond`. Se eliminaron
   `Legend::toggleTriangle` y la constante `SIZE`.

@@ -110,6 +110,11 @@ public:
     uint8_t size = 1,
     bool tColor = SSD1306_WHITE, bool bgColor = SSD1306_BLACK);
 
+  void drawBitmap(
+    int16_t x, int16_t y,
+    const uint8_t *bitmap, int16_t w, int16_t h,
+    bool color = SSD1306_BLACK, bool bgColor = SSD1306_WHITE);
+
   // // Imprimir texto invertido (negro) en una posición píxel exacta
   // void drawTextInverted(const char* text, int16_t x, int16_t y, uint8_t size = 1);
 
