@@ -95,8 +95,9 @@ void Scroller::setTexto(const char* text, int16_t y, bool toLeft, uint8_t size) 
 // ========================================================
 
 void Scroller::startSlide() {
-  _x = 0;
-  _lastX = 0;
+  _x = -timeCurtain();
+
+  _lastX = _x;
   _done = false;
   _isStopNow = false;
   _timer.start();
@@ -159,6 +160,9 @@ bool Scroller::update() {
 bool Scroller::print() {
   if (_done) return false;
   if (_lastX == _x) return false;
+
+  curtain();
+  if (_x < 0) return true;
 
   if (_x > WIDTH) _x = WIDTH;
 
@@ -237,10 +241,12 @@ void Scroller::setStripPixel(uint16_t x, uint8_t y, bool color) {
     _strip[rowBytes][x] &= (int8_t) ~(1 << bit);
   }
 }
-
+int16_t Scroller::timeCurtain() const {
+  return 6 * _size + 4 * _size - 1;
+}
 void Scroller::curtain() {
+  int16_t front = _toLeft ? WIDTH - _x : _x;
   int8_t dir = _toLeft ? -1 : 1;
-  int8_t timeCurtain = 6 * _size + 4 * _size - 1;
 
   int16_t centerX;
   int16_t centerY;
@@ -248,8 +254,8 @@ void Scroller::curtain() {
 
   size = 4 * _size - 1;
 
-  centerX = _x + dir * (6 * _size - 1);
-  centerY = _y + 4 * _size - 1;
+  centerX = front + dir * (6 * _size - 1);
+  centerY = _y + 4 * _size - 0; // 1
   display.fillTriangle(
     centerX + dir * size, centerY,
     centerX, centerY,
@@ -257,7 +263,7 @@ void Scroller::curtain() {
     false
   );
 
-  centerX = _x + dir * (6 * _size - 1);
+  centerX = front + dir * (6 * _size - 1);
   centerY = _y + 4 * _size + 0;
   display.fillTriangle(
     centerX + dir * size, centerY,
@@ -269,7 +275,7 @@ void Scroller::curtain() {
   int8_t width = 6 * _size - 1;
   int8_t height = 8 * _size;
   
-  centerX = _x;
+  centerX = front;
   if (dir == -1) centerX -= width;
   centerY = _y;
   display.fillRect(
@@ -278,7 +284,7 @@ void Scroller::curtain() {
     false);
 
   // size = 4 * _size - 1;
-  // centerX = _x + 6 * _size - 1;
+  // centerX = front + 6 * _size - 1;
   // centerY = _y + 4 * _size + 0;
   // display.fillRect(centerX, centerY, size, 2, false);
 
@@ -286,7 +292,7 @@ void Scroller::curtain() {
 
   size = 4 * _size - 2;
 
-  centerX = _x;
+  centerX = front;
   centerY = _y + 4 * _size - 1;
   display.fillTriangle(
     centerX + dir * size, centerY,
@@ -295,7 +301,7 @@ void Scroller::curtain() {
     true
   );
 
-  centerX = _x;
+  centerX = front;
   centerY = _y + 4 * _size + 0;
   display.fillTriangle(
     centerX + dir * size, centerY,

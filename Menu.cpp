@@ -523,6 +523,7 @@ void Menu::blinkOption() {
     _done = true;
     _confirm = false;
   } else if (!_scroller.done()) return;
+  else if (_lastSelected != _selected) return;
   else if (!_blink.changed(PERIOD, OFF)) return;
   
   if (!_scroller.done()) {
@@ -531,7 +532,7 @@ void Menu::blinkOption() {
   }
 
   const bool visible = _done || _blink.isVisible(PERIOD, OFF);
-  // toggleText(visible);
+  toggleText(visible);
   toggleDiamond(_selected, visible);
 }
 

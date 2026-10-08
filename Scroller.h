@@ -90,6 +90,7 @@ public:
   bool done() const;
 private:
   void curtain();
+  int16_t timeCurtain() const;
   // ========================================================
   // Acceso a la franja (_strip)
   // ========================================================
