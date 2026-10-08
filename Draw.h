@@ -16,12 +16,12 @@
 // ========================================================
 
 namespace Draw {
-    enum Direction : uint8_t {
-        UP = 1,
-        RIGHT,
-        DOWN,
-        LEFT
-    };
+enum Direction : uint8_t {
+  DIR_UP = 1,
+  DIR_RIGHT,
+  DIR_DOWN,
+  DIR_LEFT
+};
 // Triángulo sólido (o borrado si show = false) apuntando en `dir`
 // (1 = arriba, 2 = derecha, 3 = abajo, 4 = izquierda), centrado en
 // (centerX, centerY). Lado Config::Diamond::SIZE.

@@ -89,11 +89,11 @@ private:
   // static constexpr uint8_t  ARROW_BLINK_OFF_PCT = 25;   // % del período en que la flecha está oculta
 
   static constexpr int16_t WIDTH = Config::Screen::WIDTH;
-  static constexpr uint8_t SIZE = Config::Diamond::SIZE;                // rombo completo (SIEMPRE rombo)
+  static constexpr uint8_t SIZE = Config::Diamond::SIZE;  // rombo completo (SIEMPRE rombo)
 
   static constexpr uint32_t PERIOD = Config::DefaultTimer::PERIOD;  // período del parpadeo MUY rápido (ms)
   static constexpr uint8_t OFF = Config::DefaultTimer::OFF;         // % del período en que está oculto
-  
+
   static constexpr int16_t VALUE_HEIGHT = Config::MenuStrip::VALUE_HEIGHT;
   static constexpr int16_t VALUE_TOP = Config::MenuStrip::VALUE_TOP;
 
@@ -109,8 +109,8 @@ private:
   // Estado
   // ========================================================
 
-  bool _enabled;   // valor en edición (no aplicado hasta confirmar)
-  bool _done;      // confirmó o canceló: el Engine vuelve al Menu
+  bool _enabled;  // valor en edición (no aplicado hasta confirmar)
+  bool _done;     // confirmó o canceló: el Engine vuelve al Menu
 
   Blink _blink;  // parpadeo de la flecha (fase cruda)
 };

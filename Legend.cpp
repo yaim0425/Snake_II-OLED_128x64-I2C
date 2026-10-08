@@ -169,10 +169,10 @@ void Legend::firstPrint() {
   text = "Move";
   textX = (middleX - strlen(text) * 6) / 2;
   display.drawText(text, textX, TEXT_Y, TEXT_6x8, false, true);
-  Draw::triangle(Draw::UP, PAD_LEFT_X, PAD_Y - PAD_RADIO);        // Arriba (↑)
-  Draw::triangle(Draw::RIGHT, PAD_LEFT_X + PAD_RADIO, PAD_Y);        // Derecha (→)
-  Draw::triangle(Draw::DOWN, PAD_LEFT_X, PAD_Y + PAD_RADIO);        // Abajo (↓)
-  Draw::triangle(Draw::LEFT, PAD_LEFT_X - PAD_RADIO, PAD_Y);        // Izquierda (←)
+  Draw::triangle(Draw::DIR_UP, PAD_LEFT_X, PAD_Y - PAD_RADIO);     // Arriba (↑)
+  Draw::triangle(Draw::DIR_RIGHT, PAD_LEFT_X + PAD_RADIO, PAD_Y);  // Derecha (→)
+  Draw::triangle(Draw::DIR_DOWN, PAD_LEFT_X, PAD_Y + PAD_RADIO);   // Abajo (↓)
+  Draw::triangle(Draw::DIR_LEFT, PAD_LEFT_X - PAD_RADIO, PAD_Y);   // Izquierda (←)
 
 
 
@@ -352,6 +352,8 @@ void Legend::nextBtn() {
   _lastScroll = true;
 
   toggleDiamond(_lastBtn, true);
+  toggleDiamond(_btn, true);
+  _ticker.start();
   _lastBtn = _btn;
 }
 

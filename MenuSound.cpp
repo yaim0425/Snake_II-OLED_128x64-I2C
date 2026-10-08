@@ -1,6 +1,7 @@
 #include "esp32-hal.h"
 #include "MenuSound.h"
 #include "Globals.h"
+#include "Draw.h"
 
 // ========================================================
 // Constructor
@@ -74,8 +75,16 @@ void MenuSound::update() {
 void MenuSound::print() {
   display.fillRect(
     0, VALUE_TOP,
-    WIDTH, VALUE_TOP + VALUE_HEIGHT,
-    SSD1306_BLACK);
+    WIDTH, VALUE_HEIGHT,
+    false);
+
+  // int16_t footTop = Config::Screen::FOOT_TOP;
+  // display.fillRect(44, footTop - 1, 18, 18, true);
+  // display.fillRect(64, footTop - 1, 18, 18, false);
+
+  // for (size_t y = 0; y < VALUE_HEIGHT; y ++)
+  //   for (size_t x = 0; x < WIDTH; x++)
+  //     display.drawPixel(y % 2 + x, VALUE_TOP + y, x % 2 == 0);
 
   drawSelector();
 }
@@ -99,37 +108,37 @@ void MenuSound::print() {
 void MenuSound::drawSelector() {
   // Palabra centrada. En ambos estados mide lo mismo: "ON " lleva un
   // espacio final para emparejar el ancho con "OFF" (18 px).
-  const char* label = (_enabled) ? " ON  " : " OFF ";
+  const char* label = (_enabled) ? "ON " : "OFF";
   // Ancho a mano: Display::getTextWidth() y getWidth() estan comentados en
   // Display.h (mismo idioma que Menu y Legend: strlen * 6 px por char 6x8).
   const int16_t labelW = strlen(label) * 6;
   const int16_t labelX = (WIDTH - labelW) / 2;
-  const int16_t centerY = DIAMOND_Y;
+  // const int16_t centerY = DIAMOND_Y;
 
   // Parpadeo de la flecha: visible el 75% del período, oculta el
   // primer 25% (anclado al begin: sin salto de fase con el reloj
   // de 64 bits)
-  if (_blink.isVisible(PERIOD, OFF)) {
-    if (_enabled) {
-      // ON: flecha a la izquierda, punta hacia la izquierda ("< ON")
-      // int16_t base = labelX - ARROW_GAP;  // lado plano, pegado a la palabra
-      int16_t centerX = labelX;
-      display.fillTriangle(
-        centerX, centerY - SIZE,
-        centerX - SIZE, centerY,
-        centerX, centerY + SIZE,
-        SSD1306_WHITE);
-    } else {
-      // OFF: flecha a la derecha, punta hacia la derecha ("OFF >")
-      // int16_t base = labelX + labelW + ARROW_GAP;  // lado plano, pegado a la palabra
-      int16_t centerX = labelX + labelW;
-      display.fillTriangle(
-        centerX, centerY - SIZE,
-        centerX + SIZE, centerY,
-        centerX, centerY + SIZE,
-        SSD1306_WHITE);
-    }
-  }
+  if (_blink.isVisible(PERIOD, OFF))
+    if (_enabled)
+      Draw::triangle(Draw::DIR_LEFT, labelX - 6, DIAMOND_Y);
+    // ON: flecha a la izquierda, punta hacia la izquierda ("< ON")
+    // int16_t base = labelX - ARROW_GAP;  // lado plano, pegado a la palabra
+    // int16_t centerX = labelX;
+    // display.fillTriangle(
+    //   centerX, centerY - SIZE,
+    //   centerX - SIZE, centerY,
+    //   centerX, centerY + SIZE,
+    //   SSD1306_WHITE);
+    else
+      Draw::triangle(Draw::DIR_RIGHT, labelX + labelW + 5, DIAMOND_Y);
+  // OFF: flecha a la derecha, punta hacia la derecha ("OFF >")
+  // int16_t base = labelX + labelW + ARROW_GAP;  // lado plano, pegado a la palabra
+  // int16_t centerX = labelX + labelW;
+  // display.fillTriangle(
+  //   centerX, centerY - SIZE,
+  //   centerX + SIZE, centerY,
+  //   centerX, centerY + SIZE,
+  //   SSD1306_WHITE);
 
   display.drawText(label, labelX, DIAMOND_Y - 3, TEXT_6x8);
 }

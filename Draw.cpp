@@ -7,7 +7,7 @@ void triangle(int8_t dir, int16_t centerX, int16_t centerY, bool show) {
   const int16_t size = Config::Diamond::SIZE;
 
   switch (dir) {
-    case UP: // Arriba (↑)
+    case DIR_UP:  // Arriba (↑)
       display.fillTriangle(
         centerX - size, centerY,
         centerX, centerY - size,
@@ -15,7 +15,7 @@ void triangle(int8_t dir, int16_t centerX, int16_t centerY, bool show) {
         show);
       break;
 
-    case RIGHT: // Derecha (→)
+    case DIR_RIGHT:  // Derecha (→)
       display.fillTriangle(
         centerX, centerY - size,
         centerX + size, centerY,
@@ -23,7 +23,7 @@ void triangle(int8_t dir, int16_t centerX, int16_t centerY, bool show) {
         show);
       break;
 
-    case DOWN: // Abajo (↓)
+    case DIR_DOWN:  // Abajo (↓)
       display.fillTriangle(
         centerX - size, centerY,
         centerX, centerY + size,
@@ -31,7 +31,7 @@ void triangle(int8_t dir, int16_t centerX, int16_t centerY, bool show) {
         show);
       break;
 
-    case LEFT: // Izquierda (←)
+    case DIR_LEFT:  // Izquierda (←)
       display.fillTriangle(
         centerX, centerY - size,
         centerX - size, centerY,
@@ -42,8 +42,8 @@ void triangle(int8_t dir, int16_t centerX, int16_t centerY, bool show) {
 }
 
 void diamond(int16_t centerX, int16_t centerY, bool show) {
-  triangle(1, centerX, centerY, show);
-  triangle(3, centerX, centerY, show);
+  triangle(DIR_UP, centerX, centerY, show);
+  triangle(DIR_DOWN, centerX, centerY, show);
 }
 
 }
