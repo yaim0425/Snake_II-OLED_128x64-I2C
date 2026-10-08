@@ -38,7 +38,7 @@
 
 Display display;
 Buttons buttons(Config::Pin::BUTTONS);
-Sound   sound(Config::Pin::BUZZER);
+Sound sound(Config::Pin::BUZZER);
 Storage storage;
 
 // ====================================================================================
@@ -63,7 +63,7 @@ void setup() {
 
   display.begin();
   buttons.begin();
-  sound.begin();   // adjunta el canal del buzzer (que Sound posee) y silencia
+  sound.begin();  // adjunta el canal del buzzer (que Sound posee) y silencia
   engine.begin();
 
   Serial.println("Snake II");
@@ -74,8 +74,8 @@ void setup() {
 // ====================================================================================
 
 void loop() {
-  buttons.read();     // una sola lectura de botones por frame (de esta lectura
-                      // consumen los eventos todas las ventanas despachadas por Engine)
+  buttons.read();  // una sola lectura de botones por frame (de esta lectura
+                   // consumen los eventos todas las ventanas despachadas por Engine)
   engine.update();
   engine.print();
   sound.update();

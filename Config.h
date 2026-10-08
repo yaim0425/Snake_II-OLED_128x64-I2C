@@ -150,8 +150,8 @@ constexpr uint8_t SIZE = 3;  // px de un lado del rombo
 }
 
 namespace Button {
-constexpr uint32_t DELAY   = 400;  // mantener para empezar a repetir (ms)
-constexpr uint32_t TICK    = 100;  // intervalo de repetición mientras se mantiene (ms)
+constexpr uint32_t DELAY = 400;  // mantener para empezar a repetir (ms)
+constexpr uint32_t TICK = 100;   // intervalo de repetición mientras se mantiene (ms)
 }
 
 namespace Scroller {
@@ -161,19 +161,19 @@ constexpr uint32_t ANIMATION = 4;  // ms por px de desplazamiento lateral
 
 namespace DefaultTimer {
 // constexpr uint32_t HOLD = 500;    // mantener sin navegar para parpadear
-constexpr uint32_t PERIOD = 400;  // período completo del parpadeo (ms)
-constexpr uint8_t OFF = 50;       // % del período en que está oculto
+constexpr uint32_t PERIOD = 500;  // período completo del parpadeo (ms)
+constexpr uint8_t OFF = 20;       // % del período en que está oculto
 }
 
 namespace MenuStrip {
-static constexpr int16_t TRIANGLE_Y = Screen::FOOT_TOP - 1 - 2;
-static constexpr int16_t DIAMOND_Y = TRIANGLE_Y - Diamond::SIZE - 1 - 2;
+static constexpr int16_t TRIANGLE_Y = Screen::FOOT_TOP - 3;
+static constexpr int16_t DIAMOND_Y = TRIANGLE_Y - 2 * Diamond::SIZE;
 
-static constexpr int16_t VALUE_TOP = DIAMOND_Y - Diamond::SIZE - 2;
-static constexpr int16_t VALUE_HEIGHT = (Screen::FOOT_TOP - 2 - VALUE_TOP) + 1;
-
+static constexpr int16_t BOX_TOP = Screen::BODY_TOP + 8;
 static constexpr int16_t BOX_HEIGHT = 16;
-static constexpr int16_t BOX_TOP = VALUE_TOP - 2 - BOX_HEIGHT;
+
+static constexpr int16_t VALUE_TOP = BOX_TOP + BOX_HEIGHT + 2;
+static constexpr int16_t VALUE_HEIGHT = TRIANGLE_Y - VALUE_TOP + 1;
 }
 }
 

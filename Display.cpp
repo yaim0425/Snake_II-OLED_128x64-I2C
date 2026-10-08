@@ -37,10 +37,11 @@ void Display::begin() {
   Wire.begin(_sda, _scl);
   _screen = new Adafruit_SSD1306(width, height, &Wire, _address, -1);
   if (!_screen->begin(SSD1306_SWITCHCAPVCC, _address)) {
-    delete _screen;
-    _screen = nullptr;
-    return;
+    Serial.println("ERROR: No se encontró la pantalla");
+    for(;;);
   }
+
+  // Wire.setClock(400000);
 
   _screen->setRotation(0);
   _screen->clearDisplay();

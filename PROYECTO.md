@@ -32,8 +32,8 @@ Arduino IDE. Programación orientada a objetos: cada clase en su archivo `.h` y 
 - **Al pedir un commit, la IA no modifica el código** (`.ino`, `.h`, `.cpp`). No
   "arregla" el código de los archivos para dejarlo bien antes de commitear: si algo
   está mal, lo señala y espera orden. Sí puede, sin permiso: **modificar
-  comentarios** en `.ino`/`.h`/`.cpp`/`.md` y **mover código de posición**
-  (reordenar), pero **nunca cambiar el código**.
+  comentarios** en `.ino`/`.h`/`.cpp`/`.md`, **mover código de posición**, **ajustar
+  las lineas vacias** y **ajustar la sangreia** (reordenar), pero **nunca cambiar el código**.
 - **Commit y `push` van juntos.** En cuanto se crea el commit se hace `push`
   inmediatamente, sin pedir confirmación adicional.
 - **Toda regla que el usuario dé debe quedar escrita en este documento**, para que
@@ -1894,7 +1894,7 @@ direccional y el rombo completo (dos triángulos superpuestos). No tiene estado
 ```cpp
 namespace Draw {
   enum Direction : uint8_t {
-    UP = 1, RIGHT, DOWN, LEFT
+    DIR_UP = 1, DIR_RIGHT, DIR_DOWN, DIR_LEFT
   };
   void triangle(int8_t dir, int16_t centerX, int16_t centerY, bool show = true);
   void diamond(int16_t centerX, int16_t centerY, bool show = true);
@@ -1902,18 +1902,18 @@ namespace Draw {
 ```
 
 - `triangle(dir, cx, cy, show)`: `display.fillTriangle` con el vértice según `dir`,
-  que es un `Draw::Direction` (`UP = 1`, `RIGHT = 2`, `DOWN = 3`, `LEFT = 4`), y
+  que es un `Draw::Direction` (`DIR_UP = 1`, `DIR_RIGHT = 2`, `DIR_DOWN = 3`, `DIR_LEFT = 4`), y
   medio lado `Config::Diamond::SIZE` alrededor de `(cx, cy)`; `show` elige blanco
   (`true`) o negro (`false`).
 - `diamond(cx, cy, show)`: un triángulo hacia arriba + uno hacia abajo (mismo
-  centro), es decir `triangle(1, …)` + `triangle(3, …)`.
+  centro), es decir `triangle(DIR_UP, …)` + `triangle(DIR_DOWN, …)`.
 
 ### Quién lo usa
 
 - **`Menu`**: `focused()` → `Draw::diamond(centerX, DIAMOND_Y, show)` y
-  `unfocused()` → `Draw::triangle(Draw::UP, centerX, TRIANGLE_Y, show)`. Se eliminaron
+  `unfocused()` → `Draw::triangle(Draw::DIR_UP, centerX, TRIANGLE_Y, show)`. Se eliminaron
   `Menu::toggleDiamond`/`Menu::toggleTriangle` y la constante `SIZE`.
-- **`Legend`**: las flechas del pad MOVE con `Draw::triangle(Draw::UP/RIGHT/DOWN/LEFT, …)`
+- **`Legend`**: las flechas del pad MOVE con `Draw::triangle(Draw::DIR_UP/DIR_RIGHT/DIR_DOWN/DIR_LEFT, …)`
   y el rombo activo con `Draw::diamond(…)` desde `Legend::toggleDiamond`. Se eliminaron
   `Legend::toggleTriangle` y la constante `SIZE`.
 

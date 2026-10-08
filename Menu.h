@@ -159,7 +159,7 @@ private:
   // la 45: 2 filas libres (44..43) y el cuadro desde la fila 3 (42) hacia arriba
   static constexpr int16_t BOX_HEIGHT = Config::MenuStrip::BOX_HEIGHT;
   static constexpr int16_t BOX_TOP = Config::MenuStrip::BOX_TOP;
-  
+
   static constexpr int16_t VALUE_HEIGHT = Config::MenuStrip::VALUE_HEIGHT;
   static constexpr int16_t VALUE_TOP = Config::MenuStrip::VALUE_TOP;
 
@@ -196,14 +196,14 @@ private:
 
   // uint8_t _optionCount;
   // const char* const* _optionTexts;
-  bool _holdButtons;     // true si el mensaje de "Press any button..." está visible
+  bool _holdButtons;  // true si el mensaje de "Press any button..." está visible
   bool _lastScroll;
   bool _showContinue;  // muestra/oculta la opción "Continue" (default: oculta)
 
   int8_t _selected;  // opción actual (objetivo central)
   int8_t _lastSelected;
   // Ticker _ticker;    // avance de 1 px cada ANIM_TICK ms (acumulador por tiempo)
-  Blink _blink;      // parpadeo de la opción (ancla + fase + flanco)
+  Blink _blink;  // parpadeo de la opción (ancla + fase + flanco)
   // bool _redraw;         // primer frame tras begin(): clear() completo + estáticos
   // bool _diamondsDirty;  // hay que repintar solo la banda de rombos (restoreDiamondBand)
   ButtonRepeat _repeat;  // repetición de los botones de navegación al mantenerlos
