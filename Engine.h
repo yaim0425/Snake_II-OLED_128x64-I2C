@@ -19,14 +19,13 @@
 // con el patrón begin()/update()/print()/done() y usa los
 // servicios globales (Display, Buttons, Sound — ver Globals.h)
 // directamente. Durante el aislamiento solo quedan Boot, Legend,
-// Menu y MenuSound (ver el bloque AISLADO más abajo).
+// Menu, MenuSound y MenuDifficulty (ver el bloque AISLADO más abajo).
 //
 // Solo Engine conoce el estado (State): decide qué ventana se
-// Posee las ventanas: Boot, Menu, MenuCredits, MenuDifficulty,
-// cambiar de estado, llama al begin() de la ventana entrante.
-// Como las ventanas son miembros y nadie más las referencia,
-// la regla "una ventana nunca conoce a las demás" queda
-// durante la normalizaci�n.
+// ejecuta y cuándo cambiar de estado, y llama al begin() de la
+// ventana entrante. Como las ventanas son miembros y nadie más las
+// referencia, la regla "una ventana nunca conoce a las demás" queda
+// garantizada durante la normalización.
 //
 // Las ventanas son instancias únicas que persisten entre
 // transiciones: sus valores se conservan (a menos que su
@@ -34,13 +33,12 @@
 //
 // ------------------------------------------------------------
 // AISLADO (temporal): Engine solo posee y despacha Boot, Legend,
-// Menu y MenuSound, para poder iterar sobre el Menu sin arrastrar
-// el Game ni el resto de submenus. El flujo queda Boot -> Legend
-// -> Menu y ahi se detiene: las transiciones del Menu hacia el
-// normalizado: Engine dispone de Boot, Legend, Menu, MenuSound, MenuDifficulty.
-// Engine.cpp, y MenuSound (activa en el Engine) aun no se puede
-// abrir porque la entrada desde el Menu (Menu::confirm) esta
-// comentada.
+// Menu, MenuSound y MenuDifficulty, para poder iterar sobre el Menu
+// sin arrastrar el Game ni el resto de submenus. El flujo queda
+// Boot -> Legend -> Menu y ahi se detiene: las transiciones del Menu
+// hacia el Game y MenuCredits aun no se pueden abrir porque la
+// entrada desde el Menu (Menu::confirm) esta comentada (aunque el
+// Engine ya despacha MENU_SOUND y MENU_DIFFICULTY).
 // Para revertir, descomentar por bloques los estados, los
 // miembros y las funciones comentadas.
 // ------------------------------------------------------------
@@ -90,11 +88,12 @@ private:
   // ========================================================
   // Estado interno: determina qué se ve y a qué ventana se despacha
   //
-  // AISLADO: quedan BOOT, LEGEND, MENU y MENU_SOUND. Los estados del
-  // ========================================================
-  // Estado interno: determina qu� se ve y a qu� ventana se despacha
+  // AISLADO: quedan BOOT, LEGEND, MENU, MENU_SOUND y MENU_DIFFICULTY.
+  // Los estados del Game y MenuCredits (NEW, CONTINUE, MENU_CREDITS)
+  // estan comentados.
   // ========================================================
 
+  enum class State : uint8_t {
      BOOT = 0,
      LEGEND,
      MENU,
@@ -129,10 +128,8 @@ private:
   // ========================================================
   // Ventanas (miembros propios: las posee Engine, ninguna es global)
   //
-  // El Game y los dem�s submenus que a�n no se reactivan est�n comentados.
-  //
-  // ========================================================
-  // Ventanas (miembros propios: Boot, Legend, Menu, MenuSound, MenuDifficulty)
+  // Boot, Legend, Menu, MenuSound y MenuDifficulty estan activas; el
+  // Game y MenuCredits aun no se reactivan (comentados).
   // ========================================================
 
   Legend _legend;
