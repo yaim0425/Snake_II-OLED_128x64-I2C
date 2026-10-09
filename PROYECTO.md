@@ -2010,8 +2010,11 @@ del wiring, no una ventana: depende de los globales (`display`, `buttons`,
 
 - `esp_timer` (base de `nowMs()`/`Stopwatch`) sigue avanzando durante el light
   sleep: el RTC no se detiene, así que el contador no se corrompe.
-- El OLED conserva su RAM con `displayOff()`: al volver con `displayOn()` se
-  restaura la misma imagen sin repintar.
+- El OLED conserva su RAM con el comando `SSD1306_DISPLAYOFF` (0xAE): al volver
+  con `SSD1306_DISPLAYON` (0xAF) se restaura la misma imagen sin repintar. La
+  librería instalada (Adafruit_SSD1306, esta versión) no tiene los helpers
+  `displayOn()`/`displayOff()`, así que `Display::power()` usa
+  `ssd1306_command()`.
 
 
 

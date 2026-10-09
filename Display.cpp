@@ -65,8 +65,8 @@ void Display::show() {
 
 void Display::power(bool on) {
   if (_screen == nullptr) return;
-  if (on) _screen->displayOn();
-  else    _screen->displayOff();
+  if (on) _screen->ssd1306_command(SSD1306_DISPLAYON);
+  else    _screen->ssd1306_command(SSD1306_DISPLAYOFF);
 }
 
 void Display::drawPixel(
