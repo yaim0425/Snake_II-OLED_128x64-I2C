@@ -1,7 +1,12 @@
-#include "MenuDifficulty.h"
-#include "Globals.h"
+// AISLADO: unidad de translation desactivada mientras se trabaja en Boot y
+// Legend. Arduino compila TODOS los .cpp de la carpeta del sketch, asi que este
+// archivo se seguiria compilando aunque Engine ya no lo incluya, y llama a la
+// API de Display que quedo comentada en Display.h.
+// Para revertir: borrar el #if 0 de aqui y el #endif del final.
+#if 0
 
-#include <stdio.h>
+#include "esp32-hal.h"
+#include "MenuDifficulty.h"
 #include "Globals.h"
 
 #include <stdio.h>
@@ -151,3 +156,5 @@ uint8_t MenuDifficulty::difficulty() const {
 // ====================================================================================
 // Fin
 // ====================================================================================
+
+#endif  // AISLADO (ver #if 0 al principio del archivo)
