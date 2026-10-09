@@ -120,10 +120,10 @@ void loop() {
 
   // Fuera de partida y sin actividad durante X ms -> reposo (bloquea hasta
   // que un botón despierta; al volver, no dormir al instante)
-  if (!engine.isInGame() &&
-      idleTimer.expired(Config::Power::IDLE_TIMEOUT_MS)) {
+  if (!engine.isInGame() && idleTimer.expired(Config::Power::IDLE_TIMEOUT_MS)) {
     enterSleep();
     idleTimer.start();
+    return;
   }
 
   engine.update();

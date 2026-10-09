@@ -1987,7 +1987,8 @@ del wiring, no una ventana: depende de los globales (`display`, `buttons`,
   para **re-anclar el estado** y que el botón que despertó no se lea como un
   "press" (no navega el menú al despertar).
 - **Tras el wake** `idleTimer.start()` reinstala el contador para no volver a
-  dormir al instante.
+  dormir al instante y `loop()` **retorna** sin procesar el resto del frame (así
+  el frame del despertar no ejecuta `engine.update()`/`print()`/`display.show()`).
 
 ### Por qué light sleep (no deep sleep)
 
