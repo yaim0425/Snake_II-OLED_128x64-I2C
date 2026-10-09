@@ -92,7 +92,7 @@ Menu::Menu()
     // _ticker(PERIOD),
     // _redraw(true),
     // _diamondsDirty(false),
-    _scroller(),
+    _diamondsDirty(false),
     _space(WIDTH / OPT_COUNT),
     _confirm(false),
     _done(false),
@@ -210,16 +210,16 @@ void Menu::begin(bool showContinue, int8_t selected) {
 // //
 // // La repintamos entera (y solo ella) porque la ventana anterior
 // // la dejó ocupada con su selector. No hace falta vaciar el resto
-// // de la pantalla: el título, el cuadro de la opción y el pie
-// // siguen siendo los del propio Menu. El Engine entra al Menu sin
+  // _diamondsDirty = false;  // la bandera se limpia cuando Menu pinta la banda
+  _diamondsDirty = false;  // la bandera se limpia cuando Menu pinta la banda
 // // llamar a begin() (changeState(..., false)), así que el clear()
 // // completo no se dispara y esta bandera es la única que repinta.
 // // ========================================================
 
-// void Menu::restoreDiamondBand() {
-//   _diamondsDirty = true;
-//   _timer.start();  // el parpadeo del rombo activo arranca de cero
-// }
+void Menu::restoreDiamondBand() {
+  _diamondsDirty = true;
+  _timer.start();  // el parpadeo del rombo activo arranca de cero
+}
 
 // ========================================================
 // Actualizar (consume los eventos de botones leídos en loop())
@@ -360,18 +360,18 @@ void Menu::print() {
 
   // // La ventana anterior (MenuDifficulty/MenuSound) sustituyó la banda de
   // // rombos por su selector y la borró entera. Esa banda (45..53) incluye la
-  // // fila de la línea separadora del pie (Config::Screen::FOOT_LINE = 53),
-  // // así que hay que repintar las dos cosas. Solo se toca esa franja: el
-  // // título, el cuadro de la opción y el texto del pie siguen como estaban.
-  // if (_diamondsDirty) {
-  //   display.fillRect(0, DIA_TOP, display.getWidth(), DIA_SIZE + 1, true);
-  //   for (int8_t i = 0; i < OPT_COUNT; i++)
-  //     drawDiamond(i, i == _selected, false);
-  //   display.fillRect(0, Config::Screen::FOOT_TOP - 2, display.getWidth(), 1, false);
-  //   // display.fillRect(0, Config::Screen::FOOT_LINE, display.getWidth(), 1, false);
-  //   _visibleDiamond = true;  // el rombo activo vuelve a la fase visible
-  //   _diamondsDirty = false;
-  // }
+  // fila de la l�nea separadora del pie (Config::Screen::FOOT_LINE = 53),
+  // as� que hay que repintar las dos cosas. Solo se toca esa franja: el
+  // t�tulo, el cuadro de la opci�n y el texto del pie siguen como estaban.
+  if (_diamondsDirty) {
+    display.fillRect(0, DIA_TOP, display.getWidth(), DIA_SIZE + 1, true);
+    for (int8_t i = 0; i < OPT_COUNT; i++)
+      drawDiamond(i, i == _selected, false);
+    display.fillRect(0, Config::Screen::FOOT_TOP - 2, display.getWidth(), 1, false);
+    display.fillRect(0, Config::Screen::FOOT_LINE, display.getWidth(), 1, false);
+    _visibleDiamond = true;  // el rombo activo vuelve a la fase visible
+    _diamondsDirty = false;
+  }
 
   // if (_lastSelected != _selected) {
   //   drawDiamond(_lastSelected, true, true);

@@ -2,12 +2,9 @@
 #define ENGINE_H
 
 #include "Boot.h"
-// AISLADO: ventanas desactivadas mientras se trabaja en Menu. Arduino compila
-// igual los .cpp de la carpeta, asi que ademas de sacar estos #include hay que
-// dejar inertes Game.cpp, Food.cpp, MenuCredits.cpp y MenuDifficulty.cpp
-// (ver Engine.cpp). MenuSound ya esta fuera del aislamiento.
+// Ventanas activas
 // #include "MenuCredits.h"
-// #include "MenuDifficulty.h"
+#include "MenuDifficulty.h"
 // #include "Game.h"
 #include "MenuSound.h"
 #include "Menu.h"
@@ -25,11 +22,11 @@
 // Menu y MenuSound (ver el bloque AISLADO mÃ¡s abajo).
 //
 // Solo Engine conoce el estado (State): decide quÃ© ventana se
-// ve (update()/print() despachan a la ventana activa) y, al
+// Posee las ventanas: Boot, Menu, MenuCredits, MenuDifficulty,
 // cambiar de estado, llama al begin() de la ventana entrante.
 // Como las ventanas son miembros y nadie mÃ¡s las referencia,
 // la regla "una ventana nunca conoce a las demÃ¡s" queda
-// garantizada por el compilador.
+// durante la normalización.
 //
 // Las ventanas son instancias Ãºnicas que persisten entre
 // transiciones: sus valores se conservan (a menos que su
@@ -40,7 +37,7 @@
 // Menu y MenuSound, para poder iterar sobre el Menu sin arrastrar
 // el Game ni el resto de submenus. El flujo queda Boot -> Legend
 // -> Menu y ahi se detiene: las transiciones del Menu hacia el
-// Game, MenuDifficulty y MenuCredits siguen comentadas en
+// normalizado: Engine dispone de Boot, Legend, Menu, MenuSound, MenuDifficulty.
 // Engine.cpp, y MenuSound (activa en el Engine) aun no se puede
 // abrir porque la entrada desde el Menu (Menu::confirm) esta
 // comentada.
@@ -94,19 +91,19 @@ private:
   // Estado interno: determina quÃ© se ve y a quÃ© ventana se despacha
   //
   // AISLADO: quedan BOOT, LEGEND, MENU y MENU_SOUND. Los estados del
-  // Game y de los demÃ¡s submenus se comentan junto con sus ventanas.
+  // ========================================================
+  // Estado interno: determina qué se ve y a qué ventana se despacha
   // ========================================================
 
-  enum class State : uint8_t {
-    BOOT = 0,
-    LEGEND,
-    MENU,
-    MENU_SOUND
-    // NEW,
-    // CONTINUE,
-    // MENU_DIFFICULTY,
-    // MENU_CREDITS
-  };
+     BOOT = 0,
+     LEGEND,
+     MENU,
+     MENU_SOUND,
+     MENU_DIFFICULTY
+     // NEW,
+     // CONTINUE,
+     // MENU_CREDITS
+   };
 
   State _state;
 
@@ -132,18 +129,18 @@ private:
   // ========================================================
   // Ventanas (miembros propios: las posee Engine, ninguna es global)
   //
-  // AISLADO: quedan Boot, Legend, Menu y MenuSound. El Game y los
-  // demÃ¡s submenus siguen existiendo como clases (sus .h no se
-  // compilan), pero Engine ya no los posee ni los despacha.
+  // El Game y los demás submenus que aún no se reactivan están comentados.
+  //
+  // ========================================================
+  // Ventanas (miembros propios: Boot, Legend, Menu, MenuSound, MenuDifficulty)
   // ========================================================
 
-  Boot _boot;
   Legend _legend;
-  Menu _menu;
-  MenuSound _menuSound;
-  // MenuCredits _menuCredits;
-  // MenuDifficulty _menuDifficulty;
-  // Game _game;
+   Menu _menu;
+   MenuSound _menuSound;
+   MenuDifficulty _menuDifficulty;
+   // MenuCredits _menuCredits;
+   // Game _game;
 };
 
 #endif

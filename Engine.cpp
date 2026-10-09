@@ -40,37 +40,27 @@ void Engine::update() {
       if (!_menu.done()) break;
 
       switch (_menu.selected()) {
+        case Menu::OPT_DIFFICULTY: changeState(State::MENU_DIFFICULTY); break;
         case Menu::OPT_SOUND: changeState(State::MENU_SOUND); break;
         default: changeState(State::LEGEND); break;
       }
-
-      // // Confirmar opción (ACTION_RIGHT) -> cambiar de ventana
-      // int8_t select = _menu.confirm();
-      // if (select >= 0) {
-      //   sound.play(Sound::SFX_CONFIRM);
-      //   // AISLADO: los destinos de abajo (Game y submenus) siguen
-      //   // desactivados, asi que el Menu no transiciona. Al reactivarlos
-      //   // hay que descomentar el switch y volver a habilitar los estados
-      //   // en el enum de Engine.h.
-      //   // switch (select) {
-      //   //   case Menu::OPT_NEW: changeState(State::NEW); break;
-      //   //   case Menu::OPT_CONTINUE: changeState(State::CONTINUE); break;
-      //   //   case Menu::OPT_DIFFICULTY: changeState(State::MENU_DIFFICULTY); break;
-      //   //   case Menu::OPT_SOUND: changeState(State::MENU_SOUND); break;
-      //   //   case Menu::OPT_CREDITS: changeState(State::MENU_CREDITS); break;
-      //   // }
-      // }
       break;
 
     case State::MENU_SOUND:
       _menuSound.update();
-      if (_menuSound.done()) changeState(State::MENU); break;
-        // _menu.showOptions();
-        // changeState(State::MENU);
+      if (_menuSound.done()) {
+        _menu.restoreDiamondBand();
+        changeState(State::MENU);
+      }
+      break;
 
-        // _menu.restoreDiamondBand();  // pendiente: Menu::restoreDiamondBand()
-        // sigue comentado en Menu.h/Menu.cpp; por eso changeState(MENU, false)
-        // hace igual el _menu.begin() completo (beginWindow se ignora).
+    case State::MENU_DIFFICULTY:
+      _menuDifficulty.update();
+      if (_menuDifficulty.done()) {
+        _menu.restoreDiamondBand();
+        changeState(State::MENU);
+      }
+      break;
 
       // AISLADO: ventanas del Game y de los demás submenus (MenuSound ya esta
       // activa: ver su case arriba). Se comentan por bloque entero, no linea
@@ -139,14 +129,12 @@ void Engine::print() {
     case State::LEGEND: _legend.print(); break;
     case State::MENU: _menu.print(); break;
     case State::MENU_SOUND: _menuSound.print(); break;
+    case State::MENU_DIFFICULTY: _menuDifficulty.print(); break;
 
-      // AISLADO: ventanas del Game y de los demás submenus (MenuSound ya esta
-      // activa; ver Engine::update).
       // case State::NEW:
       // case State::CONTINUE:
       //   _game.print();
       //   break;
-      // case State::MENU_DIFFICULTY: _menuDifficulty.print(); break;
       // case State::MENU_CREDITS: _menuCredits.print(); break;
   }
 }
@@ -195,9 +183,8 @@ void Engine::changeState(State newState) {
       }
 
     case State::MENU_SOUND: _menuSound.begin(); break;
+    case State::MENU_DIFFICULTY: _menuDifficulty.begin(); break;
 
-      // AISLADO: ventanas del Game y de los demás submenus (MenuSound ya esta
-      // activa; ver Engine::update).
       // case State::NEW:
       //   _game.setDifficulty(_menuDifficulty.difficulty());
       //   _game.begin(true);
@@ -206,7 +193,6 @@ void Engine::changeState(State newState) {
       //   _game.setDifficulty(_menuDifficulty.difficulty());
       //   _game.begin(false);
       //   break;
-      // case State::MENU_DIFFICULTY: _menuDifficulty.begin(); break;
       // case State::MENU_CREDITS: _menuCredits.begin(); break;
   }
 }

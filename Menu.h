@@ -98,13 +98,13 @@ public:
   // ========================================================
   // Rombos de posición (restauración)
   // ========================================================
-
-  // Las ventanas MenuDifficulty y MenuSound sustituyen la banda de
-  // rombos (45..53) por su selector y dejan el resto de la ventana
+  // Las ventanas MenuDifficulty y MenuSound sustituyen la banda de rombos (45..53) por su selector.
+  // Al salir de ellas el Engine llama a esto para que el Menu vuelva a pintar esa franja.
+  // No borra la pantalla: solo la banda.
   // como estaba. Al salir de ellas el Engine llama a esto para que
   // el Menu vuelva a pintar esa franja. A diferencia de begin(), no
   // borra la pantalla: solo la banda.
-  // void restoreDiamondBand();
+  void restoreDiamondBand();
   bool done() const;
   int8_t selected() const;
 
@@ -188,24 +188,24 @@ private:
   // Estado
   // ========================================================
 
-  // uint16_t _bestScore;
-  // const char* _version;
+  uint16_t _bestScore;
+  const char* _version;
+  const char* _title;
+  bool _showFooter;    // pie "Best"/versi?n (default true)
 
-  // const char* _title;  // título del Header (default "Snake II")
-  // bool _showFooter;    // pie "Best"/versión (default true)
 
-  // uint8_t _optionCount;
-  // const char* const* _optionTexts;
-  bool _holdButtons;  // true si el mensaje de "Press any button..." está visible
+  uint8_t _optionCount;
+  const char* const* _optionTexts;
+  bool _redraw;         // primer frame tras begin(): clear() completo + est?ticos
   bool _lastScroll;
   bool _showContinue;  // muestra/oculta la opción "Continue" (default: oculta)
 
   int8_t _selected;  // opción actual (objetivo central)
   int8_t _lastSelected;
-  // Ticker _ticker;    // avance de 1 px cada ANIM_TICK ms (acumulador por tiempo)
-  Blink _blink;  // parpadeo de la opción (ancla + fase + flanco)
-  // bool _redraw;         // primer frame tras begin(): clear() completo + estáticos
-  // bool _diamondsDirty;  // hay que repintar solo la banda de rombos (restoreDiamondBand)
+  Ticker _ticker;    // avance de 1 px cada ANIM_TICK ms (acumulador por tiempo)
+  Blink _blink;  // parpadeo de la opci??n (ancla + fase + flanco)
+  bool _redraw;         // primer frame tras begin(): clear() completo + est?ticos
+  bool _diamondsDirty;  // hay que repintar solo la banda de rombos (restoreDiamondBand)
   ButtonRepeat _repeat;  // repetición de los botones de navegación al mantenerlos
 
   Scroller _scroller;  // scroller de 1 bit del cuadro de selección (1 banda, texto 12x16)
