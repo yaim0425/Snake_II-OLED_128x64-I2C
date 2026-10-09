@@ -116,12 +116,15 @@ void loop() {
   buttons.read();  // una sola lectura de botones por frame (de esta lectura
                    // consumen los eventos todas las ventanas despachadas por Engine)
 
-  // Cualquier botón presionado = actividad: reinicia el contador del reposo
-  if (buttons.anyHeld()) idleTimer.start();
+  // Cualquier botón presionado (estado físico, sin supresión) = actividad:
+  // reinicia el contador del reposo
+  if (buttons.anyPhysical()) idleTimer.start();
 
   // Fuera de partida y sin actividad durante X ms -> reposo (bloquea hasta
-  // que un botón despierta; al volver, no dormir al instante)
+  // que un botón despierta; al volver, no dormir al instante). Nunca se
+  // entra con un pin en HIGH: el wake por nivel despertaría al instante.
   if (!engine.isInGame() &&
+      !buttons.anyPhysical() &&
       idleTimer.expired(Config::Power::IDLE_TIMEOUT_MS)) {
     enterSleep();
     idleTimer.start();

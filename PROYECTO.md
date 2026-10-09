@@ -368,7 +368,8 @@ enum Button : uint8_t {
 | `void begin()` | Configura `INPUT_PULLDOWN` y lee el estado inicial. |
 | `void read()` | Leer físicamente, aplicar debounce y generar eventos. **Se llama una sola vez por `loop()`** (en `loop()`, antes de `engine.update()`); las ventanas solo consultan `hold`/`pressed`/`released` sin volver a leer. |
 | `bool hold(index)` / `pressed(index)` / `released(index)` | **Acceso único** por botón, con los valores del enum `Button`: `hold(Buttons::MOVE_LEFT)` = estado actual (mantenido; antes se llamaba `state()`), `pressed(Buttons::ACTION_RIGHT)` = evento de pulso (true solo en el ciclo en que se presiona), `released(...)` = evento de liberación. Los 24 getters con nombre (`moveUp()`/`actionRightPressed()`/`...,Released()`, etc.) se eliminaron: API única sin boilerplate. |
-| `bool anyHeld()` | true si **algún** botón está presionado ahora (no distingue cuál). La usa el wiring para el **reposo** (sección 26): cualquier pulso cuenta como actividad y reinicia `idleTimer`. |
+| `bool anyHeld()` | true si **algún** botón está presionado (estado confirmado efectivo; no distingue cuál). Está sujeto a la supresión `ignoreUntilRelease()` (`_buttons = 0` mientras haya botones retenidos): las ventanas lo ven "sin nada" tras el wake del reposo. |
+| `bool anyPhysical()` | true si **algún** botón está físicamente presionado (estado sin filtrar `_rawButtons`, ajeno al debounce y a la supresión). La usa el wiring para el **reposo** (sección 26): cualquier pulso físico cuenta como actividad y reinicia `idleTimer`. |
 
 ### Diseño del debounce (estados agrupados en bytes)
 
@@ -1973,9 +1974,13 @@ del wiring, no una ventana: depende de los globales (`display`, `buttons`,
 ### Qué hace
 
 - **Disparador:** en `loop()`, `idleTimer` (un `Stopwatch`) cuenta el tiempo sin
-  botones presionados. Cualquier `buttons.anyHeld()` lo reinicia (`start()`).
-  Si **no se está en partida** (`!engine.isInGame()`) y llegó a
-  `Config::Power::IDLE_TIMEOUT_MS`, se entra en reposo.
+  botones presionados. Cualquier `buttons.anyPhysical()` lo reinicia (`start()`).
+  Se usa el estado **físico** (no `anyHeld()`, que refleja la supresión
+  `ignoreUntilRelease()`): un pulso mantenido tras el wake sigue contando como
+  actividad y no se duerme con él en curso. Si **no se está en partida**
+  (`!engine.isInGame()`), **no hay ningún botón presionado** (`!buttons.anyPhysical()`,
+  para no entrar con un pin en HIGH: el wake por nivel despertaría al instante) y
+  llegó a `Config::Power::IDLE_TIMEOUT_MS`, se entra en reposo.
 - **Reposo:** `enterSleep()` apaga el OLED (`display.power(false)`, comando SSD1306
   `0xAE`; el framebuffer del panel se conserva) y corta el sonido
   (`sound.stop()`); luego bloquea en `esp_light_sleep_start()` hasta que un
@@ -2000,7 +2005,10 @@ del wiring, no una ventana: depende de los globales (`display`, `buttons`,
 ### API nueva que aporta
 
 - `Display::power(bool on)` — apaga/enciende el panel OLED (ahorro en reposo).
-- `Buttons::anyHeld()` — true si algún botón está presionado (actividad del contador).
+- `Buttons::anyPhysical()` — true si algún botón está presionado físicamente
+  (actividad del contador; ajeno a la supresión `ignoreUntilRelease()`).
+- `Buttons::ignoreUntilRelease()` — supresión de la entrada hasta soltar todos
+  los botones (el que despertó no debe contar como pulsación sostenida).
 - `Engine::isInGame()` — true si hay partida en curso (el reposo no aplica).
   Hoy devuelve siempre `false` (**AISLADO**: sin `Game` activo); al reactivarlo,
   volver a `_state == State::NEW || _state == State::CONTINUE`.

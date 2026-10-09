@@ -58,6 +58,10 @@ public:
   // true si algún botón está presionado ahora (no distingue cuál)
   bool anyHeld() const;
 
+  // true si algún botón está físicamente presionado (sin debounce ni
+  // supresión): la usa el wiring como "actividad" para el reposo.
+  bool anyPhysical() const;
+
   // Anula la activación de todos los botones hasta que se suelten
   // (el botón que despertó al equipo no debe contar como pulsación)
   void ignoreUntilRelease();

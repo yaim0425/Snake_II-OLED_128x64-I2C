@@ -163,6 +163,10 @@ bool Buttons::anyHeld() const {
   return _buttons != 0;
 }
 
+bool Buttons::anyPhysical() const {
+  return _rawButtons != 0;
+}
+
 void Buttons::ignoreUntilRelease() {
 
   _ignore = true;
