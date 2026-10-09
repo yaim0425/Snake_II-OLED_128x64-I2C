@@ -199,7 +199,7 @@ void Boot::firstPrint() {
   display.drawBitmap(
     (WIDTH - Sprite::LOGO_W) / 2, BODY_TOP,
     Sprite::LOGO, Sprite::LOGO_W, Sprite::LOGO_H,
-    SSD1306_WHITE, SSD1306_BLACK);
+    true, false);
 
   // ------------------------------------------------------
 

@@ -115,12 +115,14 @@ void MenuSound::drawSelector() {
   const int16_t labelX = (WIDTH - labelW) / 2;
   // const int16_t centerY = DIAMOND_Y;
 
+  display.drawText(label, labelX, DIAMOND_Y - 3, TEXT_6x8);
+
   // Parpadeo de la flecha: visible el 75% del período, oculta el
   // primer 25% (anclado al begin: sin salto de fase con el reloj
   // de 64 bits)
   if (_blink.isVisible(PERIOD, OFF))
     if (_enabled)
-      Draw::triangle(Draw::DIR_LEFT, labelX - 6, DIAMOND_Y);
+      Draw::triangle(Draw::DIR_LEFT, labelX - 1 - 3, DIAMOND_Y);
     // ON: flecha a la izquierda, punta hacia la izquierda ("< ON")
     // int16_t base = labelX - ARROW_GAP;  // lado plano, pegado a la palabra
     // int16_t centerX = labelX;
@@ -130,7 +132,7 @@ void MenuSound::drawSelector() {
     //   centerX, centerY + SIZE,
     //   SSD1306_WHITE);
     else
-      Draw::triangle(Draw::DIR_RIGHT, labelX + labelW + 5, DIAMOND_Y);
+      Draw::triangle(Draw::DIR_RIGHT, labelX + labelW + 2, DIAMOND_Y);
   // OFF: flecha a la derecha, punta hacia la derecha ("OFF >")
   // int16_t base = labelX + labelW + ARROW_GAP;  // lado plano, pegado a la palabra
   // int16_t centerX = labelX + labelW;
@@ -139,8 +141,6 @@ void MenuSound::drawSelector() {
   //   centerX + SIZE, centerY,
   //   centerX, centerY + SIZE,
   //   SSD1306_WHITE);
-
-  display.drawText(label, labelX, DIAMOND_Y - 3, TEXT_6x8);
 }
 
 // ========================================================
