@@ -1993,8 +1993,10 @@ del wiring, no una ventana: depende de los globales (`display`, `buttons`,
   fuente de wake con `gpio_wakeup_enable(pin, GPIO_INTR_HIGH_LEVEL)`
   (los botones son `INPUT_PULLDOWN`, pulsado = HIGH) y `esp_sleep_enable_gpio_wakeup()`
   (vía rápida) **más** `esp_sleep_enable_timer_wakeup(Config::Power::WAKE_CHECK_MS)`
-  (garantía: despierta cada `WAKE_CHECK_MS` = 50 ms para re-verificar por polling
-  y volver a dormir). Al volver con un botón real: `display.power(true)` (`0xAF`,
+  (garantía: despierta cada `WAKE_CHECK_MS` = 200 ms para re-verificar por polling
+  y volver a dormir; con HW sano el botón despierta al instante por el GPIO por
+  nivel, el timer solo cubre el caso en que ese nivel deja de re-disparar). Al volver
+  con un botón real: `display.power(true)` (`0xAF`,
   misma imagen) y `buttons.begin()` para **re-anclar el estado** y que el botón
   que despertó no se lea como un "press" (no navega el menú al despertar).
 - **Tras el wake** `idleTimer.start()` reinstala el contador para no volver a
@@ -2019,9 +2021,11 @@ del wiring, no una ventana: depende de los globales (`display`, `buttons`,
   Hoy devuelve siempre `false` (**AISLADO**: sin `Game` activo); al reactivarlo,
   volver a `_state == State::NEW || _state == State::CONTINUE`.
 - `Config::Power::IDLE_TIMEOUT_MS` — timeout configurable (60 s por defecto).
-- `Config::Power::WAKE_CHECK_MS` — período del wake de verificación (50 ms): el
+- `Config::Power::WAKE_CHECK_MS` — período del wake de verificación (200 ms): el
   timer que garantiza el re-chequeo por polling durante el reposo (el GPIO por
-  nivel puede dejar de re-disparar tras el primer ciclo).
+  nivel puede dejar de re-disparar tras el primer ciclo). Compromiso: cuanto más
+  corto, menor latencia de respuesta en el caso fallback; cuanto más largo, menor
+  consumo en reposo.
 
 ### Notas
 
