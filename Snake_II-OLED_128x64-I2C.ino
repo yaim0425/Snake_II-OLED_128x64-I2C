@@ -78,9 +78,17 @@ void enterSleep() {
   display.power(false);   // apaga el panel OLED (ahorro; la RAM del OLED se conserva)
   sound.stop();           // corta un efecto en curso
 
-  esp_light_sleep_start();  // bloquea hasta el wake de un botón
+  // Wake de verificación: aunque esp_light_sleep_start() vuelva "solo"
+  // (nivel que ya no persiste, USB host, etc.), no se sale del reposo si
+  // no hay un botón realmente presionado; se vuelve a dormir al instante.
+  // El wake real se detecta por polling (timer cada WAKE_CHECK_MS + el GPIO
+  // por nivel como vía rápida) y la pantalla queda apagada hasta entonces.
+  while (!buttons.anyPhysical()) {
+    esp_light_sleep_start();  // bloquea hasta el wake de un botón o del timer
+    buttons.read();           // refresca el estado físico tras despertar
+  }
 
-  // --- al despertar ---
+  // --- al despertar con un botón real ---
   display.power(true);      // el framebuffer del OLED sigue en el panel: misma imagen
   buttons.begin();          // re-ancla el estado: el botón que despertó no es un "press"
   buttons.ignoreUntilRelease();  // ...ni cuenta como pulsación sostenida hasta soltarlo
@@ -104,6 +112,13 @@ void setup() {
     gpio_wakeup_enable((gpio_num_t)Config::Pin::BUTTONS[i], GPIO_INTR_HIGH_LEVEL);
   }
   esp_sleep_enable_gpio_wakeup();
+
+  // Wake de verificación por timer: el GPIO por nivel puede dejar de
+  // re-disparar tras el primer ciclo (p. ej. con USB-CDC el host impide
+  // que el light sleep persista). El timer despierta cada WAKE_CHECK_MS
+  // y enterSleep() re-verifica por polling; el GPIO por nivel solo actúa
+  // de vía rápida cuando funciona.
+  esp_sleep_enable_timer_wakeup((uint64_t)Config::Power::WAKE_CHECK_MS * 1000ULL);
 
   Serial.println("Snake II");
 }

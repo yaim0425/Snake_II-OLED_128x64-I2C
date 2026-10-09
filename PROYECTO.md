@@ -1983,14 +1983,20 @@ del wiring, no una ventana: depende de los globales (`display`, `buttons`,
   llegó a `Config::Power::IDLE_TIMEOUT_MS`, se entra en reposo.
 - **Reposo:** `enterSleep()` apaga el OLED (`display.power(false)`, comando SSD1306
   `0xAE`; el framebuffer del panel se conserva) y corta el sonido
-  (`sound.stop()`); luego bloquea en `esp_light_sleep_start()` hasta que un
-  botón despierta.
+  (`sound.stop()`); luego entra en un bucle de **wake de verificación**:
+  `while (!buttons.anyPhysical()) { esp_light_sleep_start(); buttons.read(); }`.
+  No se sale del reposo hasta que hay un botón **realmente** presionado; si
+  `esp_light_sleep_start()` vuelve "solo" (p. ej. el GPIO por nivel que ya no
+  re-dispara o el host USB-CDC que impide que el light sleep persista), se
+  vuelve a dormir al instante y la pantalla queda apagada hasta entonces.
 - **Despertar:** en `setup()`, cada pin de `Config::Pin::BUTTONS` se habilita como
   fuente de wake con `gpio_wakeup_enable(pin, GPIO_INTR_HIGH_LEVEL)`
-  (los botones son `INPUT_PULLDOWN`, pulsado = HIGH) y `esp_sleep_enable_gpio_wakeup()`.
-  Al volver: `display.power(true)` (`0xAF`, misma imagen) y `buttons.begin()`
-  para **re-anclar el estado** y que el botón que despertó no se lea como un
-  "press" (no navega el menú al despertar).
+  (los botones son `INPUT_PULLDOWN`, pulsado = HIGH) y `esp_sleep_enable_gpio_wakeup()`
+  (vía rápida) **más** `esp_sleep_enable_timer_wakeup(Config::Power::WAKE_CHECK_MS)`
+  (garantía: despierta cada `WAKE_CHECK_MS` = 50 ms para re-verificar por polling
+  y volver a dormir). Al volver con un botón real: `display.power(true)` (`0xAF`,
+  misma imagen) y `buttons.begin()` para **re-anclar el estado** y que el botón
+  que despertó no se lea como un "press" (no navega el menú al despertar).
 - **Tras el wake** `idleTimer.start()` reinstala el contador para no volver a
   dormir al instante.
 
@@ -2013,6 +2019,9 @@ del wiring, no una ventana: depende de los globales (`display`, `buttons`,
   Hoy devuelve siempre `false` (**AISLADO**: sin `Game` activo); al reactivarlo,
   volver a `_state == State::NEW || _state == State::CONTINUE`.
 - `Config::Power::IDLE_TIMEOUT_MS` — timeout configurable (60 s por defecto).
+- `Config::Power::WAKE_CHECK_MS` — período del wake de verificación (50 ms): el
+  timer que garantiza el re-chequeo por polling durante el reposo (el GPIO por
+  nivel puede dejar de re-disparar tras el primer ciclo).
 
 ### Notas
 

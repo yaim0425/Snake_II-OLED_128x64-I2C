@@ -168,6 +168,7 @@ constexpr uint8_t OFF = 20;       // % del período en que está oculto
 
 namespace Power {
 constexpr uint32_t IDLE_TIMEOUT_MS = 60 * 1000;  // reposo: sin actividad fuera de partida (ms)
+constexpr uint32_t WAKE_CHECK_MS = 50;           // reposo: período del wake de verificación (ms)
 }
 
 namespace MenuStrip {
