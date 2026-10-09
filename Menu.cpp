@@ -82,8 +82,7 @@ Menu::Menu()
   // _showFooter(true),
   // _optionCount(OPT_NEW),
   // _optionTexts(NO_CONTINUE_OPTIONS),
-  : _holdButtons(true),
-    _lastScroll(true),
+  : _lastScroll(true),
     _showContinue(false),
     _selected(OPT_NEW),
     _lastSelected(OPT_NEW),
@@ -104,7 +103,8 @@ Menu::Menu()
 
 void Menu::begin(bool showContinue, int8_t selected) {
   // _bestScore = 0;
-  _holdButtons = true;
+  // Ignorar los botones retenidos al abrir el menú (p. ej. el que lo abrió)
+  buttons.ignoreUntilRelease();
   _showContinue = showContinue;
   _selected = selected;
   _lastSelected = selected;
@@ -233,9 +233,6 @@ void Menu::begin(bool showContinue, int8_t selected) {
 void Menu::update() {
   if (_done) return;
 
-  // if (_holdButtons) _holdButtons = !_timer.expired(5000);
-
-  holdButtons();
   navigate();
   action();
 
@@ -257,17 +254,7 @@ void Menu::update() {
 // Navegación
 // ========================================================
 
-void Menu::holdButtons() {
-  if (!_holdButtons) return;
-
-  _holdButtons = false;
-  for (int8_t button = 0; button < Buttons::MAX_BUTTONS; button++)
-    _holdButtons = _holdButtons || buttons.hold(button);
-}
-
 void Menu::navigate() {
-  if (_holdButtons) return;
-
   bool moved = false;
 
   if (_repeat.step(Buttons::MOVE_LEFT) && _selected > 0) {
@@ -284,8 +271,6 @@ void Menu::navigate() {
 }
 
 void Menu::action() {
-  if (_holdButtons) return;
-
   if (buttons.pressed(Buttons::ACTION_UP)) {
     _selected = _showContinue ? OPT_CONTINUE : OPT_NEW;
     if (_lastSelected == _selected) return;

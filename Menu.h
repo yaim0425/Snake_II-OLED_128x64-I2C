@@ -114,7 +114,6 @@ private:
   void blinkOption();
   void nextOption();
   void toggleText(bool show);
-  void holdButtons();
   void navigate();
   void toggleDiamond(int8_t diamond, bool show);
   void toggleTriangle(int8_t triangle, bool show);
@@ -196,7 +195,6 @@ private:
 
   // uint8_t _optionCount;
   // const char* const* _optionTexts;
-  bool _holdButtons;  // true si el mensaje de "Press any button..." está visible
   bool _lastScroll;
   bool _showContinue;  // muestra/oculta la opción "Continue" (default: oculta)
 

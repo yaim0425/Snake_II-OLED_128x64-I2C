@@ -14,6 +14,7 @@ Buttons::Buttons(
   _buttons = 0;
   _pressed = 0;
   _released = 0;
+  _ignore = false;
 
   for (uint8_t i = 0; i < MAX_BUTTONS; i++) {
 
@@ -121,6 +122,21 @@ void Buttons::read() {
     _pressed  &= (uint8_t)~MOVE_MASK;
     _released &= (uint8_t)~MOVE_MASK;
   }
+
+  // --------------------------------------------
+  // Supresión tras el wake del reposo: hasta
+  // que se suelten todos los botones, ninguno
+  // cuenta como activo (ni estado ni eventos)
+  // --------------------------------------------
+
+  if (_ignore) {
+
+    _buttons  = 0;
+    _pressed  = 0;
+    _released = 0;
+
+    if (raw == 0) _ignore = false;
+  }
 }
 
 // ========================================================
@@ -145,6 +161,17 @@ bool Buttons::released(uint8_t index) const {
 
 bool Buttons::anyHeld() const {
   return _buttons != 0;
+}
+
+void Buttons::ignoreUntilRelease() {
+
+  _ignore = true;
+
+  // Anula ya el estado/eventos actuales: el botón que despertó
+  // no debe alcanzar a verse como pulsación en este ciclo
+  _buttons  = 0;
+  _pressed  = 0;
+  _released = 0;
 }
 
 // ====================================================================================

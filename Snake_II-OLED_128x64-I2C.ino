@@ -83,6 +83,7 @@ void enterSleep() {
   // --- al despertar ---
   display.power(true);      // el framebuffer del OLED sigue en el panel: misma imagen
   buttons.begin();          // re-ancla el estado: el botón que despertó no es un "press"
+  buttons.ignoreUntilRelease();  // ...ni cuenta como pulsación sostenida hasta soltarlo
 }
 
 // ========================================================

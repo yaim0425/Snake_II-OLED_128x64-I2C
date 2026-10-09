@@ -58,6 +58,10 @@ public:
   // true si algún botón está presionado ahora (no distingue cuál)
   bool anyHeld() const;
 
+  // Anula la activación de todos los botones hasta que se suelten
+  // (el botón que despertó al equipo no debe contar como pulsación)
+  void ignoreUntilRelease();
+
   // Los accesos por botón con nombre (moveUp/moveDown..., xxxPressed/xxxReleased)
   // se eliminaron: se usan state/pressed/released con el enum Button, p. ej.
   // `buttons.pressed(Buttons::ACTION_RIGHT)`. API única, sin boilerplate.
@@ -93,6 +97,10 @@ private:
 
   // Se acaba de soltar (evento de un solo ciclo)
   uint8_t _released;
+
+  // Ignora toda activación hasta que se suelten los botones
+  // (tras despertar del reposo: el botón que despertó no debe contar)
+  bool _ignore;
 
   // ========================================================
   // Helper: verifica un bit (botón 0-7) en un estado agrupado
