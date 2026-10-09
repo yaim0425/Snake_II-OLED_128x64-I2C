@@ -63,6 +63,12 @@ void Display::show() {
   _screen->display();
 }
 
+void Display::power(bool on) {
+  if (_screen == nullptr) return;
+  if (on) _screen->displayOn();
+  else    _screen->displayOff();
+}
+
 void Display::drawPixel(
   int16_t x, int16_t y,
   bool white) {

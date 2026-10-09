@@ -80,7 +80,9 @@ constantes compartidas viven en `Config.h` (pines, geometría, dificultad, versi
   propias copias).
 - `Engine` es el despachador: posee las ventanas (no globales, no anidadas) y
   llama al `begin()` de la entrante al cambiar de estado. `loop()` hace la única
-  lectura de botones del frame.
+  lectura de botones del frame y vigila el **reposo** (sección 26): sin partida
+  en curso y sin botón presionado durante `Config::Power::IDLE_TIMEOUT_MS`, el
+  ESP32 duerme en light sleep y despierta con cualquier botón.
 - Renderizado sin `clear()` global: cada ventana limpia solo en su primer frame y
   luego redibuja solo zonas dinámicas. `MenuDifficulty` y `MenuSound` son la
   excepción: no limpian nada, se dibujan **sobre el `Menu`** sustituyendo solo
@@ -147,10 +149,10 @@ Directorio: `D:\Documents\ESP32S3\Snake_II-OLED_128x64-I2C`
 
 | Archivo | Contenido |
 |---------|-----------|
-| `Display.h` / `Display.cpp` | Clase `Display` (control del OLED). Completa. |
+| `Display.h` / `Display.cpp` | Clase `Display` (control del OLED: `begin()`, `clear()`/`show()`, `power(on)` para apagar/encender el panel SSD1306 —ahorro en reposo—, `fillRect`, `fillTriangle`, `drawText`, `drawBitmap`). Completa. |
 | `Config.h` | Constantes compartidas del proyecto (namespace `Config`, sección 19): pines (`Config::Pin`: botones, buzzer, SDA/SCL), geometría y regiones de la pantalla (`Config::Screen`: 128×64, celda 8, dirección I2C, Header/Body), límites de la dificultad (`Config::Difficulty`), la versión del firmware (`Config::Version`: VERSION/RELEASE_DATE, la usa el pie del menú; NAME lo dibuja `Boot`), créditos (`Config::Credits`), tiempos de `Legend` (`Config::Legend`: NEXT/PERIOD/OFF, `HOLD` comentado), tamaño de rombo (`Config::Diamond`), repetición de botones (`Config::Button`: DELAY/TICK, **nuevo**), animación del `Scroller` (`Config::Scroller`) y parpadeo genérico (`Config::DefaultTimer`: PERIOD/OFF, `HOLD` comentado). Solo lo verdaderamente compartido; el resto es `static constexpr` en su clase. Sin `#define` para valores (constantes con tipo y ámbito). |
 | `Globals.h` | Declara `extern` los **globales del proyecto**: `Display display;`, `Buttons buttons;` y `Sound sound;` (servicios) más `Storage storage;` (almacén de estado, sección 22), todos definidos en `Snake_II-OLED_128x64-I2C.ino` (sección 20). **No** declara el `Buzzer` (es interno de `Sound`). No define las ventanas: esas viven dentro de `Engine`. |
-| `Buttons.h` / `Buttons.cpp` | Clase `Buttons` (lectura con debounce, `hold`/`pressed`/`released`; `MAX_BUTTONS` es el contador final del enum `Button`; `isSet` declarado en el header y definido en el `.cpp`). Completa. |
+| `Buttons.h` / `Buttons.cpp` | Clase `Buttons` (lectura con debounce, `hold`/`pressed`/`released`/`anyHeld`; `MAX_BUTTONS` es el contador final del enum `Button`; `isSet` declarado en el header y definido en el `.cpp`). Completa. |
 | `Boot.h` / `Boot.cpp` | Clase `Boot` (pantalla de arranque: Header con el mensaje "Press any button / to start" que **parpadea sin fase fija** —`PERIOD=500 ms`, oculto el 20 % (`Config::DefaultTimer`), `HOLD` comentado— y Body con el logo `Sprite::LOGO` (bloque 1bpp, 80×48) en blanco, volcado con `Display::drawBitmap(..., SSD1306_WHITE, SSD1306_BLACK)`; al entrar (`begin()`) suena la fanfarria `SFX_FANFARE`; se termina con cualquier botón con su sonido según el botón; la animación de bandas de líneas verticales anterior está comentada). Completa. |
 | `Legend.h` / `Legend.cpp` | Clase `Legend` (panel de botones: pad MOVE a la izquierda con 4 flechas, 4 rombos completos de ACTION a la derecha en las posiciones de un pad que parpadean MUY rápido uno a la vez en ciclo lento —ciclo `NEXT=2500 ms` con el `Ticker`, **sin fase fija** (`HOLD` comentado), parpadeo `PERIOD=100 ms` al 50 %— y texto de la función del rombo activo en el pie (Back, Select / Pause, None, None), compuesto y mostrado con su propio `Scroller` (`_scroller`) para que **entre deslizándose** al cambiar de rombo; cualquier botón la cierra con un sonido según el botón pulsado: MOVE = CLICK, ACTION_UP = BACK, ACTION_RIGHT = CONFIRM). Completa. |
 | `Scroller.h` / `Scroller.cpp` | Clase `Scroller` (scroller de 1 bit: una sola banda de **ancho completo de pantalla**, texto como array de `int8_t` donde cada byte = 1 columna de 8 px; fondo siempre negro y texto blanco; `setTexto()` compone el texto centrado, fija la fila donde se imprimirá, deriva el alto de la franja del tamaño (`8 * size`, máx. `Config::Scroller::MAX_H` = 32), calcula el límite de caracteres según el tamaño y trunca silenciosamente; `startSlide()` arranca en `-timeCurtain()` y limpia 1 px justo sobre/bajo la franja; `update()` avanza 1 px cada 4 ms mientras `print()` vuelca la bandeja **con la cortina activa** —`curtain()` anclada al frente, helper `timeCurtain()` = `6 * _size + 4 * _size - 1`, texto que entra solo cuando `_x >= 0`—; usada por `Menu` con 1 instancia —transición **activa** en `nextOption()`—, por `MenuCredits` con 2 instancias sincronizadas y por `Legend` con 1 instancia para el texto del pie). Completa. |
@@ -161,8 +163,8 @@ Directorio: `D:\Documents\ESP32S3\Snake_II-OLED_128x64-I2C`
 | `Game.h` / `Game.cpp` | Clase `Game` (ventana del juego de la serpiente: estados NEW/CONTINUE del `Engine`). **Coordina**: dificultad/velocidad, lectura de botones (MOVE → `Snake::turn`), `snake.step()` con manejo del resultado, alimento (`Food`), puntaje, sonidos, overlays y volcado del tablero con los segmentos de `Snake` (celda de `Config::Screen::CELL`, sprites escalados con `SPRITE_SCALE`). Completa. |
 | `Food.h` / `Food.cpp` | Clase `Food` (alimento del tablero, extraído de `Game`): estado (posición, presencia, tipo normal/especial), generación en celdas libres (`spawn`, que consulta la ocupación al tablero vía `Game::occupied`), dibujo del rombo (normal) o del sprite `SPECIAL_FOOD` (especial) —la celda la toma de `Config::Screen::CELL`, no declara una propia— y el temporizador de la comida especial. Completa. |
 | `Snake.h` / `Snake.cpp` | Clase `Snake` (lógica pura de la serpiente, extraída de `Game`): buffer circular de segmentos, dirección commitida + giro pendiente (sin reversa directa), paso con wrap, colisión, comer/crecer y elección de sprites de las partes. **Sin `Display`/`Sound`/`Food`**: `Game` coordina el ritmo, el alimento, los sonidos y el dibujo. Completa. |
-| `Engine.h` / `Engine.cpp` | Clase `Engine` (despachador de ventanas, antes `App`). **No anida las ventanas** pero las **posee como miembros** (`_boot`, `_menu`, `_menuDifficulty`, `_menuSound`, `_menuCredits`, `_game`, `_legend`): su estado interno decide qué ventana corre y cuándo cambiar (`changeState()`, que llama al `begin()` de la ventana entrante). Los `begin()` de las ventanas se lanzan desde `setup()` vía `engine.begin()`. `changeState()` admite un `beginWindow = false` para volver al menú desde `MenuDifficulty`/`MenuSound` sin repintar la página entera. Completa. |
-| `Snake_II-OLED_128x64-I2C.ino` | Enlace de dependencias (wiring). Define los **servicios globales** (`display`, `buttons`, `sound`) y crea `Engine engine;` (que posee las ventanas). `Sound` se construye con el pin: `Sound sound(Config::Pin::BUZZER);` (el `Buzzer` es suyo). `setup()` llama `display.begin()`, `buttons.begin()`, `sound.begin()` (que inicializa su `Buzzer` interno) y `engine.begin()`; `loop()` hace la **única lectura de botones del frame** (`buttons.read()`) y llama `engine.update()`, `engine.print()`, `sound.update()` y `display.show()`. |
+| `Engine.h` / `Engine.cpp` | Clase `Engine` (despachador de ventanas, antes `App`). **No anida las ventanas** pero las **posee como miembros** (`_boot`, `_menu`, `_menuDifficulty`, `_menuSound`, `_menuCredits`, `_game`, `_legend`): su estado interno decide qué ventana corre y cuándo cambiar (`changeState()`, que llama al `begin()` de la ventana entrante). Los `begin()` de las ventanas se lanzan desde `setup()` vía `engine.begin()`. `changeState()` admite un `beginWindow = false` para volver al menú desde `MenuDifficulty`/`MenuSound` sin repintar la página entera. `isInGame()` indica si hay partida en curso (el reposo no aplica). Completa. |
+| `Snake_II-OLED_128x64-I2C.ino` | Enlace de dependencias (wiring). Define los **servicios globales** (`display`, `buttons`, `sound`) y crea `Engine engine;` (que posee las ventanas). `Sound` se construye con el pin: `Sound sound(Config::Pin::BUZZER);` (el `Buzzer` es suyo). `setup()` llama `display.begin()`, `buttons.begin()`, `sound.begin()` (que inicializa su `Buzzer` interno) y `engine.begin()`, y configura el **despertar por botón del light sleep** (`gpio_wakeup_enable` en cada pin + `esp_sleep_enable_gpio_wakeup`); `loop()` hace la **única lectura de botones del frame** (`buttons.read()`), vigila el **reposo** (`idleTimer` + `enterSleep()` —sección 25—) y llama `engine.update()`, `engine.print()`, `sound.update()` y `display.show()`. |
 | `Buzzer.h` / `Buzzer.cpp` | Clase `Buzzer` (capa de hardware de sonido: un tono no bloqueante vía LEDC). **No es un servicio global**: la posee `Sound` por valor (sección 10.2). Completa. |
 | `Sound.h` / `Sound.cpp` | Classe `Sound` (secuencias de los efectos del juego sobre su `Buzzer` interno —miembro por valor, inicializado en `begin()`—, con `setEnabled` para silenciar). Completa. |
 | `Storage.h` / `Storage.cpp` | Clase `Storage` (almacén de estado compartido **fuera de las ventanas**): mejor puntaje, sonido activo y dificultad, con valores por defecto tomados de `Config` (`_bestScore = 0`, `_soundEnabled = true`, `_difficulty = DEFAULT_LEVEL`) y clamp en `setDifficulty`. Contenedor de datos puro: sin `begin()`/`update()`/`print()` y sin dependencias de hardware. La **instancia** —no los métodos— es global (`storage`, sección 22). Completa; **pendiente de integrar**: todavía no la lee ni la escribe nadie. |
@@ -266,6 +268,7 @@ y con cualquier tamaño (`TEXT_6x8`, `TEXT_12x16`, `TEXT_18x24`).
 | `void begin()` | `Wire.begin(sda, scl)`, crea el OLED y lo limpia. **Idempotente:** si la pantalla ya quedó inicializada (`_screen != nullptr`) no hace nada, de modo que llamarla dos veces no reasigna el OLED ni filtra memoria (si el primer intento falló, `_screen` quedó en `nullptr` y un segundo llamado reintenta). |
 | `void clear()` | Limpia el buffer de la pantalla. |
 | `void show()` | Envía el buffer al OLED. |
+| `void power(bool on)` | Apaga (`0xAE`) / enciende (`0xAF`) el panel SSD1306. Apagado solo para **ahorro en reposo** (sección 26): el framebuffer del panel se conserva, así que al volver a encender se restaura la misma imagen sin repintar. No afecta al buffer en RAM de `Adafruit_SSD1306`. |
 | `void drawPixel(x, y, white=false)` | Dibuja 1 píxel (`true` = blanco, `false` = negro). |
 | `void fillRect(x, y, w, h, white=false)` | Rectángulo relleno. Reenvío directo a `Adafruit_SSD1306::fillRect`, con el guard de `_screen == nullptr` del resto de métodos. El color no se propaga como `uint16_t` de la pantalla: la API de `Display` lo expresa como `bool white` (`true` = blanco, `false` = negro), igual que `drawPixel`, para que las ventanas no manejen las constantes de color. |
 | `void fillTriangle(x0, y0, x1, y1, x2, y2, white=false)` | Triángulo relleno por sus tres vértices (en cualquier orden). Reenvío directo a `Adafruit_GFX::fillTriangle` con el mismo `bool white` que `fillRect`. Quedan en `Display.cpp` los helpers estáticos `sortByY()`/`edgeAt()` de una versión anterior que rasterizaba el triángulo por filas (ordenar los vértices por `y` y cortar los dos lados activos en cada fila): ya no los usa nadie y están pendientes de borrar. |
@@ -365,6 +368,7 @@ enum Button : uint8_t {
 | `void begin()` | Configura `INPUT_PULLDOWN` y lee el estado inicial. |
 | `void read()` | Leer físicamente, aplicar debounce y generar eventos. **Se llama una sola vez por `loop()`** (en `loop()`, antes de `engine.update()`); las ventanas solo consultan `hold`/`pressed`/`released` sin volver a leer. |
 | `bool hold(index)` / `pressed(index)` / `released(index)` | **Acceso único** por botón, con los valores del enum `Button`: `hold(Buttons::MOVE_LEFT)` = estado actual (mantenido; antes se llamaba `state()`), `pressed(Buttons::ACTION_RIGHT)` = evento de pulso (true solo en el ciclo en que se presiona), `released(...)` = evento de liberación. Los 24 getters con nombre (`moveUp()`/`actionRightPressed()`/`...,Released()`, etc.) se eliminaron: API única sin boilerplate. |
+| `bool anyHeld()` | true si **algún** botón está presionado ahora (no distingue cuál). La usa el wiring para el **reposo** (sección 26): cualquier pulso cuenta como actividad y reinicia `idleTimer`. |
 
 ### Diseño del debounce (estados agrupados en bytes)
 
@@ -922,6 +926,7 @@ enum class State : uint8_t {
 | `void print()` | Despacha el dibujo a la ventana activa. **Ya no limpia la
   pantalla (`display.clear()`)**: cada ventana la usa solo en su primer frame tras
   `begin()` y luego limpia/redibuja solo sus zonas dinámicas (sección 13). |
+| `bool isInGame()` | `true` si hay una partida en curso (el **reposo** no aplica, sección 26). Hoy devuelve siempre `false` (**AISLADO**: sin `Game` activo); al reactivarlo debe devolver `_state == State::NEW \|\| _state == State::CONTINUE`. Queda indicado en el comentario del `.cpp`. |
 | `void setBestScore(uint16_t)` | **Comentado** (aislado): reenviaría al menú para conservar el puntaje máximo entre sesiones. |
 | `void changeState(State, bool beginWindow = true)` | Transición común: guarda el estado y llama `begin()` de la ventana destino. `MENU_SOUND` ya la usa (`MenuSound::begin()`); `NEW`/`CONTINUE`/`MENU_DIFFICULTY`/`MENU_CREDITS` siguen comentados. **Hoy `_menu.begin()` es incondicional** (la guarda `if (beginWindow)` está comentada): el parámetro `beginWindow = false` —usado al volver de `MENU_DIFFICULTY`/`MENU_SOUND` para repintar solo la banda de rombos con `menu.restoreDiamondBand()` en vez del `clear()` de `Menu::begin()`— está deshabilitado, así que el regreso de `MenuSound` hace el `clear()` completo. El resto del cableado de la transición (p. ej. `setDifficulty` al entrar en `Game`) también está comentado. No reproduce sonidos: cada ventana toca el suyo al confirmar o cancelar. |
 
@@ -1607,6 +1612,7 @@ columna 0, sin indentar respecto de `namespace Config {`.
 | `Config::Scroller` | `MAX_H` (32) / `ANIMATION` (4 ms/px); `TOP` **comentado** | `Scroller` (`STRIP_H = MAX_H`, alto máximo de la franja; `ANIM_TICK = ANIMATION`, ms por píxel de desplazamiento). `TOP` (fila por defecto de la franja del menú) quedó **comentado**. |
 | `Config::MenuStrip` | `BODY_H` (39, alto del Body sin el pie) / `BODY_MIDDLE` (34, mitad del Body) / `BOX_HEIGHT` (16) / `BOX_TOP` (= `BODY_MIDDLE - BOX_HEIGHT/2` = 26) / `VALUE_TOP` (44) / `VALUE_HEIGHT` (11) / `DIAMOND_Y` (= `VALUE_TOP + VALUE_HEIGHT/2` = 49) / `TRIANGLE_Y` (= `Screen::FOOT_TOP - 3` = 53) | `Menu` (cuadro de la opción y marcadores, sección 7) y `MenuSound` (banda del selector ON/OFF). Geometría **centrada en la mitad del Body** (`B`/`C` son auxiliares para `BODY_MIDDLE`). |
 | `Config::DefaultTimer` | `PERIOD` (500 ms) / `OFF` (20 %); `HOLD` **comentado** | Parpadeo de "cualquier ventana" sin cronómetro propio: hoy `Boot` (mensaje) y `Menu` (rombo de la opción seleccionada). `HOLD` está comentado (sin fase fija inicial). |
+| `Config::Power` | `IDLE_TIMEOUT_MS` (60000 ms) | Reposo (sección 25): tiempo sin actividad (sin botón presionado) fuera de partida antes de dormir en light sleep. Lo usa `Snake_II-OLED_128x64-I2C.ino` (cronómetro `idleTimer` en `loop()`). |
 
 Las regiones `HEADER_TOP/H` y `BODY_TOP/H` reemplazan las constantes repetidas
 `BODY_TOP`/`BODY_H`/`TITLE_TOP`/`TITLE_H` de `Menu`, `Game`, `Boot` y `MenuCredits`.
@@ -1954,6 +1960,57 @@ namespace Draw {
   estado que toca (`display`, la constante `SIZE`) es global/compartido.
 - El nombre es a nivel de **intención** (`triangle`/`diamond`), no de primitiva GFX
   (`fillTriangle`), para que las ventanas no repitan las coordenadas relativas.
+
+## 26. Reposo (light sleep)
+
+Ubicación: `Snake_II-OLED_128x64-I2C.ino` (`enterSleep()`, `idleTimer` y el
+despertar en `setup()`), con `Config::Power::IDLE_TIMEOUT_MS` (60 s) y los
+métodos `Display::power(on)` y `Engine::isInGame()`. Es una **función libre**
+del wiring, no una ventana: depende de los globales (`display`, `buttons`,
+`sound`) y del estado del `Engine`.
+
+### Qué hace
+
+- **Disparador:** en `loop()`, `idleTimer` (un `Stopwatch`) cuenta el tiempo sin
+  botones presionados. Cualquier `buttons.anyHeld()` lo reinicia (`start()`).
+  Si **no se está en partida** (`!engine.isInGame()`) y llegó a
+  `Config::Power::IDLE_TIMEOUT_MS`, se entra en reposo.
+- **Reposo:** `enterSleep()` apaga el OLED (`display.power(false)`, comando SSD1306
+  `0xAE`; el framebuffer del panel se conserva) y corta el sonido
+  (`sound.stop()`); luego bloquea en `esp_light_sleep_start()` hasta que un
+  botón despierta.
+- **Despertar:** en `setup()`, cada pin de `Config::Pin::BUTTONS` se habilita como
+  fuente de wake con `gpio_wakeup_enable(pin, GPIO_INTR_HIGH_LEVEL)`
+  (los botones son `INPUT_PULLDOWN`, pulsado = HIGH) y `esp_sleep_enable_gpio_wakeup()`.
+  Al volver: `display.power(true)` (`0xAF`, misma imagen) y `buttons.begin()`
+  para **re-anclar el estado** y que el botón que despertó no se lea como un
+  "press" (no navega el menú al despertar).
+- **Tras el wake** `idleTimer.start()` reinstala el contador para no volver a
+  dormir al instante.
+
+### Por qué light sleep (no deep sleep)
+
+- **Conserva la RAM:** las ventanas y `Storage` (récord, sonido, dificultad)
+  siguen vivas; `loop()` continúa donde quedó, sin reinicializar nada.
+- **Cualquier GPIO despierta:** el wake por matriz GPIO (`esp_sleep_enable_gpio_wakeup`)
+  admite todos los pines, incluido `GPIO47` (ACTION_LEFT). El deep sleep solo
+  despierta por pines RTC (`EXT0`/`EXT1`), y además perdería la RAM.
+
+### API nueva que aporta
+
+- `Display::power(bool on)` — apaga/enciende el panel OLED (ahorro en reposo).
+- `Buttons::anyHeld()` — true si algún botón está presionado (actividad del contador).
+- `Engine::isInGame()` — true si hay partida en curso (el reposo no aplica).
+  Hoy devuelve siempre `false` (**AISLADO**: sin `Game` activo); al reactivarlo,
+  volver a `_state == State::NEW || _state == State::CONTINUE`.
+- `Config::Power::IDLE_TIMEOUT_MS` — timeout configurable (60 s por defecto).
+
+### Notas
+
+- `esp_timer` (base de `nowMs()`/`Stopwatch`) sigue avanzando durante el light
+  sleep: el RTC no se detiene, así que el contador no se corrompe.
+- El OLED conserva su RAM con `displayOff()`: al volver con `displayOn()` se
+  restaura la misma imagen sin repintar.
 
 
 

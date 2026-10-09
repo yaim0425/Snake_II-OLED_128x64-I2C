@@ -152,6 +152,17 @@ void Engine::print() {
 }
 
 // ========================================================
+// ¿Se está jugando? (el reposo no aplica en partida)
+//
+// AISLADO: sin Game activo, siempre false. Al reactivarlo:
+//   return _state == State::NEW || _state == State::CONTINUE;
+// ========================================================
+
+bool Engine::isInGame() const {
+  return false;
+}
+
+// ========================================================
 // Puntaje máximo (lo conserva el menú entre sesiones)
 // ========================================================
 

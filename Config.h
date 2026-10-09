@@ -166,6 +166,10 @@ constexpr uint32_t PERIOD = 500;  // período completo del parpadeo (ms)
 constexpr uint8_t OFF = 20;       // % del período en que está oculto
 }
 
+namespace Power {
+constexpr uint32_t IDLE_TIMEOUT_MS = 60 * 1000;  // reposo: sin actividad fuera de partida (ms)
+}
+
 namespace MenuStrip {
 static constexpr int16_t TRIANGLE_Y = Screen::FOOT_TOP - 3;
 

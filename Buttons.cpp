@@ -143,6 +143,10 @@ bool Buttons::released(uint8_t index) const {
   return isSet(_released, index);
 }
 
+bool Buttons::anyHeld() const {
+  return _buttons != 0;
+}
+
 // ====================================================================================
 // Fin
 // ====================================================================================

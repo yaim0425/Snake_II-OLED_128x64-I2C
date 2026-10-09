@@ -73,6 +73,11 @@ public:
   void clear();
   void show();
 
+  // Enciende/apaga el panel OLED (SSD1306 0xAF/0xAE): apagado para
+  // ahorrar energía (el framebuffer se conserva en RAM y al volver
+  // a encender se restaura la misma imagen).
+  void power(bool on);
+
   void drawPixel(
     int16_t x, int16_t y,
     bool white = false);

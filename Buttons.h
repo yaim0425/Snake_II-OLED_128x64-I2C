@@ -55,6 +55,9 @@ public:
   bool pressed(uint8_t index) const;
   bool released(uint8_t index) const;
 
+  // true si algún botón está presionado ahora (no distingue cuál)
+  bool anyHeld() const;
+
   // Los accesos por botón con nombre (moveUp/moveDown..., xxxPressed/xxxReleased)
   // se eliminaron: se usan state/pressed/released con el enum Button, p. ej.
   // `buttons.pressed(Buttons::ACTION_RIGHT)`. API única, sin boilerplate.
