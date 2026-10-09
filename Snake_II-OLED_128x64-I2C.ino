@@ -31,6 +31,7 @@
 #include "Engine.h"
 
 #include <Arduino.h>
+#include <string.h>
 #include "driver/gpio.h"
 #include "esp_sleep.h"
 
@@ -64,6 +65,11 @@ Engine engine;
 // duerme (light sleep). Se reinicia con cualquier botón.
 Stopwatch idleTimer;
 
+// Aviso de diagnóstico del reposo (ver enterSleep()): true cuando hubo
+// que mostrar "WAKE ESPURIO"; al despertar con un botón se fuerza el
+// repintado completo de la ventana activa (Engine::repaint()).
+bool diagSeen = false;
+
 // ========================================================
 // Reposo (light sleep)
 //
@@ -74,6 +80,33 @@ Stopwatch idleTimer;
 // Al despertar, loop() continúa donde quedó.
 // ========================================================
 
+// Aviso de diagnóstico del reposo. Se dibuja SOLO en la banda de rombos
+// del Menu (MenuStrip::VALUE_TOP..VALUE_HEIGHT), porque es la única
+// franja que cualquier ventana vuelve a pintar sobre la imagen retenida
+// (el OLED conserva su RAM con power off): el Menu, el Legend y el Boot
+// la cubren con su clear() completo del primer frame y MenuSound borra
+// esa banda en cada print(). Así el repintado forzado nunca deja restos
+// del aviso, sea cual sea la ventana activa.
+void screenDiag() {
+  diagSeen = true;
+
+  display.power(true);
+  display.clear();
+
+  const char* msg = "WAKE ESPURIO";
+  const uint8_t textH = 8;  // TEXT_6x8
+  const int16_t msgW = strlen(msg) * 6;
+  display.drawText(
+    msg,
+    (Config::Screen::WIDTH - msgW) / 2,
+    Config::MenuStrip::VALUE_TOP + (Config::MenuStrip::VALUE_HEIGHT - textH) / 2,
+    TEXT_6x8, true, false);
+
+  display.show();
+  delay(Config::Power::DIAG_MS);
+  display.power(false);
+}
+
 void enterSleep() {
   display.power(false);   // apaga el panel OLED (ahorro; la RAM del OLED se conserva)
   sound.stop();           // corta un efecto en curso
@@ -83,13 +116,34 @@ void enterSleep() {
   // no hay un botón realmente presionado; se vuelve a dormir al instante.
   // El wake real se detecta por polling (timer cada WAKE_CHECK_MS + el GPIO
   // por nivel como vía rápida) y la pantalla queda apagada hasta entonces.
+  uint8_t spurious = 0;
   while (!buttons.anyPhysical()) {
-    esp_light_sleep_start();  // bloquea hasta el wake de un botón o del timer
-    buttons.read();           // refresca el estado físico tras despertar
+    uint64_t t0 = nowMs();
+    esp_err_t err = esp_light_sleep_start();  // bloquea hasta el wake de un botón o del timer
+    buttons.read();                           // refresca el estado físico tras despertar
+    uint64_t slept = nowMs() - t0;
+
+    if (buttons.anyPhysical()) break;
+
+    // Light sleep que no persiste: volvió casi sin dormir y sin botón
+    // (rechazado o wake espurio). En una placa sana duerme ~WAKE_CHECK_MS
+    // hasta el timer de verificación. N espurios seguidos = aviso.
+    if (err == ESP_ERR_SLEEP_REJECT || slept < Config::Power::MIN_SLEEP_MS) {
+      if (++spurious >= Config::Power::SPURIOUS_LIMIT) {
+        spurious = 0;
+        screenDiag();
+      }
+    } else {
+      spurious = 0;
+    }
   }
 
   // --- al despertar con un botón real ---
   display.power(true);      // el framebuffer del OLED sigue en el panel: misma imagen
+  if (diagSeen) {           // ...salvo que un diagnóstico la deformara
+    diagSeen = false;
+    engine.repaint();
+  }
   buttons.begin();          // re-ancla el estado: el botón que despertó no es un "press"
   buttons.ignoreUntilRelease();  // ...ni cuenta como pulsación sostenida hasta soltarlo
 }

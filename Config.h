@@ -169,6 +169,9 @@ constexpr uint8_t OFF = 20;       // % del período en que está oculto
 namespace Power {
 constexpr uint32_t IDLE_TIMEOUT_MS = 60 * 1000;  // reposo: sin actividad fuera de partida (ms)
 constexpr uint32_t WAKE_CHECK_MS = 200;          // reposo: período del wake de verificación (ms)
+constexpr uint32_t MIN_SLEEP_MS = 10;            // reposo: bajo este tiempo dormido, el light sleep no persistió (ms)
+constexpr uint8_t  SPURIOUS_LIMIT = 3;           // reposo: wakes espurios seguidos hasta mostrar el diagnóstico
+constexpr uint32_t DIAG_MS = 1500;               // reposo: duración del aviso de diagnóstico en pantalla (ms)
 }
 
 namespace MenuStrip {

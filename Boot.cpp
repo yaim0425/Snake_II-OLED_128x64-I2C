@@ -48,6 +48,14 @@ void Boot::begin() {
 }
 
 // ========================================================
+// Repintado forzado (tras un diagnóstico del reposo)
+// ========================================================
+
+void Boot::forceRedraw() {
+  _clear = true;
+}
+
+// ========================================================
 // Actualizar (procesa eventos de botones ya leídos y avanza el desplazamiento)
 // ========================================================
 

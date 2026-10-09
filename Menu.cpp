@@ -138,6 +138,15 @@ void Menu::begin(bool showContinue, int8_t selected) {
 }
 
 // ========================================================
+// Repintado forzado (tras un diagnóstico del reposo)
+// ========================================================
+
+void Menu::forceRedraw() {
+  _done = false;   // el parche MenuSound convive con un Menu ya "confirmado"
+  _clear = true;   // el próximo print() vuelve a dibujar el frame completo
+}
+
+// ========================================================
 // Opciones (cantidad variable)
 // ========================================================
 

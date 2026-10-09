@@ -1984,11 +1984,21 @@ del wiring, no una ventana: depende de los globales (`display`, `buttons`,
 - **Reposo:** `enterSleep()` apaga el OLED (`display.power(false)`, comando SSD1306
   `0xAE`; el framebuffer del panel se conserva) y corta el sonido
   (`sound.stop()`); luego entra en un bucle de **wake de verificación**:
-  `while (!buttons.anyPhysical()) { esp_light_sleep_start(); buttons.read(); }`.
+  `while (!buttons.anyPhysical()) { ... esp_light_sleep_start(); buttons.read(); }`.
   No se sale del reposo hasta que hay un botón **realmente** presionado; si
   `esp_light_sleep_start()` vuelve "solo" (p. ej. el GPIO por nivel que ya no
   re-dispara o el host USB-CDC que impide que el light sleep persista), se
   vuelve a dormir al instante y la pantalla queda apagada hasta entonces.
+- **Diagnóstico del wake espurio:** cada vuelta del bucle mide cuánto se durmió
+  de verdad (`slept = nowMs() - t0`). Un light sleep que no **persistió** vuelve
+  en ~0-5 ms y sin botón (rechazado, `ESP_ERR_SLEEP_REJECT`, o por debajo de
+  `Config::Power::MIN_SLEEP_MS`); en una placa sana duerme ~`WAKE_CHECK_MS`
+  hasta el timer de verificación. Tras `Config::Power::SPURIOUS_LIMIT` espurios
+  seguidos se muestra un aviso en la pantalla (`screenDiag()`: enciende el OLED,
+  dibuja "WAKE ESPURIO" **solo en la banda de rombos del Menu** —la única
+  franja que cualquier ventana vuelve a pintar—, espera `Config::Power::DIAG_MS`
+  y la vuelve a apagar) y se marca el flag `diagSeen`. El contador se reinicia
+  con cualquier vuelta "sana".
 - **Despertar:** en `setup()`, cada pin de `Config::Pin::BUTTONS` se habilita como
   fuente de wake con `gpio_wakeup_enable(pin, GPIO_INTR_HIGH_LEVEL)`
   (los botones son `INPUT_PULLDOWN`, pulsado = HIGH) y `esp_sleep_enable_gpio_wakeup()`
@@ -1998,7 +2008,10 @@ del wiring, no una ventana: depende de los globales (`display`, `buttons`,
   nivel, el timer solo cubre el caso en que ese nivel deja de re-disparar). Al volver
   con un botón real: `display.power(true)` (`0xAF`,
   misma imagen) y `buttons.begin()` para **re-anclar el estado** y que el botón
-  que despertó no se lea como un "press" (no navega el menú al despertar).
+  que despertó no se lea como un "press" (no navega el menú al despertar). Si
+  hubo diagnóstico (`diagSeen`), la imagen retenida quedó deformada: se llama a
+  `Engine::repaint()`, que fuerza el repintado completo de la ventana activa
+  (ver API) antes de re-anclar los botones.
 - **Tras el wake** `idleTimer.start()` reinstala el contador para no volver a
   dormir al instante.
 
@@ -2026,6 +2039,20 @@ del wiring, no una ventana: depende de los globales (`display`, `buttons`,
   nivel puede dejar de re-disparar tras el primer ciclo). Compromiso: cuanto más
   corto, menor latencia de respuesta en el caso fallback; cuanto más largo, menor
   consumo en reposo.
+- `Config::Power::MIN_SLEEP_MS` — por debajo de este tiempo dormido (10 ms), un
+  retorno sin botón cuenta como wake espurio (el light sleep no persistió).
+- `Config::Power::SPURIOUS_LIMIT` — wakes espurios seguidos (3) que disparan el
+  diagnóstico en pantalla.
+- `Config::Power::DIAG_MS` — duración del aviso de diagnóstico (1,5 s).
+- `Engine::repaint()` — **repintado forzado** de la ventana activa tras un
+  diagnóstico: `display.clear()` puntual del buffer y `.forceRedraw()` de la
+  ventana (primer frame completo en el próximo `print()`, que ya cubre también lo
+  que el aviso haya tocado). En `MENU_SOUND` —un selector sobre el Menu ya
+  dibujado— redibuja ahí mismo la base del Menu (`_menu.print()`) y encima el
+  selector, porque el `loop()` solo llamará al `print()` del parche.
+- `Boot::forceRedraw()` / `Legend::forceRedraw()` / `Menu::forceRedraw()` — piden
+  el full frame a la ventana (`_clear = true`); la del `Menu` además resetea
+  `_done`, porque el parche `MenuSound` convive con un Menu ya "confirmado".
 
 ### Notas
 

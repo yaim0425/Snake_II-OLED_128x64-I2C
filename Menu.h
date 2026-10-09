@@ -87,6 +87,15 @@ public:
   void showOptions();
 
   // ========================================================
+  // Repintado forzado (tras un diagnóstico del reposo: el próximo
+  // print() dibuja el frame completo, con clear() incluido; resetea
+  // _done para que la base del Menu se pueda re-pintar también desde
+  // el parche MenuSound, que convive con un Menu ya "confirmado")
+  // ========================================================
+
+  void forceRedraw();
+
+  // ========================================================
   // Accesos
   // ========================================================
 

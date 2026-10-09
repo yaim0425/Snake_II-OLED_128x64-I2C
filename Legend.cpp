@@ -50,6 +50,14 @@ void Legend::begin() {
 }
 
 // ========================================================
+// Repintado forzado (tras un diagnóstico del reposo)
+// ========================================================
+
+void Legend::forceRedraw() {
+  _clear = true;
+}
+
+// ========================================================
 // Actualizar (consume eventos de botones ya leídos, reproduce
 // sonido según el botón y avanza el ciclo de parpadeo)
 // ========================================================

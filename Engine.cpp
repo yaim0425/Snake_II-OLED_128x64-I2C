@@ -152,6 +152,36 @@ void Engine::print() {
 }
 
 // ========================================================
+// Repintado forzado (tras un diagnóstico del reposo)
+//
+// El diagnóstico deformó la imagen que el OLED conserva en su RAM, así
+// que se fuerza el full frame de la ventana activa: clear() puntual del
+// buffer (no de la pantalla física, que se sustituye en el próximo
+// display.show()) y primer frame de la ventana. En MenuSound, un
+// selector sobre el Menu ya dibujado, se reconstruye primero la base
+// del Menu y encima su selector.
+// ========================================================
+
+void Engine::repaint() {
+  display.clear();
+
+  switch (_state) {
+    case State::BOOT: _boot.forceRedraw(); break;
+    case State::LEGEND: _legend.forceRedraw(); break;
+    case State::MENU: _menu.forceRedraw(); break;
+
+    case State::MENU_SOUND:
+      // La base del Menu ya no se va a volver a dibujar por el loop
+      // (la ventana activa es el parche): se dibuja aquí mismo.
+      _menu.forceRedraw();
+      _menu.print();
+      _menuSound.begin();
+      _menuSound.print();
+      break;
+  }
+}
+
+// ========================================================
 // ¿Se está jugando? (el reposo no aplica en partida)
 //
 // AISLADO: sin Game activo, siempre false. Al reactivarlo:

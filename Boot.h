@@ -51,6 +51,13 @@ public:
   void print();
 
   // ========================================================
+  // Repintado forzado (tras un diagnóstico del reposo: el próximo
+  // print() dibuja el frame completo, con clear() incluido)
+  // ========================================================
+
+  void forceRedraw();
+
+  // ========================================================
   // Salida (true = la animación terminó)
   // ========================================================
 
