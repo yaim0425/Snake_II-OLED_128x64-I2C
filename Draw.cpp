@@ -4,38 +4,36 @@
 namespace Draw {
 
 void triangle(int8_t dir, int16_t centerX, int16_t centerY, bool show) {
-  const int16_t size = Config::Diamond::SIZE;
-
   switch (dir) {
     case DIR_UP:  // Arriba (↑)
       display.fillTriangle(
-        centerX - size, centerY,
-        centerX, centerY - size,
-        centerX + size, centerY,
+        centerX - SIZE, centerY,
+        centerX, centerY - SIZE,
+        centerX + SIZE, centerY,
         show);
       break;
 
     case DIR_RIGHT:  // Derecha (→)
       display.fillTriangle(
-        centerX, centerY - size,
-        centerX + size, centerY,
-        centerX, centerY + size,
+        centerX, centerY - SIZE,
+        centerX + SIZE, centerY,
+        centerX, centerY + SIZE,
         show);
       break;
 
     case DIR_DOWN:  // Abajo (↓)
       display.fillTriangle(
-        centerX - size, centerY,
-        centerX, centerY + size,
-        centerX + size, centerY,
+        centerX - SIZE, centerY,
+        centerX, centerY + SIZE,
+        centerX + SIZE, centerY,
         show);
       break;
 
     case DIR_LEFT:  // Izquierda (←)
       display.fillTriangle(
-        centerX, centerY - size,
-        centerX - size, centerY,
-        centerX, centerY + size,
+        centerX, centerY - SIZE,
+        centerX - SIZE, centerY,
+        centerX, centerY + SIZE,
         show);
       break;
   }

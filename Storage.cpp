@@ -7,7 +7,7 @@
 Storage::Storage()
   : _bestScore(0),
     _soundEnabled(true),
-    _difficulty(Config::Difficulty::DEFAULT_LEVEL) {}
+    _difficulty(DEFAULT_LEVEL) {}
 
 // ========================================================
 // Mejor puntaje (récord)
@@ -42,8 +42,8 @@ uint8_t Storage::difficulty() const {
 }
 
 void Storage::setDifficulty(uint8_t level) {
-  if (level < Config::Difficulty::MIN_LEVEL) level = Config::Difficulty::MIN_LEVEL;
-  else if (level > Config::Difficulty::MAX_LEVEL) level = Config::Difficulty::MAX_LEVEL;
+  if (level < MIN_LEVEL) level = MIN_LEVEL;
+  else if (level > MAX_LEVEL) level = MAX_LEVEL;
   _difficulty = level;
 }
 

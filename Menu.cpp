@@ -417,9 +417,7 @@ void Menu::firstPrint() {
   // ------------------------------------------------------
 
   // Título
-  const char* name = Config::Version::NAME;
-  const int16_t headerW = Config::Screen::HEADER_TOP;
-  display.drawText(name, (WIDTH - strlen(name) * 12) / 2, headerW, TEXT_12x16, true, false);
+  display.drawText(NAME, (WIDTH - strlen(NAME) * 12) / 2, HEADER_TOP, TEXT_12x16, true, false);
 
   // const int16_t SIZE = Config::Diamond::SIZE;
   // const int16_t centerX = WIDTH / 2;
@@ -444,20 +442,20 @@ void Menu::firstPrint() {
   toggleText(true);
   showOptions();
 
-  const int16_t footTop = Config::Screen::FOOT_TOP;
-  const int16_t footH = Config::Screen::FOOT_H;
-  display.fillRect(0, footTop - 1, WIDTH, footH + 1, true);
+  // const int16_t footTop = Config::Screen::FOOT_TOP;
+  // const int16_t footH = Config::Screen::FOOT_H;
+  display.fillRect(0, FOOT_TOP - 1, WIDTH, FOOT_H + 1, true);
 
   // Best score
   const char* label = "Best ";
   char bestScore[9];
   sprintf(bestScore, "%u", (unsigned)storage.bestScore());
-  display.drawText(label, 1, footTop, TEXT_6x8, false, true);
-  display.drawText(bestScore, 1 + strlen(label) * 6, footTop, TEXT_6x8, false, true);
+  display.drawText(label, 1, FOOT_TOP, TEXT_6x8, false, true);
+  display.drawText(bestScore, 1 + strlen(label) * 6, FOOT_TOP, TEXT_6x8, false, true);
 
   // Versión
-  const char* version = Config::Version::VERSION;
-  display.drawText(version, WIDTH - strlen(version) * 6, footTop, TEXT_6x8, false, true);
+  // const char* version = Config::Version::VERSION;
+  display.drawText(VERSION, WIDTH - strlen(VERSION) * 6, FOOT_TOP, TEXT_6x8, false, true);
 
   // for (uint8_t selected = 0; selected < OPT_COUNT; selected++)
   //   drawDiamond(selected, selected == _selected, false);

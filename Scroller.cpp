@@ -103,11 +103,11 @@ void Scroller::startSlide() {
   _timer.start();
   
   int16_t up = _y - 1;
-  if (up >= 0 && up < Config::Screen::BODY_H)
+  if (up >= 0 && up < BODY_H)
     display.fillRect(0, up, WIDTH, 1, true);
 
   int16_t down = _y + _height;
-  if (down >= 0 && down < Config::Screen::BODY_H)
+  if (down >= 0 && down < BODY_H)
     display.fillRect(0, down, WIDTH, 1, true);
 }
 

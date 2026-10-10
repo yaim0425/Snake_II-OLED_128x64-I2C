@@ -31,6 +31,7 @@ void triangle(int8_t dir, int16_t centerX, int16_t centerY, bool show = true);
 // + abajo) centrados en (centerX, centerY). Lado Config::Diamond::SIZE.
 void diamond(int16_t centerX, int16_t centerY, bool show = true);
 
+const uint8_t SIZE = Config::Diamond::SIZE;
 }
 
 #endif

@@ -170,6 +170,9 @@ private:
   static constexpr uint8_t CHAR_W = 6;
   static constexpr uint8_t CHAR_H = 8;
 
+  const int16_t WIDTH = Config::Screen::WIDTH;
+  const int16_t HEIGHT = Config::Screen::HEIGHT;
+
   uint8_t _sda;
   uint8_t _scl;
   uint8_t _address;

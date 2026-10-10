@@ -164,7 +164,7 @@ Directorio: `D:\Documents\ESP32S3\Snake_II-OLED_128x64-I2C`
 | `Food.h` / `Food.cpp` | Clase `Food` (alimento del tablero, extraído de `Game`): estado (posición, presencia, tipo normal/especial), generación en celdas libres (`spawn`, que consulta la ocupación al tablero vía `Game::occupied`), dibujo del rombo (normal) o del sprite `SPECIAL_FOOD` (especial) —la celda la toma de `Config::Screen::CELL`, no declara una propia— y el temporizador de la comida especial. Completa. |
 | `Snake.h` / `Snake.cpp` | Clase `Snake` (lógica pura de la serpiente, extraída de `Game`): buffer circular de segmentos, dirección commitida + giro pendiente (sin reversa directa), paso con wrap, colisión, comer/crecer y elección de sprites de las partes. **Sin `Display`/`Sound`/`Food`**: `Game` coordina el ritmo, el alimento, los sonidos y el dibujo. Completa. |
 | `Engine.h` / `Engine.cpp` | Clase `Engine` (despachador de ventanas, antes `App`). **No anida las ventanas** pero las **posee como miembros** (`_boot`, `_menu`, `_menuDifficulty`, `_menuSound`, `_menuCredits`, `_game`, `_legend`): su estado interno decide qué ventana corre y cuándo cambiar (`changeState()`, que llama al `begin()` de la ventana entrante). Los `begin()` de las ventanas se lanzan desde `setup()` vía `engine.begin()`. `changeState()` admite un `beginWindow = false` para volver al menú desde `MenuDifficulty`/`MenuSound` sin repintar la página entera. `isInGame()` indica si hay partida en curso (el reposo no aplica). Completa. |
-| `Snake_II-OLED_128x64-I2C.ino` | Enlace de dependencias (wiring). Define los **servicios globales** (`display`, `buttons`, `sound`) y crea `Engine engine;` (que posee las ventanas). `Sound` se construye con el pin: `Sound sound(Config::Pin::BUZZER);` (el `Buzzer` es suyo). `setup()` llama `display.begin()`, `buttons.begin()`, `sound.begin()` (que inicializa su `Buzzer` interno) y `engine.begin()`, y configura el **despertar por botón del light sleep** (`gpio_wakeup_enable` en cada pin + `esp_sleep_enable_gpio_wakeup`); `loop()` hace la **única lectura de botones del frame** (`buttons.read()`), vigila el **reposo** (`idleTimer` + `enterSleep()` —sección 25—) y llama `engine.update()`, `engine.print()`, `sound.update()` y `display.show()`. |
+| `Snake_II-OLED_128x64-I2C.ino` | Enlace de dependencias (wiring). Define los **servicios globales** (`display`, `buttons`, `sound`), crea `Engine engine;` (que posee las ventanas) y `SleepManager sleepManager(engine);` (reposo —sección 26—). `Sound` se construye con el pin: `Sound sound(Config::Pin::BUZZER);` (el `Buzzer` es suyo). `setup()` llama `display.begin()`, `buttons.begin()`, `sound.begin()` (que inicializa su `Buzzer` interno), `engine.begin()` y `sleepManager.begin()` (fuentes de wake del light sleep); `loop()` hace la **única lectura de botones del frame** (`buttons.read()`), llama `sleepManager.update()` (vigila el reposo y duerme si toca) y luego `engine.update()`, `engine.print()`, `sound.update()` y `display.show()`. |
 | `Buzzer.h` / `Buzzer.cpp` | Clase `Buzzer` (capa de hardware de sonido: un tono no bloqueante vía LEDC). **No es un servicio global**: la posee `Sound` por valor (sección 10.2). Completa. |
 | `Sound.h` / `Sound.cpp` | Classe `Sound` (secuencias de los efectos del juego sobre su `Buzzer` interno —miembro por valor, inicializado en `begin()`—, con `setEnabled` para silenciar). Completa. |
 | `Storage.h` / `Storage.cpp` | Clase `Storage` (almacén de estado compartido **fuera de las ventanas**): mejor puntaje, sonido activo y dificultad, con valores por defecto tomados de `Config` (`_bestScore = 0`, `_soundEnabled = true`, `_difficulty = DEFAULT_LEVEL`) y clamp en `setDifficulty`. Contenedor de datos puro: sin `begin()`/`update()`/`print()` y sin dependencias de hardware. La **instancia** —no los métodos— es global (`storage`, sección 22). Completa; **pendiente de integrar**: todavía no la lee ni la escribe nadie. |
@@ -1965,23 +1965,30 @@ namespace Draw {
 
 ## 26. Reposo (light sleep)
 
-Ubicación: `Snake_II-OLED_128x64-I2C.ino` (`enterSleep()`, `idleTimer` y el
-despertar en `setup()`), con `Config::Power::IDLE_TIMEOUT_MS` (60 s) y los
-métodos `Display::power(on)` y `Engine::isInGame()`. Es una **función libre**
-del wiring, no una ventana: depende de los globales (`display`, `buttons`,
-`sound`) y del estado del `Engine`.
+Ubicación: `SleepManager.h` / `SleepManager.cpp` (la clase `SleepManager`), con
+`Config::Power::IDLE_TIMEOUT_MS` (60 s) y los métodos
+`Display::power(on)`, `Buttons::anyPhysical()`/`ignoreUntilRelease()` y
+`Engine::isInGame()`/`repaint()`. Antes vivía como **función libre** del wiring
+(`enterSleep()`, `idleTimer`, `diagSeen` en `Snake_II-OLED_128x64-I2C.ino`);
+se extrajo a su propia clase porque reunía casi todo el código suelto del
+`.ino` y era un subsistema cerrado (política de inactividad + wake + plataforma
++ diagnóstico). No es una ventana: usa los servicios globales (`display`,
+`buttons`, `sound`) directamente y recibe a `Engine` por referencia (partida +
+repintado). El wiring solo llama `sleepManager.begin()` (setup) y
+`sleepManager.update()` (loop).
 
 ### Qué hace
 
-- **Disparador:** en `loop()`, `idleTimer` (un `Stopwatch`) cuenta el tiempo sin
+- **Disparador:** en `SleepManager::update()` (llamado cada frame desde
+  `loop()`, tras `buttons.read()`), `_idle` (un `Stopwatch`) cuenta el tiempo sin
   botones presionados. Cualquier `buttons.anyPhysical()` lo reinicia (`start()`).
   Se usa el estado **físico** (no `anyHeld()`, que refleja la supresión
   `ignoreUntilRelease()`): un pulso mantenido tras el wake sigue contando como
   actividad y no se duerme con él en curso. Si **no se está en partida**
-  (`!engine.isInGame()`), **no hay ningún botón presionado** (`!buttons.anyPhysical()`,
+  (`!_engine.isInGame()`), **no hay ningún botón presionado** (`!buttons.anyPhysical()`,
   para no entrar con un pin en HIGH: el wake por nivel despertaría al instante) y
   llegó a `Config::Power::IDLE_TIMEOUT_MS`, se entra en reposo.
-- **Reposo:** `enterSleep()` apaga el OLED (`display.power(false)`, comando SSD1306
+- **Reposo:** `SleepManager::enterSleep()` apaga el OLED (`display.power(false)`, comando SSD1306
   `0xAE`; el framebuffer del panel se conserva) y corta el sonido
   (`sound.stop()`); luego entra en un bucle de **wake de verificación**:
   `while (!buttons.anyPhysical()) { ... esp_light_sleep_start(); buttons.read(); }`.
@@ -1994,12 +2001,13 @@ del wiring, no una ventana: depende de los globales (`display`, `buttons`,
   en ~0-5 ms y sin botón (rechazado, `ESP_ERR_SLEEP_REJECT`, o por debajo de
   `Config::Power::MIN_SLEEP_MS`); en una placa sana duerme ~`WAKE_CHECK_MS`
   hasta el timer de verificación. Tras `Config::Power::SPURIOUS_LIMIT` espurios
-  seguidos se muestra un aviso en la pantalla (`screenDiag()`: enciende el OLED,
-  dibuja "WAKE ESPURIO" **solo en la banda de rombos del Menu** —la única
-  franja que cualquier ventana vuelve a pintar—, espera `Config::Power::DIAG_MS`
-  y la vuelve a apagar) y se marca el flag `diagSeen`. El contador se reinicia
-  con cualquier vuelta "sana".
-- **Despertar:** en `setup()`, cada pin de `Config::Pin::BUTTONS` se habilita como
+  seguidos se muestra un aviso en la pantalla (`SleepManager::screenDiag()`:
+  enciende el OLED y dibuja una **pantalla completa** —"ERROR" (12x16) en el
+  Header, "SLEEP FAIL" (12x16, invertido) en el cuadro del Menu, "The ESP32 is
+  failing" (6x8, invertido) en el pie—, espera `Config::Power::DIAG_MS` y la
+  vuelve a apagar) y se marca el flag `_diagSeen`. El contador se reinicia con
+  cualquier vuelta "sana".
+- **Despertar:** en `SleepManager::begin()` (setup), cada pin de `Config::Pin::BUTTONS` se habilita como
   fuente de wake con `gpio_wakeup_enable(pin, GPIO_INTR_HIGH_LEVEL)`
   (los botones son `INPUT_PULLDOWN`, pulsado = HIGH) y `esp_sleep_enable_gpio_wakeup()`
   (vía rápida) **más** `esp_sleep_enable_timer_wakeup(Config::Power::WAKE_CHECK_MS)`
@@ -2009,10 +2017,10 @@ del wiring, no una ventana: depende de los globales (`display`, `buttons`,
   con un botón real: `display.power(true)` (`0xAF`,
   misma imagen) y `buttons.begin()` para **re-anclar el estado** y que el botón
   que despertó no se lea como un "press" (no navega el menú al despertar). Si
-  hubo diagnóstico (`diagSeen`), la imagen retenida quedó deformada: se llama a
-  `Engine::repaint()`, que fuerza el repintado completo de la ventana activa
+  hubo diagnóstico (`_diagSeen`), la imagen retenida quedó deformada: se llama a
+  `_engine.repaint()`, que fuerza el repintado completo de la ventana activa
   (ver API) antes de re-anclar los botones.
-- **Tras el wake** `idleTimer.start()` reinstala el contador para no volver a
+- **Tras el wake** `_idle.start()` reinstala el contador para no volver a
   dormir al instante.
 
 ### Por qué light sleep (no deep sleep)
@@ -2025,7 +2033,13 @@ del wiring, no una ventana: depende de los globales (`display`, `buttons`,
 
 ### API nueva que aporta
 
-- `Display::power(bool on)` — apaga/enciende el panel OLED (ahorro en reposo).
+- `SleepManager(Engine&)` — clase del reposo; el `.ino` la construye con `Engine`
+  (`SleepManager sleepManager(engine);`) y solo llama `begin()` y `update()`.
+- `SleepManager::begin()` — fuentes de wake del light sleep (GPIO por nivel +
+  timer de verificación), antes en `setup()`.
+- `SleepManager::update()` — marca el frame (idle + dormir), antes en `loop()`.
+  También quita del `.ino` los globales `idleTimer` y `diagSeen` y las funciones
+  libres `enterSleep()` / `screenDiag()`.
 - `Buttons::anyPhysical()` — true si algún botón está presionado físicamente
   (actividad del contador; ajeno a la supresión `ignoreUntilRelease()`).
 - `Buttons::ignoreUntilRelease()` — supresión de la entrada hasta soltar todos
@@ -2043,7 +2057,7 @@ del wiring, no una ventana: depende de los globales (`display`, `buttons`,
   retorno sin botón cuenta como wake espurio (el light sleep no persistió).
 - `Config::Power::SPURIOUS_LIMIT` — wakes espurios seguidos (3) que disparan el
   diagnóstico en pantalla.
-- `Config::Power::DIAG_MS` — duración del aviso de diagnóstico (1,5 s).
+- `Config::Power::DIAG_MS` — duración del aviso de diagnóstico (2 s).
 - `Engine::repaint()` — **repintado forzado** de la ventana activa tras un
   diagnóstico: `display.clear()` puntual del buffer y `.forceRedraw()` de la
   ventana (primer frame completo en el próximo `print()`, que ya cubre también lo

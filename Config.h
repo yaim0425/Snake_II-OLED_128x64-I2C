@@ -171,16 +171,16 @@ constexpr uint32_t IDLE_TIMEOUT_MS = 60 * 1000;  // reposo: sin actividad fuera 
 constexpr uint32_t WAKE_CHECK_MS = 200;          // reposo: período del wake de verificación (ms)
 constexpr uint32_t MIN_SLEEP_MS = 10;            // reposo: bajo este tiempo dormido, el light sleep no persistió (ms)
 constexpr uint8_t  SPURIOUS_LIMIT = 3;           // reposo: wakes espurios seguidos hasta mostrar el diagnóstico
-constexpr uint32_t DIAG_MS = 1500;               // reposo: duración del aviso de diagnóstico en pantalla (ms)
+constexpr uint32_t DIAG_MS = 2 * 1000;           // reposo: duración del aviso de diagnóstico en pantalla (ms)
 }
 
 namespace MenuStrip {
 static constexpr int16_t TRIANGLE_Y = Screen::FOOT_TOP - 3;
 
 static constexpr int16_t BODY_H = (Screen::FOOT_TOP - 2) - Screen::BODY_TOP + 1;  // Alto del cuerpo (sin el pie)
-static constexpr int16_t B = (int16_t)(BODY_H / 2);                   // Aux mitad del alto del cuerpo
-static constexpr int16_t C = 2 * B == BODY_H ? B : B - 1;             // Mitad del alto del cuerpo
-static constexpr int16_t BODY_MIDDLE = Screen::BODY_TOP + C;          // Posición mitad del alto del cuerpo
+static constexpr int16_t Y = (int16_t)(BODY_H / 2);                   // Aux mitad del alto del cuerpo
+static constexpr int16_t Z = 2 * Y == BODY_H ? Y : Y - 1;             // Mitad del alto del cuerpo
+static constexpr int16_t BODY_MIDDLE = Screen::BODY_TOP + Z;          // Posición mitad del alto del cuerpo
 
 static constexpr int16_t BOX_HEIGHT = 16;
 static constexpr int16_t BOX_TOP = BODY_MIDDLE - BOX_HEIGHT / 2;

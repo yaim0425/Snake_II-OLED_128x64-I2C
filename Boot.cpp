@@ -205,8 +205,8 @@ void Boot::firstPrint() {
 
   display.fillRect(0, BODY_TOP, WIDTH, BODY_H, true);
   display.drawBitmap(
-    (WIDTH - Sprite::LOGO_W) / 2, BODY_TOP,
-    Sprite::LOGO, Sprite::LOGO_W, Sprite::LOGO_H,
+    (WIDTH - LOGO_W) / 2, BODY_TOP,
+    LOGO, LOGO_W, LOGO_H,
     true, false);
 
   // ------------------------------------------------------

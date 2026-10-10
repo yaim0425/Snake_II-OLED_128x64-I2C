@@ -45,8 +45,8 @@ namespace Sprite {
   // Dimensiones
   // ========================================================
 
-  constexpr uint8_t SIZE = 4;            // ancho y alto del sprite de la serpiente (4×4 px)
-  constexpr uint8_t BITS = SIZE * SIZE;  // px por sprite = bits de su uint16_t
+  static constexpr const uint8_t SIZE = 4;            // ancho y alto del sprite de la serpiente (4×4 px)
+  static constexpr const uint8_t BITS = SIZE * SIZE;  // px por sprite = bits de su uint16_t
 
   // ========================================================
   // Partes de la serpiente
@@ -106,7 +106,7 @@ namespace Sprite {
   // Sprites de la serpiente (empaquetados: 1 bit por px)
   // ========================================================
 
-  constexpr uint16_t SPRITES[COUNT] = {
+  static constexpr const uint16_t SPRITES[COUNT] = {
     // ------------------------------------------------------
     // TAIL
     // ------------------------------------------------------
@@ -175,7 +175,7 @@ namespace Sprite {
   // Usa el empaque de 16 bits: px (0,0) -> bit 15.
   // ========================================================
 
-  constexpr bool pixel(Part part, uint8_t x, uint8_t y) {
+  static constexpr const bool pixel(Part part, uint8_t x, uint8_t y) {
     return (SPRITES[(uint8_t)part] & ((uint16_t)1 << (BITS - 1 - (y * SIZE + x)))) != 0;
   }
 
@@ -186,10 +186,10 @@ namespace Sprite {
   // px (0,0) en el bit 7.
   // ========================================================
 
-  constexpr uint8_t SPECIAL_FOOD_W = 8;   // ancho en px (8 px = 1 byte por fila)
-  constexpr uint8_t SPECIAL_FOOD_H = 4;   // alto en px (4 filas = 4 bytes)
+  static constexpr const uint8_t SPECIAL_FOOD_W = 8;   // ancho en px (8 px = 1 byte por fila)
+  static constexpr const uint8_t SPECIAL_FOOD_H = 4;   // alto en px (4 filas = 4 bytes)
 
-  constexpr uint8_t SPECIAL_FOOD[SPECIAL_FOOD_H] = {
+  static constexpr const uint8_t SPECIAL_FOOD[SPECIAL_FOOD_H] = {
     0b0101'0100,  // fila 0
     0b1011'1110,  // fila 1
     0b1111'1111,  // fila 2
@@ -197,7 +197,7 @@ namespace Sprite {
   };
 
   // Píxel de la comida especial (x = columna, y = fila): px (0,0) = bit 7
-  constexpr bool specialPixel(uint8_t x, uint8_t y) {
+  static constexpr const bool specialPixel(uint8_t x, uint8_t y) {
     return (SPECIAL_FOOD[y] & ((uint8_t)0x80 >> x)) != 0;
   }
 
@@ -213,10 +213,10 @@ namespace Sprite {
   // y bg = negro, asi el glifo sale negro sobre fondo blanco.
   // ========================================================
 
-  constexpr uint8_t LOGO_W = 80;                          // ancho en px (5 palabras de 16 bits)
-  constexpr uint8_t LOGO_H = 48;                          // alto en px (1 palabra por fila de px)
+  static constexpr const uint8_t LOGO_W = 80;                          // ancho en px (5 palabras de 16 bits)
+  static constexpr const uint8_t LOGO_H = 48;                          // alto en px (1 palabra por fila de px)
 
-  constexpr uint8_t LOGO[LOGO_H * (LOGO_W / 8)] = {
+  static constexpr const uint8_t LOGO[LOGO_H * (LOGO_W / 8)] = {
     0b1111'1111, 0b1111'1111, 0b1111'1111, 0b1111'1111, 0b1111'1111, 0b1111'1111, 0b1111'1111, 0b1111'1111, 0b1111'1111, 0b1111'1111,  // fila 1
     0b1111'1111, 0b1100'0011, 0b1111'1111, 0b1110'0011, 0b1110'0111, 0b1100'0111, 0b1111'1110, 0b0001'1111, 0b1111'1111, 0b0000'1111,  // fila 0
     0b1111'1111, 0b1000'0011, 0b1111'0011, 0b1100'0011, 0b1100'0011, 0b1000'0111, 0b1100'1100, 0b0001'1111, 0b1110'0000, 0b1110'0111,  // fila 2

@@ -16,24 +16,24 @@
 //     internas de Engine.
 //     AISLADO: por ahora Engine solo posee y despacha Boot, Legend
 //     y Menu (ver el bloque AISLADO en Engine.h).
+//   - SleepManager: reposo (light sleep) y diagnóstico de wake
+//     espurio. Recibe a Engine por referencia (consulta la partida
+//     y fuerza el repintado tras un diagnóstico) y usa los
+//     servicios globales. El wiring solo llama
+//     sleepManager.begin() (setup()) y sleepManager.update() (loop()).
 //
 // setup() inicia el hardware y luego engine.begin() (entra al primer
 // estado, Boot); loop() hace la única lectura de botones del frame
-// (buttons.read()) y llama engine.update(), engine.print(), sound.update()
-// y display.show(). Sin partida en curso y sin botón durante
-// Config::Power::IDLE_TIMEOUT_MS, loop() entra en reposo (light sleep,
-// enterSleep()) y despierta con cualquier botón.
+// (buttons.read()) y llama sleepManager.update(), engine.update(),
+// engine.print(), sound.update() y display.show().
 // ====================================================================================
 
 #include "Config.h"
 #include "Globals.h"
-#include "Timer.h"
 #include "Engine.h"
+#include "SleepManager.h"
 
 #include <Arduino.h>
-#include <string.h>
-#include "driver/gpio.h"
-#include "esp_sleep.h"
 
 // ====================================================================================
 // Globales (servicios de hardware + almacén de estado), compartidos por todas
@@ -60,97 +60,14 @@ Storage storage;
 
 Engine engine;
 
-// Cronómetro del reposo: cuenta el tiempo sin botones presionados
-// fuera de partida; al llegar a Config::Power::IDLE_TIMEOUT_MS se
-// duerme (light sleep). Se reinicia con cualquier botón.
-Stopwatch idleTimer;
+// Reposo (light sleep): política de inactividad, wake y diagnóstico
+// de wake espurio. Recibe el Engine para no dormir en partida y
+// repintar al volver tras un diagnóstico.
+SleepManager sleepManager(engine);
 
-// Aviso de diagnóstico del reposo (ver enterSleep()): true cuando hubo
-// que mostrar "WAKE ESPURIO"; al despertar con un botón se fuerza el
-// repintado completo de la ventana activa (Engine::repaint()).
-bool diagSeen = false;
-
-// ========================================================
-// Reposo (light sleep)
-//
-// Apaga el OLED y detiene la CPU con esp_light_sleep_start():
-// el light sleep conserva la RAM (los estados de las ventanas
-// y Storage siguen vivos) y despierta por cualquier botón
-// (gpio_wakeup_enable con nivel HIGH configurado en setup()).
-// Al despertar, loop() continúa donde quedó.
-// ========================================================
-
-// Aviso de diagnóstico del reposo. Se dibuja SOLO en la banda de rombos
-// del Menu (MenuStrip::VALUE_TOP..VALUE_HEIGHT), porque es la única
-// franja que cualquier ventana vuelve a pintar sobre la imagen retenida
-// (el OLED conserva su RAM con power off): el Menu, el Legend y el Boot
-// la cubren con su clear() completo del primer frame y MenuSound borra
-// esa banda en cada print(). Así el repintado forzado nunca deja restos
-// del aviso, sea cual sea la ventana activa.
-void screenDiag() {
-  diagSeen = true;
-
-  display.power(true);
-  display.clear();
-
-  const char* msg = "WAKE ESPURIO";
-  const uint8_t textH = 8;  // TEXT_6x8
-  const int16_t msgW = strlen(msg) * 6;
-  display.drawText(
-    msg,
-    (Config::Screen::WIDTH - msgW) / 2,
-    Config::MenuStrip::VALUE_TOP + (Config::MenuStrip::VALUE_HEIGHT - textH) / 2,
-    TEXT_6x8, true, false);
-
-  display.show();
-  delay(Config::Power::DIAG_MS);
-  display.power(false);
-}
-
-void enterSleep() {
-  display.power(false);   // apaga el panel OLED (ahorro; la RAM del OLED se conserva)
-  sound.stop();           // corta un efecto en curso
-
-  // Wake de verificación: aunque esp_light_sleep_start() vuelva "solo"
-  // (nivel que ya no persiste, USB host, etc.), no se sale del reposo si
-  // no hay un botón realmente presionado; se vuelve a dormir al instante.
-  // El wake real se detecta por polling (timer cada WAKE_CHECK_MS + el GPIO
-  // por nivel como vía rápida) y la pantalla queda apagada hasta entonces.
-  uint8_t spurious = 0;
-  while (!buttons.anyPhysical()) {
-    uint64_t t0 = nowMs();
-    esp_err_t err = esp_light_sleep_start();  // bloquea hasta el wake de un botón o del timer
-    buttons.read();                           // refresca el estado físico tras despertar
-    uint64_t slept = nowMs() - t0;
-
-    if (buttons.anyPhysical()) break;
-
-    // Light sleep que no persiste: volvió casi sin dormir y sin botón
-    // (rechazado o wake espurio). En una placa sana duerme ~WAKE_CHECK_MS
-    // hasta el timer de verificación. N espurios seguidos = aviso.
-    if (err == ESP_ERR_SLEEP_REJECT || slept < Config::Power::MIN_SLEEP_MS) {
-      if (++spurious >= Config::Power::SPURIOUS_LIMIT) {
-        spurious = 0;
-        screenDiag();
-      }
-    } else {
-      spurious = 0;
-    }
-  }
-
-  // --- al despertar con un botón real ---
-  display.power(true);      // el framebuffer del OLED sigue en el panel: misma imagen
-  if (diagSeen) {           // ...salvo que un diagnóstico la deformara
-    diagSeen = false;
-    engine.repaint();
-  }
-  buttons.begin();          // re-ancla el estado: el botón que despertó no es un "press"
-  buttons.ignoreUntilRelease();  // ...ni cuenta como pulsación sostenida hasta soltarlo
-}
-
-// ========================================================
+// ====================================================================================
 // Inicialización: hardware + primera transición (Boot)
-// ========================================================
+// ====================================================================================
 
 void setup() {
   Serial.begin(115200);
@@ -159,20 +76,7 @@ void setup() {
   buttons.begin();
   sound.begin();  // adjunta el canal del buzzer (que Sound posee) y silencia
   engine.begin();
-
-  // Despertar del light sleep con cualquier botón (los botones son
-  // INPUT_PULLDOWN, pulsado = HIGH)
-  for (uint8_t i = 0; i < Buttons::MAX_BUTTONS; i++) {
-    gpio_wakeup_enable((gpio_num_t)Config::Pin::BUTTONS[i], GPIO_INTR_HIGH_LEVEL);
-  }
-  esp_sleep_enable_gpio_wakeup();
-
-  // Wake de verificación por timer: el GPIO por nivel puede dejar de
-  // re-disparar tras el primer ciclo (p. ej. con USB-CDC el host impide
-  // que el light sleep persista). El timer despierta cada WAKE_CHECK_MS
-  // y enterSleep() re-verifica por polling; el GPIO por nivel solo actúa
-  // de vía rápida cuando funciona.
-  esp_sleep_enable_timer_wakeup((uint64_t)Config::Power::WAKE_CHECK_MS * 1000ULL);
+  sleepManager.begin();  // fuentes de wake del light sleep (GPIO por nivel + timer)
 
   Serial.println("Snake II");
 }
@@ -182,23 +86,8 @@ void setup() {
 // ====================================================================================
 
 void loop() {
-  buttons.read();  // una sola lectura de botones por frame (de esta lectura
-                   // consumen los eventos todas las ventanas despachadas por Engine)
-
-  // Cualquier botón presionado (estado físico, sin supresión) = actividad:
-  // reinicia el contador del reposo
-  if (buttons.anyPhysical()) idleTimer.start();
-
-  // Fuera de partida y sin actividad durante X ms -> reposo (bloquea hasta
-  // que un botón despierta; al volver, no dormir al instante). Nunca se
-  // entra con un pin en HIGH: el wake por nivel despertaría al instante.
-  if (!engine.isInGame() &&
-      !buttons.anyPhysical() &&
-      idleTimer.expired(Config::Power::IDLE_TIMEOUT_MS)) {
-    enterSleep();
-    idleTimer.start();
-  }
-
+  buttons.read();
+  sleepManager.update();
   engine.update();
   engine.print();
   sound.update();

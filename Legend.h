@@ -92,6 +92,7 @@ private:
   // Rótulo sobre el pad MOVE
   static constexpr int16_t TEXT_Y = Config::Screen::HEADER_TOP + 4;  // punto Y del texto "Move" y "Action"
   static constexpr int16_t FOOT_TOP = Config::Screen::FOOT_TOP;
+  static constexpr int16_t FOOT_H = Config::Screen::FOOT_H;
 
   // ========================================================
   // Rombos de posición del pad ACTION (mitad derecha)

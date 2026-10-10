@@ -31,11 +31,11 @@ Display::Display(
 void Display::begin() {
   if (_screen != nullptr) return;  // idempotente: ya inicializado (evita filtrar memoria)
 
-  const int16_t width = Config::Screen::WIDTH;
-  const int16_t height = Config::Screen::HEIGHT;
+  // const int16_t width = Config::Screen::WIDTH;
+  // const int16_t height = Config::Screen::HEIGHT;
 
   Wire.begin(_sda, _scl);
-  _screen = new Adafruit_SSD1306(width, height, &Wire, _address, -1);
+  _screen = new Adafruit_SSD1306(WIDTH, HEIGHT, &Wire, _address, -1);
   if (!_screen->begin(SSD1306_SWITCHCAPVCC, _address)) {
     Serial.println("ERROR: No se encontró la pantalla");
     for(;;);
