@@ -2,8 +2,9 @@
 
 Este documento lista las dependencias de terceros de Snake_II-OLED_128x64-I2C y sus
 licencias.
-No forma parte del código fuente del proyecto, que se licencia bajo MIT
-(véase [`LICENSE.md`](LICENSE.md)); es un aviso de atribución.
+No forma parte del código fuente del proyecto, que se licencia bajo
+**PolyForm Noncommercial 1.0.0** (uso no comercial; véase
+[`LICENSE.md`](LICENSE.md)); es un aviso de atribución.
 
 ## Qué se distribuye en este repositorio
 

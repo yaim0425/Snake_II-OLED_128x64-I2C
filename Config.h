@@ -132,7 +132,7 @@ constexpr char* Credits[] = {
   "YAIM0425",
   "",
   "License",
-  "MIT License",
+  "Polyform Noncommercial 1.0.0",
   "Copyright (c) 2026 yaim0425"
 };
 constexpr char* THANKS = "Thanks for playing!";
