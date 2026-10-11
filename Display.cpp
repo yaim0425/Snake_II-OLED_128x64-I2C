@@ -41,7 +41,7 @@ void Display::begin() {
     for(;;);
   }
 
-  // Wire.setClock(400000);
+  Wire.setClock(400000);
 
   _screen->setRotation(0);
   _screen->clearDisplay();

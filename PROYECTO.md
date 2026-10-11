@@ -265,7 +265,7 @@ y con cualquier tamaño (`TEXT_6x8`, `TEXT_12x16`, `TEXT_18x24`).
 
 | Método | Descripción |
 |--------|-------------|
-| `void begin()` | `Wire.begin(sda, scl)`, crea el OLED y lo limpia. **Idempotente:** si la pantalla ya quedó inicializada (`_screen != nullptr`) no hace nada, de modo que llamarla dos veces no reasigna el OLED ni filtra memoria (si el primer intento falló, `_screen` quedó en `nullptr` y un segundo llamado reintenta). |
+| `void begin()` | `Wire.begin(sda, scl)`, fija el reloj I2C a **400 kHz** (`Wire.setClock(400000)`), crea el OLED y lo limpia. **Idempotente:** si la pantalla ya quedó inicializada (`_screen != nullptr`) no hace nada, de modo que llamarla dos veces no reasigna el OLED ni filtra memoria (si el primer intento falló, `_screen` quedó en `nullptr` y un segundo llamado reintenta). |
 | `void clear()` | Limpia el buffer de la pantalla. |
 | `void show()` | Envía el buffer al OLED. |
 | `void power(bool on)` | Apaga (`0xAE`) / enciende (`0xAF`) el panel SSD1306. Apagado solo para **ahorro en reposo** (sección 26): el framebuffer del panel se conserva, así que al volver a encender se restaura la misma imagen sin repintar. No afecta al buffer en RAM de `Adafruit_SSD1306`. |
