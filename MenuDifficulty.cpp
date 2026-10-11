@@ -1,13 +1,7 @@
-// AISLADO: unidad de translation desactivada mientras se trabaja en Boot y
-// Legend. Arduino compila TODOS los .cpp de la carpeta del sketch, asi que este
-// archivo se seguiria compilando aunque Engine ya no lo incluya, y llama a la
-// API de Display que quedo comentada en Display.h.
-// Para revertir: borrar el #if 0 de aqui y el #endif del final.
-#if 0
-
 #include "esp32-hal.h"
 #include "MenuDifficulty.h"
 #include "Globals.h"
+#include "Draw.h"
 
 #include <stdio.h>
 
@@ -16,10 +10,12 @@
 // ========================================================
 
 MenuDifficulty::MenuDifficulty()
-  : _difficulty(Config::Difficulty::DEFAULT_LEVEL),
-    _edit(Config::Difficulty::DEFAULT_LEVEL),
+  : _difficulty(DEFAULT_LEVEL),
+    _selected(DEFAULT_LEVEL),
+    _lastSelected(DEFAULT_LEVEL),
     _done(false),
     _blink(),
+    _clear(true),
     _repeat() {}
 
 // ========================================================
@@ -27,13 +23,16 @@ MenuDifficulty::MenuDifficulty()
 //
 // No borra la pantalla ni dibuja nada: entra sobre el Menu ya
 // dibujado, así que basta con poner el valor confirmado en
-// edición y anclar el parpadeo (sin salto de fase respecto al
-// reloj de 64 bits). El selector lo pinta print().
+// edición (y en el último mostrado) y anclar el parpadeo (sin
+// salto de fase respecto al reloj de 64 bits). El selector lo
+// pinta print().
 // ========================================================
 
 void MenuDifficulty::begin() {
-  _edit = _difficulty;
+  _clear = true;
   _done = false;
+  _selected = _difficulty;
+  _lastSelected = _selected;
   _blink.start();
 }
 
@@ -41,25 +40,25 @@ void MenuDifficulty::begin() {
 // Actualizar
 //
 // MOVE_RIGHT +1 y MOVE_LEFT -1 con repetición al mantener
-// presionado (primer paso inmediato, después cada
-// HOLD_REPEAT_TICK ms tras HOLD_REPEAT_DELAY de mantención). El
-// valor mostrado cambia sin aplicarse; ACTION_RIGHT lo aplica y
-// ACTION_UP cancela. En ambos casos se vuelve al Menu.
+// presionado (primer paso inmediato, después cada Config::Button::TICK
+// ms tras Config::Button::DELAY de mantención). El valor mostrado
+// cambia sin aplicarse; ACTION_RIGHT lo aplica y ACTION_UP cancela.
+// En ambos casos se vuelve al Menu.
 // ========================================================
 
 void MenuDifficulty::update() {
-  if (_repeat.step(Buttons::MOVE_RIGHT) && _edit < Config::Difficulty::MAX_LEVEL) {
-    _edit++;
+  if (_repeat.step(Buttons::MOVE_RIGHT) && _selected < MAX_LEVEL) {
+    _selected++;
     sound.play(Sound::SFX_CLICK);
   }
-  if (_repeat.step(Buttons::MOVE_LEFT) && _edit > Config::Difficulty::MIN_LEVEL) {
-    _edit--;
+  if (_repeat.step(Buttons::MOVE_LEFT) && _selected > MIN_LEVEL) {
+    _selected--;
     sound.play(Sound::SFX_CLICK);
   }
 
   if (buttons.pressed(Buttons::ACTION_RIGHT)) {
     // Select: aplica el nivel mostrado
-    _difficulty = _edit;
+    _difficulty = _selected;
     sound.play(Sound::SFX_CONFIRM);
     _done = true;
   } else if (buttons.pressed(Buttons::ACTION_UP)) {
@@ -72,15 +71,23 @@ void MenuDifficulty::update() {
 // ========================================================
 // Dibujar
 //
-// La franja de rombos del Menu se borra y se vuelve a pintar en
-// cada frame (las flechas parpadean; el número no). No se toca
-// ninguna otra zona: el título, el cuadro de la opción y el pie
-// del Menu siguen como estaban.
+// La franja de rombos del Menu se borra y se vuelve a pintar (las
+// flechas parpadean; el número no). No se toca ninguna otra zona:
+// el título, el cuadro de la opción y el pie del Menu siguen como
+// estaban.
 // ========================================================
 
 void MenuDifficulty::print() {
-  display.fillRect(0, SEL_TOP, display.getWidth(), SEL_SIZE + 1, true);
-  drawSelector();
+  firstPrint();
+  nextOption();
+  blinkOption();
+}
+
+void MenuDifficulty::clear() {
+  display.fillRect(
+    0, VALUE_TOP,
+    WIDTH, VALUE_HEIGHT,
+    false);
 }
 
 // ========================================================
@@ -93,52 +100,65 @@ void MenuDifficulty::print() {
 //   - flecha izquierda: MOVE_LEFT (-1), oculta en el mínimo
 //   - flecha derecha:   MOVE_RIGHT (+1), oculta en el máximo
 // Las flechas parpadean juntas (visible 75%, oculto 25% de
-// ARROW_BLINK_PERIOD ms), pegadas al número (hueco ARROW_GAP);
-// el número no parpadea.
+// PERIOD ms), pegadas al número (hueco 4 px); el número no
+// parpadea.
 //
 // Al mantener presionado MOVE_LEFT o MOVE_RIGHT el paso se vuelve
 // continuo y el dibujo lo refleja: se detiene el parpadeo, solo la
 // flecha del botón activo queda fija y la contraria se oculta. Al
 // llegar al límite (1 o 10) el botón de ese lado ya no puede
-// avanzar y se dibuja como siempre (flecha oculta), sin marcar la
+// avanzar y se dibuja como siempre (parpadeando), sin marcar la
 // repetición.
 // ========================================================
 
-void MenuDifficulty::drawSelector() {
+void MenuDifficulty::nextOption(bool show) {
+  if (_lastSelected == _selected && !show) return;
+
   // Número centrado con ancho constante (" 5" / "10" = 12 px)
   char buf[8];
-  if (_edit < 10) sprintf(buf, " %u", _edit);
-  else sprintf(buf, "%u", _edit);
+  if (_selected < 10) sprintf(buf, " %u", _selected);
+  else sprintf(buf, "%u", _selected);
+  display.drawText(buf, LABEL_X, DIAMOND_Y - 3, TEXT_6x8);
 
-  int16_t labelW = display.getTextWidth(buf, TEXT_6x8);
-  int16_t labelX = (display.getWidth() - labelW) / 2;
+  // Al mantener MOVE_LEFT (-1) o MOVE_RIGHT (+1) la repetición continua
+  // queda marcada: SOLO se muestra la flecha del botón activo (fija); la
+  // contraria se oculta. Sin mantener, ambas flechas se dibujan visibles y
+  // es blinkOption() quien las hace parpadear. No se dibuja la flecha del
+  // lado que está en su límite.
+  const bool leftHeld = buttons.hold(Buttons::MOVE_LEFT) && _selected > MIN_LEVEL;
+  const bool rightHeld = buttons.hold(Buttons::MOVE_RIGHT) && _selected < MAX_LEVEL;
 
-  // Al mantener presionado MOVE_LEFT (-1) o MOVE_RIGHT (+1) la repetición
-  // continua queda marcada en pantalla: el parpadeo se detiene y SOLO la
-  // flecha del botón activo se muestra (fija); la contraria se oculta.
-  // Sin mantener, las dos flechas parpadean juntas (visible 75%, oculto
-  // 25% de ARROW_BLINK_PERIOD ms) como siempre.
-  bool leftHeld  = buttons.state(Buttons::MOVE_LEFT)  && _edit > Config::Difficulty::MIN_LEVEL;
-  bool rightHeld = buttons.state(Buttons::MOVE_RIGHT) && _edit < Config::Difficulty::MAX_LEVEL;
+  Draw::triangle(Draw::DIR_LEFT, TRIANGLE_L, DIAMOND_Y, _selected > MIN_LEVEL && !rightHeld);
+  Draw::triangle(Draw::DIR_RIGHT, TRIANGLE_R, DIAMOND_Y, _selected < MAX_LEVEL && !leftHeld);
 
-  bool arrowsVisible = leftHeld || rightHeld || _blink.on(ARROW_BLINK_PERIOD, ARROW_BLINK_OFF_PCT);
+  _lastSelected = _selected;
+  _blink.start();
+}
 
-  if (arrowsVisible) {
-    // Flecha izquierda (-1): fija al mantener MOVE_LEFT; oculta mientras se
-    // mantiene MOVE_RIGHT; sin mantener parpadea. No se dibuja en el mínimo.
-    if (_edit > Config::Difficulty::MIN_LEVEL && !rightHeld) {
-      int16_t base = labelX - ARROW_GAP;  // lado plano, pegado al número
-      display.fillTriangle(base - ARROW_W, SEL_TEXT_MID, base, SEL_TEXT_TOP, base, SEL_TEXT_BOT, true);
-    }
-    // Flecha derecha (+1): fija al mantener MOVE_RIGHT; oculta mientras se
-    // mantiene MOVE_LEFT; sin mantener parpadea. No se dibuja en el máximo.
-    if (_edit < Config::Difficulty::MAX_LEVEL && !leftHeld) {
-      int16_t base = labelX + labelW + ARROW_GAP;  // lado plano, pegado al número
-      display.fillTriangle(base + ARROW_W, SEL_TEXT_MID, base, SEL_TEXT_TOP, base, SEL_TEXT_BOT, true);
-    }
-  }
+void MenuDifficulty::blinkOption() {
+  if (!_blink.changed(PERIOD, OFF)) return;
 
-  display.drawText(buf, labelX, SEL_TEXT_TOP, TEXT_6x8);
+  const bool visible = _blink.isVisible(PERIOD, OFF);
+  const bool leftHeld = buttons.hold(Buttons::MOVE_LEFT) && _selected > MIN_LEVEL;
+  const bool rightHeld = buttons.hold(Buttons::MOVE_RIGHT) && _selected < MAX_LEVEL;
+
+  // Flecha izquierda: fija al mantener MOVE_LEFT; oculta mientras se
+  // mantiene MOVE_RIGHT; sin mantener parpadea. No se dibuja en el mínimo.
+  if (_selected > MIN_LEVEL && !rightHeld)
+    Draw::triangle(Draw::DIR_LEFT, TRIANGLE_L, DIAMOND_Y, leftHeld || visible);
+
+  // Flecha derecha: fija al mantener MOVE_RIGHT; oculta mientras se
+  // mantiene MOVE_LEFT; sin mantener parpadea. No se dibuja en el máximo.
+  if (_selected < MAX_LEVEL && !leftHeld)
+    Draw::triangle(Draw::DIR_RIGHT, TRIANGLE_R, DIAMOND_Y, rightHeld || visible);
+}
+
+void MenuDifficulty::firstPrint(bool forceRedraw) {
+  if (!_clear && !forceRedraw) return;
+  clear();
+  _clear = false;
+
+  nextOption(true);
 }
 
 // ========================================================
@@ -156,5 +176,3 @@ uint8_t MenuDifficulty::difficulty() const {
 // ====================================================================================
 // Fin
 // ====================================================================================
-
-#endif  // AISLADO (ver #if 0 al principio del archivo)

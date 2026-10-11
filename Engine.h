@@ -7,7 +7,7 @@
 // dejar inertes Game.cpp, Food.cpp, MenuCredits.cpp y MenuDifficulty.cpp
 // (ver Engine.cpp). MenuSound ya esta fuera del aislamiento.
 // #include "MenuCredits.h"
-// #include "MenuDifficulty.h"
+#include "MenuDifficulty.h"
 // #include "Game.h"
 #include "MenuSound.h"
 #include "Menu.h"
@@ -107,10 +107,10 @@ private:
     BOOT = 0,
     LEGEND,
     MENU,
-    MENU_SOUND
+    MENU_SOUND,
     // NEW,
     // CONTINUE,
-    // MENU_DIFFICULTY,
+    MENU_DIFFICULTY
     // MENU_CREDITS
   };
 
@@ -148,7 +148,7 @@ private:
   Menu _menu;
   MenuSound _menuSound;
   // MenuCredits _menuCredits;
-  // MenuDifficulty _menuDifficulty;
+  MenuDifficulty _menuDifficulty;
   // Game _game;
 };
 

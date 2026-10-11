@@ -41,6 +41,7 @@ void Engine::update() {
 
       switch (_menu.selected()) {
         case Menu::OPT_SOUND: changeState(State::MENU_SOUND); break;
+        case Menu::OPT_DIFFICULTY: changeState(State::MENU_DIFFICULTY); break;
         default: changeState(State::LEGEND); break;
       }
 
@@ -64,13 +65,14 @@ void Engine::update() {
 
     case State::MENU_SOUND:
       _menuSound.update();
-      if (_menuSound.done()) changeState(State::MENU); break;
-        // _menu.showOptions();
-        // changeState(State::MENU);
+      if (_menuSound.done()) changeState(State::MENU);
+      break;
+      // _menu.showOptions();
+      // changeState(State::MENU);
 
-        // _menu.restoreDiamondBand();  // pendiente: Menu::restoreDiamondBand()
-        // sigue comentado en Menu.h/Menu.cpp; por eso changeState(MENU, false)
-        // hace igual el _menu.begin() completo (beginWindow se ignora).
+      // _menu.restoreDiamondBand();  // pendiente: Menu::restoreDiamondBand()
+      // sigue comentado en Menu.h/Menu.cpp; por eso changeState(MENU, false)
+      // hace igual el _menu.begin() completo (beginWindow se ignora).
 
       // AISLADO: ventanas del Game y de los demás submenus (MenuSound ya esta
       // activa: ver su case arriba). Se comentan por bloque entero, no linea
@@ -97,20 +99,12 @@ void Engine::update() {
       //     }
       //     break;
       //   }
-      //
-      // case State::MENU_DIFFICULTY:
-      //   {
-      //
-      //     // La ventana sustituyó la banda de rombos del Menu por su selector:
-      //     // al volver solo hay que repintar esa franja, sin clear() completo.
-      //     _menuDifficulty.update();
-      //     if (_menuDifficulty.done()) {
-      //       _menu.restoreDiamondBand();
-      //       changeState(State::MENU, false);
-      //     }
-      //     break;
-      //   }
-      //
+
+    case State::MENU_DIFFICULTY:
+      _menuDifficulty.update();
+      if (_menuDifficulty.done()) changeState(State::MENU);
+      break;
+
       // case State::MENU_CREDITS:
       //   {
       //
@@ -139,6 +133,9 @@ void Engine::print() {
     case State::LEGEND: _legend.print(); break;
     case State::MENU: _menu.print(); break;
     case State::MENU_SOUND: _menuSound.print(); break;
+    case State::MENU_DIFFICULTY:
+      _menuDifficulty.print();
+      break;
 
       // AISLADO: ventanas del Game y de los demás submenus (MenuSound ya esta
       // activa; ver Engine::update).
@@ -146,7 +143,6 @@ void Engine::print() {
       // case State::CONTINUE:
       //   _game.print();
       //   break;
-      // case State::MENU_DIFFICULTY: _menuDifficulty.print(); break;
       // case State::MENU_CREDITS: _menuCredits.print(); break;
   }
 }
@@ -175,6 +171,11 @@ void Engine::repaint() {
       // (la ventana activa es el parche): se dibuja aquí mismo.
       _menu.firstPrint(true);
       _menuSound.firstPrint(true);
+      break;
+
+    case State::MENU_DIFFICULTY:
+      _menu.firstPrint(true);
+      _menuDifficulty.firstPrint(true);
       break;
   }
 }
@@ -223,6 +224,7 @@ void Engine::changeState(State newState) {
       }
 
     case State::MENU_SOUND: _menuSound.begin(); break;
+    case State::MENU_DIFFICULTY: _menuDifficulty.begin(); break;
 
       // AISLADO: ventanas del Game y de los demás submenus (MenuSound ya esta
       // activa; ver Engine::update).
@@ -234,7 +236,6 @@ void Engine::changeState(State newState) {
       //   _game.setDifficulty(_menuDifficulty.difficulty());
       //   _game.begin(false);
       //   break;
-      // case State::MENU_DIFFICULTY: _menuDifficulty.begin(); break;
       // case State::MENU_CREDITS: _menuCredits.begin(); break;
   }
 }

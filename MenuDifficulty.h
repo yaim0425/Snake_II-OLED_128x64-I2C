@@ -55,6 +55,8 @@ public:
   // ========================================================
 
   void print();
+  void firstPrint(bool forceRedraw = false);
+  void clear();
 
   // ========================================================
   // Estado
@@ -69,49 +71,73 @@ public:
 
 private:
 
-  // ========================================================
-  // Geometría
-  // ========================================================
+  // // ========================================================
+  // // Geometría (valores anteriores, en desuso)
+  // // ========================================================
 
-  // La banda es la de los rombos del Menu (DIA_TOP/DIA_SIZE de
-  // Menu): las filas 45..53. Ojo a la última: la 53 es la línea
-  // separadora del pie (Config::Screen::FOOT_LINE), así que el erase
-  // se lleva por delante esa fila y el selector escribe encima
-  // (46..53). Por eso Menu::restoreDiamondBand() tiene que repintar
-  // también la línea al volver.
-  static constexpr int16_t SEL_TOP  = 45;
-  static constexpr uint8_t SEL_SIZE = 8;
+  // // La banda es la de los rombos del Menu (DIA_TOP/DIA_SIZE de
+  // // Menu): las filas 45..53. Ojo a la última: la 53 es la línea
+  // // separadora del pie (Config::Screen::FOOT_LINE), así que el erase
+  // // se lleva por delante esa fila y el selector escribe encima
+  // // (46..53). Por eso Menu::restoreDiamondBand() tiene que repintar
+  // // también la línea al volver.
+  // static constexpr int16_t SEL_TOP  = 45;
+  // static constexpr uint8_t SEL_SIZE = 8;
 
-  // Número centrado con ancho constante: 1 dígito lleva un
-  // espacio inicial (" 5" mide lo mismo que "10", 12 px) para que
-  // el centrado no se desplace al pasar de 9 a 10.
-  static constexpr int16_t SEL_TEXT_TOP = SEL_TOP + 1;  // 46
-  static constexpr int16_t SEL_TEXT_MID = SEL_TOP + SEL_SIZE / 2;  // 49
-  static constexpr int16_t SEL_TEXT_BOT = SEL_TOP + SEL_SIZE;      // 53
+  // // Número centrado con ancho constante: 1 dígito lleva un
+  // // espacio inicial (" 5" mide lo mismo que "10", 12 px) para que
+  // // el centrado no se desplace al pasar de 9 a 10.
+  // static constexpr int16_t SEL_TEXT_TOP = SEL_TOP + 1;  // 46
+  // static constexpr int16_t SEL_TEXT_MID = SEL_TOP + SEL_SIZE / 2;  // 49
+  // static constexpr int16_t SEL_TEXT_BOT = SEL_TOP + SEL_SIZE;      // 53
 
-  // Flechas: grosor horizontal, hueco con el número, período de
-  // parpadeo (visible 75%, oculto el 25% inicial) y las dos
-  // constantes de repetición al mantener.
-  static constexpr int16_t ARROW_GAP            = 6;    // hueco (px) entre el número y la flecha
-  static constexpr int16_t ARROW_W              = 6;    // grosor horizontal de la flecha (px)
-  static constexpr uint32_t ARROW_BLINK_PERIOD  = 500;  // período del parpadeo de las flechas (ms)
-  static constexpr uint8_t  ARROW_BLINK_OFF_PCT = 25;   // % del período en que la flecha está oculta
+  // // Flechas: grosor horizontal, hueco con el número, período de
+  // // parpadeo (visible 75%, oculto el 25% inicial) y las dos
+  // // constantes de repetición al mantener.
+  // static constexpr int16_t ARROW_GAP            = 6;    // hueco (px) entre el número y la flecha
+  // static constexpr int16_t ARROW_W              = 6;    // grosor horizontal de la flecha (px)
+  // static constexpr uint32_t ARROW_BLINK_PERIOD  = 500;  // período del parpadeo de las flechas (ms)
+  // static constexpr uint8_t  ARROW_BLINK_OFF_PCT = 25;   // % del período en que la flecha está oculta
+
+  static constexpr int16_t DEFAULT_LEVEL = Config::Difficulty::DEFAULT_LEVEL;
+  static constexpr int16_t MAX_LEVEL = Config::Difficulty::MAX_LEVEL;
+  static constexpr int16_t MIN_LEVEL = Config::Difficulty::MIN_LEVEL;
+
+  static constexpr int16_t WIDTH = Config::Screen::WIDTH;
+  static constexpr uint8_t SIZE = Config::Diamond::SIZE;  // rombo completo (SIEMPRE rombo)
+
+  static constexpr uint32_t PERIOD = Config::DefaultTimer::PERIOD;  // período del parpadeo MUY rápido (ms)
+  static constexpr uint8_t OFF = Config::DefaultTimer::OFF;         // % del período en que está oculto
+
+  static constexpr int16_t VALUE_HEIGHT = Config::MenuStrip::VALUE_HEIGHT;
+  static constexpr int16_t VALUE_TOP = Config::MenuStrip::VALUE_TOP;
+
+  // Número centrado con ancho constante (" 5" / "10" = 12 px): las
+  // flechas se pegan al número (hueco 4 px) y parpadean juntas.
+  static constexpr int16_t TRIANGLE_L = (WIDTH - 6 * 2) / 2 - 4;
+  static constexpr int16_t TRIANGLE_R = (WIDTH - 6 * 2) / 2 + (6 * 2) + 2;
+  static constexpr int16_t LABEL_X = TRIANGLE_L + 4;
+
+  static constexpr int16_t DIAMOND_Y = Config::MenuStrip::DIAMOND_Y;
 
   // ========================================================
   // Métodos internos
   // ========================================================
 
-  void drawSelector();
+  void blinkOption();
+  void nextOption(bool show = false);
 
   // ========================================================
   // Estado
   // ========================================================
 
-  uint8_t _difficulty;   // nivel confirmado, persistente entre entradas
-  uint8_t _edit;         // nivel en edición (se aplica al confirmar)
-  bool _done;            // confirmó o canceló: el Engine vuelve al Menu
+  uint8_t _difficulty;    // nivel confirmado, persistente entre entradas
+  uint8_t _selected;      // nivel en edición (se aplica al confirmar)
+  uint8_t _lastSelected;  // último nivel mostrado (para detectar el cambio)
+  bool _done;             // confirmó o canceló: el Engine vuelve al Menu
 
   Blink _blink;          // parpadeo de las flechas (fase cruda)
+  bool _clear;           // pide el primer frame completo
   ButtonRepeat _repeat;  // repetición de MOVE_LEFT/MOVE_RIGHT al mantener
 };
 

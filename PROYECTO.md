@@ -89,20 +89,20 @@ constantes compartidas viven en `Config.h` (pines, geometría, dificultad, versi
   la banda de los rombos y vuelven con
   `changeState(State::MENU, false)` + `Menu::restoreDiamondBand()`, así que el
   título, el cuadro de la opción y el pie nunca se repintan en el ida y vuelta.
-  Hoy solo `MenuSound` está fuera del aislamiento y su regreso hace el
-  `begin()` completo del `Menu`: `Menu::restoreDiamondBand()` sigue comentada
-  (ver sección 11).
+  Hoy `MenuSound` y `MenuDifficulty` están fuera del aislamiento y su regreso
+  hace el `begin()` completo del `Menu`: `Menu::restoreDiamondBand()` sigue
+  comentada (ver sección 11).
 - Flujo de arranque: `Boot` → `Legend` → `Menu`. La `Legend` solo aparece al
   arrancar; al volver al menú se pasa directo a `Menu`.
 - **Aislamiento temporal (bloques `AISLADO` en `Engine.h`/`Engine.cpp`):**
-  `Engine` posee y despacha `Boot`, `Legend`, `Menu` y `MenuSound` (reactivada
-  en la sección 10.3); `Game`, `MenuCredits` y `MenuDifficulty` siguen
-  existiendo como clases pero sus estados, miembros y transiciones están
+  `Engine` posee y despacha `Boot`, `Legend`, `Menu`, `MenuSound` y
+  `MenuDifficulty` (reactivadas en la sección 10.3); `Game` y `MenuCredits`
+  siguen existiendo como clases pero sus estados, miembros y transiciones están
   comentados. El flujo queda `Boot` → `Legend` → `Menu` y ahí se detiene:
-  `Menu::confirm()` está comentado (la entrada a `MenuSound` no está cableada),
-  `ACTION_RIGHT` solo alterna el resaltado (`_confirm`) y `ACTION_UP` devuelve
-  la selección a `New`/`Continue`, así que el menú no sale hacia ninguna
-  ventana.
+  `Menu::confirm()` está comentado (la entrada a `MenuSound`/`MenuDifficulty`
+  no está cableada), `ACTION_RIGHT` solo alterna el resaltado (`_confirm`) y
+  `ACTION_UP` devuelve la selección a `New`/`Continue`, así que el menú no sale
+  hacia ninguna ventana.
 
 **Clases extraídas de `Game`:**
 - `Food` — alimento (normal/especial): estado, spawn en celdas libres, dibujo,
@@ -157,7 +157,7 @@ Directorio: `D:\Documents\ESP32S3\Snake_II-OLED_128x64-I2C`
 | `Legend.h` / `Legend.cpp` | Clase `Legend` (panel de botones: pad MOVE a la izquierda con 4 flechas, 4 rombos completos de ACTION a la derecha en las posiciones de un pad que parpadean MUY rápido uno a la vez en ciclo lento —ciclo `NEXT=2500 ms` con el `Ticker`, **sin fase fija** (`HOLD` comentado), parpadeo `PERIOD=100 ms` al 50 %— y texto de la función del rombo activo en el pie (Back, Select / Pause, None, None), compuesto y mostrado con su propio `Scroller` (`_scroller`) para que **entre deslizándose** al cambiar de rombo; cualquier botón la cierra con un sonido según el botón pulsado: MOVE = CLICK, ACTION_UP = BACK, ACTION_RIGHT = CONFIRM). Completa. |
 | `Scroller.h` / `Scroller.cpp` | Clase `Scroller` (scroller de 1 bit: una sola banda de **ancho completo de pantalla**, texto como array de `int8_t` donde cada byte = 1 columna de 8 px; fondo siempre negro y texto blanco; `setTexto()` compone el texto centrado, fija la fila donde se imprimirá, deriva el alto de la franja del tamaño (`8 * size`, máx. `Config::Scroller::MAX_H` = 32), calcula el límite de caracteres según el tamaño y trunca silenciosamente; `startSlide()` arranca en `-timeCurtain()` y limpia 1 px justo sobre/bajo la franja; `update()` avanza 1 px cada 4 ms mientras `print()` vuelca la bandeja **con la cortina activa** —`curtain()` anclada al frente, helper `timeCurtain()` = `6 * _size + 4 * _size - 1`, texto que entra solo cuando `_x >= 0`—; usada por `Menu` con 1 instancia —transición **activa** en `nextOption()`—, por `MenuCredits` con 2 instancias sincronizadas y por `Legend` con 1 instancia para el texto del pie). Completa. |
 | `Menu.h` / `Menu.cpp` | Clase `Menu` (menú con scroller de 1 bit —1 banda del `Scroller`—, rombos/triángulos de posición marcados con `toggleDiamond()`/`toggleTriangle()` sobre la geometría centrada en el Body de `Config::MenuStrip`, navegación con repetición y anti-entrada `_holdButtons`). **En iteración**: `begin(showContinue, selected)` fija la lista y la selección; `navigate()` (MOVE con el helper `ButtonRepeat`), `action()` (`ACTION_UP` vuelve a `New`/`Continue`, `ACTION_RIGHT` alterna `_confirm`), `holdButtons()` (bloquea hasta soltar los botones), `blinkOption()` (parpadeo con el helper `Blink`) y `nextOption()` (vuelo lateral del `Scroller`, activo). La API anterior (`setOptions`, `setContinueAvailable`, `setBestScore`, `setSelected`, `setTitle`, `setShowFooter`, `confirm()`, `restoreDiamondBand()`) está **comentada** en `Menu.h`. |
-| `MenuDifficulty.h` / `MenuDifficulty.cpp` | Clase `MenuDifficulty` (selector de nivel 1..10, `< N >`, con repetición al mantener presionado; al mantener, solo queda fija la flecha del botón activo). Completa. Ventana hermana: vive sobre el `Menu` ya dibujado, sustituye solo la banda de rombos (45..53) y no hace `clear()`. Guarda el nivel confirmado (`difficulty()`), que el `Engine` pasa a `Game::setDifficulty`. |
+| `MenuDifficulty.h` / `MenuDifficulty.cpp` | Clase `MenuDifficulty` (selector de nivel 1..10, `< N >`, con repetición al mantener presionado; al mantener, solo queda fija la flecha del botón activo). **Refactorizada al estilo de `MenuSound` (`firstPrint()`/`clear()`/`nextOption()`/`blinkOption()`, `_selected`/`_lastSelected`/`_clear`, `Draw::triangle`, `Blink::changed`/`isVisible`) y reactivada (fuera del aislamiento)**: el `Engine` ya la posee y despacha (`MENU_DIFFICULTY`), pero la entrada desde el `Menu` sigue pendiente. Ventana hermana: vive sobre el `Menu` ya dibujado y sustituye solo la banda de rombos (45..53). Guarda el nivel confirmado (`difficulty()`), que el `Engine` pasa a `Game::setDifficulty`. |
 | `MenuSound.h` / `MenuSound.cpp` | Clase `MenuSound` (selector On/Off con una flecha en el lado del destino, sobre la misma banda). **Reactivada (fuera del aislamiento)**: el `Engine` ya la posee y despacha (`MENU_SOUND`), pero la entrada desde el `Menu` sigue pendiente. Como `Display::getWidth()`/`getTextWidth()` siguen comentadas en `Display.h`, centra a mano con `Config::Screen::WIDTH` y `strlen * 6`. El valor real se aplica al global `Sound` con `setEnabled`. |
 | `MenuCredits.h` / `MenuCredits.cpp` | Clase `MenuCredits` (ventana de créditos con 3 entradas navegables con transición lateral —2 bandas sincronizadas del `Scroller` compartido— y `SFX_CLICK` al navegar, vuelve al menú con `ACTION_UP`). Se llama así, y no `Credits`, para distinguirla de una hipotética ventana de créditos general: esta es la que se abre desde la opción "Credits" del `Menu`. Completa. |
 | `Game.h` / `Game.cpp` | Clase `Game` (ventana del juego de la serpiente: estados NEW/CONTINUE del `Engine`). **Coordina**: dificultad/velocidad, lectura de botones (MOVE → `Snake::turn`), `snake.step()` con manejo del resultado, alimento (`Food`), puntaje, sonidos, overlays y volcado del tablero con los segmentos de `Snake` (celda de `Config::Screen::CELL`, sprites escalados con `SPRITE_SCALE`). Completa. |
@@ -171,7 +171,7 @@ Directorio: `D:\Documents\ESP32S3\Snake_II-OLED_128x64-I2C`
 | `Sprite.h` | Namespace `Sprite` (tabla de sprites de la serpiente, estilo Nokia: cola, cuerpo, curvas, cabeza cerrada/abierta y panza; sprites de 4×4 px + sprite de la comida especial de 8×4 px + el logo del arranque `LOGO` de 80×48 px como bloque 1bpp, dibujado con `Display::drawBitmap()`, sección 15). Solo datos (header-only, sin `.cpp`). Adaptada al estilo del proyecto. |
 | `Timer.h` / `Timer.cpp` | Reloj de 64 bits y cronómetros compartidos (`nowMs()`, `Stopwatch`, `Ticker`), basados en `esp_timer_get_time()` (sección 21). El header solo declara; las definiciones están en el `.cpp`, porque el `inline` en el header repetía el mismo código en cada `.cpp` que lo incluye. |
 | `ButtonRepeat.h` / `ButtonRepeat.cpp` | Helper de **repetición al mantener un botón** (sección 23): primer paso inmediato (`pressed`) y, tras `Config::Button::DELAY` (400 ms), un paso cada `Config::Button::TICK` (100 ms) mientras sigue mantenido (`hold`). Encapsula los dos `Stopwatch` que antes vivían sueltos en `Menu` y `MenuDifficulty` (donde además habían divergido: `hold` vs el viejo `state`). **Sin `reset()`** (YAGNI: hoy no hay call site). Lo usan `Menu` (`_repeat`) y `MenuDifficulty` (`_repeat`). |
-| `Blink.h` / `Blink.cpp` | Helper de **parpadeo** (sección 24): encapsula el `Stopwatch` (ancla del período) + el recuerdo de la última fase (`_last`, para el flanco) que cada ventana llevaba por separado. API de 3 métodos: `start()` (ancla y olvida la fase), `isVisible(period, offPct)` (fase actual, `true` = visible) y `changed(period, offPct)` (true solo en el flanco). Lo usan `Boot`, `Legend` y `Menu` (redibujan en el flanco con `changed()`/`isVisible()`) y `MenuDifficulty`/`MenuSound` (solo la fase cruda `isVisible()`). |
+| `Blink.h` / `Blink.cpp` | Helper de **parpadeo** (sección 24): encapsula el `Stopwatch` (ancla del período) + el recuerdo de la última fase (`_last`, para el flanco) que cada ventana llevaba por separado. API de 3 métodos: `start()` (ancla y olvida la fase), `isVisible(period, offPct)` (fase actual, `true` = visible) y `changed(period, offPct)` (true solo en el flanco). Lo usan `Boot`, `Legend` y `Menu` (redibujan en el flanco con `changed()`/`isVisible()`) y `MenuDifficulty`/`MenuSound` (repintan en el flanco con `changed()`/`isVisible()`). |
 | `Draw.h` / `Draw.cpp` | Namespace de **primitivas de dibujo** (sección 25): `triangle(dir, cx, cy, show)` y `diamond(cx, cy, show)`, los marcadores de posición que `Menu` y `Legend` tenían duplicados. Sin estado (usan el global `display` y `Config::Diamond::SIZE`); `dir` = 1↑, 2→, 3↓, 4←. |
 | `PROYECTO.md` | Este documento. |
 | `LICENSE.md` | Licencia del proyecto: **PolyForm Noncommercial 1.0.0**, con el texto canónico en inglés (traducirlo haría que GitHub dejara de reconocerlo). Permite copiar, modificar y distribuir con fines **no comerciales**, pero **prohíbe vender** el software y **usarlo en proyectos privados para ganar dinero**; por esa restricción **no es una licencia de código abierto** según la OSI (es *source-available*). Exige incluir la licencia y conservar la línea `Required Notice:`. Para cambiar el titular basta con editar esa línea. |
@@ -768,10 +768,10 @@ igual que `MenuCredits` (históricamente fueron una clase `SoundWindow` y luego
 edición *inline* dentro del propio `Menu`; ambas formas se eliminaron). El `Menu`
 las devuelve como cualquier otra opción en `confirm()` y el `Engine` abre la
 ventana que corresponda (`OPT_DIFFICULTY` → `MENU_DIFFICULTY`, `OPT_SOUND` →
-`MENU_SOUND`). **Estado actual:** `MenuSound` ya está **fuera del aislamiento**
-(el `Engine` la posee y despacha su estado, sección 11), pero `Menu::confirm()`
-y la entrada desde el `Menu` siguen comentadas, así que la ventana **no se abre
-todavía**; `MenuDifficulty` sigue aislada por completo.
+`MENU_SOUND`). **Estado actual:** `MenuSound` y `MenuDifficulty` ya están
+**fuera del aislamiento** (el `Engine` las posee y despacha sus estados,
+sección 11), pero `Menu::confirm()` y la entrada desde el `Menu` siguen
+comentadas, así que las ventanas **no se abren todavía**.
 
 Ambas comparten el mismo esqueleto de ventana (`begin`/`update`/`print`/`done`),
 la misma banda de dibujo (**45..53**, la de los rombos del `Menu`) y la misma
@@ -787,15 +787,20 @@ a `_menu.begin()`.)
 
 | Miembro | Descripción |
 |---------|-------------|
-| `MenuDifficulty()` | `_difficulty = Config::Difficulty::DEFAULT_LEVEL` (5) y el valor en edición igual. |
-| `void begin()` | Copia `_difficulty` a `_edit` y ancla el parpadeo (`_blink.start()`). **No dibuja ni borra nada** (entra sobre el `Menu`). |
-| `void update()` | `MOVE_RIGHT` +1 / `MOVE_LEFT` −1 con repetición al mantener (helper `ButtonRepeat`, `_repeat.step()`), tope en `Config::Difficulty::MIN_LEVEL`/`MAX_LEVEL`, cada paso con `SFX_CLICK`. `ACTION_RIGHT` **aplica** (`_difficulty = _edit`) y marca `done()`; `ACTION_UP` cancela. |
-| `void print()` | Borra la banda 45..53 y llama a `drawSelector()` (cada frame: las flechas parpadean, el número no). |
+| `MenuDifficulty()` | `_clear = true`, `_done = false`, `_difficulty = _selected = _lastSelected = Config::Difficulty::DEFAULT_LEVEL` (5). |
+| `void begin()` | `_clear = true`, `_done = false`, `_selected = _difficulty`, `_lastSelected = _selected` y ancla el parpadeo (`_blink.start()`). **No dibuja ni borra nada** (entra sobre el `Menu`; el borrado lo hace `firstPrint()`/`clear()`). |
+| `void update()` | `MOVE_RIGHT` +1 / `MOVE_LEFT` −1 con repetición al mantener (helper `ButtonRepeat`, `_repeat.step()`), tope en `MIN_LEVEL`/`MAX_LEVEL`, cada paso con `SFX_CLICK`. `ACTION_RIGHT` **aplica** (`_difficulty = _selected`) y marca `done()`; `ACTION_UP` cancela. |
+| `void print()` | `firstPrint()` (primer frame/forzado: `clear()` + el número y las flechas vía `nextOption(true)`) + `nextOption()` (redibuja si cambió `_selected`) + `blinkOption()` (parpadeo de las flechas). |
+| `void firstPrint(bool forceRedraw = false)` | Solo el primer frame (o `forceRedraw`): `clear()` (borra la banda 45..53) y `nextOption(true)` (dibuja el número y ambas flechas). |
+| `void clear()` | Borra la banda 45..53 (`fillRect(0, VALUE_TOP, WIDTH, VALUE_HEIGHT, false)`). |
+| `void nextOption(bool show = false)` | Si `_lastSelected == _selected` y no `show`, sale; si no, dibuja el número (`" 5"`/`"10"`, ancho constante 12 px, en `LABEL_X`, `TEXT_6x8`) y **ambas** flechas (`Draw::triangle` en `TRIANGLE_L`/`TRIANGLE_R`): visibles salvo en el límite del lado correspondiente; **al mantener** `MOVE_LEFT`/`MOVE_RIGHT` solo la activa (la contraria se oculta); actualiza `_lastSelected` y reancla `_blink`. |
+| `void blinkOption()` | Cuando `_blink.changed(PERIOD, OFF)`, repinta las flechas con `Draw::triangle(..., _blink.isVisible(PERIOD, OFF))` (la del botón mantenido queda fija, la contraria se oculta; no se dibuja la del lado en el límite); el número no parpadea. |
 | `bool done()` | `true` tras confirmar o cancelar. |
 | `uint8_t difficulty()` | Nivel **confirmado**: lo lee el `Engine` en `changeState(NEW/CONTINUE)` para pasárselo a `Game::setDifficulty` (antes vivía en `Menu::difficulty()`). |
-| `void drawSelector()` | Número 1..10 en `TEXT_6x8` centrado con **ancho constante** (`" 5"` mide lo mismo que `"10"`, 12 px) y **dos flechas** a los lados (`"< 5 >"`), **pegadas** al número (hueco `ARROW_GAP = 6` px, grosor `ARROW_W = 6`), que **parpadean juntas** (visible 75% / oculto 25% de `ARROW_BLINK_PERIOD = 500` ms) con la fase cruda de `Blink` (`_blink.isVisible(...)`). En el **límite** la flecha de ese lado se oculta. **Al mantener** `MOVE_LEFT`/`MOVE_RIGHT` el parpadeo se detiene: solo queda fija la flecha del botón activo y la contraria se oculta; al llegar al límite se dibuja como siempre (sin marcar la repetición). |
-| ~~`bool holdRepeat(uint8_t)`~~ | **Eliminado**: la repetición se extrajo al helper `ButtonRepeat` (sección 23). |
-| `_blink` | `Blink`: fase del parpadeo de las flechas (`isVisible()`). Antes era un `Stopwatch`. |
+| ~~`void drawSelector()`~~ / ~~`bool holdRepeat(uint8_t)`~~ | **Eliminados**: el dibujo se reparte en `nextOption()`/`blinkOption()` (estilo `MenuSound`) y la repetición se extrajo al helper `ButtonRepeat` (sección 23). |
+| `_difficulty` | `uint8_t`: nivel **confirmado** (`difficulty()`); sigue siendo propio de la ventana (aún no se mueve a `Storage`, sección 22). |
+| `_selected` / `_lastSelected` | `uint8_t`: nivel en edición y último mostrado (para redibujar solo al cambiar, estilo `MenuSound`). |
+| `_blink` | `Blink`: fase del parpadeo de las flechas (`changed()`/`isVisible()`). Antes era un `Stopwatch`. |
 | `_repeat` | `ButtonRepeat`: repetición de `MOVE_LEFT`/`MOVE_RIGHT` al mantener (usa `Config::Button::DELAY`/`TICK`; se eliminaron las constantes locales `HOLD_REPEAT_DELAY`/`HOLD_REPEAT_TICK`). |
 
 ### `MenuSound` — On/Off
@@ -818,14 +823,17 @@ servicio global `Sound` (`setEnabled`/`enabled`), así que `MenuSound` solo llev
 el valor en edición y no necesita recordarlo entre entradas (a diferencia de
 `MenuDifficulty`, que sí guarda el nivel confirmado).
 
-Las constantes de geometría y parpadeo de ambas ventanas (`SEL_TOP = 45`,
-`SEL_SIZE = 8`, `ARROW_*` en `MenuDifficulty`; `TRIANGLE_L`/`TRIANGLE_R`/`LABEL_X` en `MenuSound`) son `static constexpr` de cada clase,
+Las constantes de geometría y parpadeo de ambas ventanas (`WIDTH`, `SIZE`,
+`PERIOD`/`OFF`, `VALUE_TOP`/`VALUE_HEIGHT`, `DIAMOND_Y` y
+`TRIANGLE_L`/`TRIANGLE_R`/`LABEL_X`) son `static constexpr` de cada clase,
 siguiendo la convención de `Config.h` (allí solo va lo compartido de verdad); la
 banda 45..53 es la misma que los rombos del `Menu`, y su erase incluye la fila
 inferior de la banda, que por eso
 `Menu::restoreDiamondBand()` vuelve a pintar (con la línea del pie
-`Config::Screen::FOOT_LINE`, hoy **comentada** en `Config.h`). La repetición al
-mantener ya no es constante de clase: `ButtonRepeat` usa `Config::Button`.
+`Config::Screen::FOOT_LINE`, hoy **comentada** en `Config.h`). `MenuDifficulty`
+añade además alias de clase `DEFAULT_LEVEL`/`MIN_LEVEL`/`MAX_LEVEL` (valores de
+`Config::Difficulty`). La repetición al mantener ya no es constante de clase:
+`ButtonRepeat` usa `Config::Button`.
 
 ---
 
@@ -837,11 +845,11 @@ ventanas** pero las **posee como miembros**: `Boot`, `Legend`, `Menu`, `MenuCred
 `_menu`, `_menuDifficulty`, `_menuSound`, `_menuCredits`, `_game`, `_legend`. No son
 globales ni reciben las
 ventanas por referencia. **Estado actual (aislado):** en `Engine.h` están activos `_boot`, `_legend`,
-`_menu` y `_menuSound`; los `#include` y miembros `_game`, `_menuCredits` y
-`_menuDifficulty` y los estados `NEW`, `CONTINUE`, `MENU_DIFFICULTY` y
-`MENU_CREDITS` del `enum State` están **comentados** (bloques `AISLADO`).
-`MENU_SOUND` está activo, pero la entrada desde el `Menu` sigue sin cablear
-(`Menu::confirm()` comentado).
+`_menu`, `_menuSound` y `_menuDifficulty`; los `#include` y miembros `_game` y
+`_menuCredits` y los estados `NEW`, `CONTINUE` y `MENU_CREDITS` del
+`enum State` están **comentados** (bloques `AISLADO`). `MENU_SOUND` y
+`MENU_DIFFICULTY` están activos, pero la entrada desde el `Menu` sigue sin
+cablear (`Menu::confirm()` comentado).
 
 ### Responsabilidad
 
@@ -891,10 +899,10 @@ los globales ya construidos (misma TU, orden de definición).
    solo la banda de rombos) y su regreso previsto es
    `menu.restoreDiamondBand()` + `changeState(State::MENU, false)` —el `false`
    salta el `Menu::begin()`, que sí provocaría el `clear()` de página completa.
-   **Estado actual:** `MenuSound` ya está **activa**, pero `restoreDiamondBand()`
-   y la guarda `if (beginWindow)` siguen **comentadas**, así que hoy el regreso
-   de `MenuSound` (`changeState(MENU, false)`) llama igual a `_menu.begin()` con
-   `clear()` de página completa. `MenuDifficulty` sigue aislada.
+   **Estado actual:** `MenuSound` y `MenuDifficulty` ya están **activas**, pero
+   `restoreDiamondBand()` y la guarda `if (beginWindow)` siguen **comentadas**,
+   así que hoy el regreso de cualquiera de las dos (`changeState(MENU, false)`)
+   llama igual a `_menu.begin()` con `clear()` de página completa.
 
 ### Estados internos
 
@@ -903,10 +911,10 @@ enum class State : uint8_t {
   BOOT = 0,
   LEGEND,
   MENU,
-  MENU_SOUND
+  MENU_SOUND,
   // NEW,            // AISLADO: comentados junto con sus ventanas
   // CONTINUE,
-  // MENU_DIFFICULTY,
+  MENU_DIFFICULTY
   // MENU_CREDITS
 };
 ```
@@ -918,7 +926,7 @@ enum class State : uint8_t {
 | `MENU` | `Menu` | **Aislado:** `ACTION_RIGHT` no sale del menú (`_menu.confirm()` y el `switch` de destinos —`NEW`/`CONTINUE`/`MENU_DIFFICULTY`/`MENU_SOUND`/`MENU_CREDITS`— están comentados). Hoy `Menu` solo navega con MOVE (`SFX_CLICK`), `ACTION_RIGHT` alterna el estado `_confirm` (`SFX_CONFIRM`, la opción queda marcada/parpadeando en `blinkOption()`) y `ACTION_UP` devuelve la selección a `New`/`Continue` (`SFX_BACK`). |
 | `NEW` | `Game` | **Comentado (aislado).** Previsto: nueva partida `setDifficulty(_menuDifficulty.difficulty())` + `begin(true)`. Arranca con el conteo regresivo 3-2-1 (un `SFX_TICK` por dígito). Al salir (`done()`) suena `SFX_BACK`, el `Engine` sincroniza el récord (`menu.setBestScore(game.bestScore())`), **oculta/muestra "Continue" al volver** (`menu.setContinueAvailable(resumable)`, donde `resumable = !game.isGameOver() && game.score() > 0`: partida en curso **y** con puntos), deja la selección del menú en `Continue` si `resumable`, o en `New` en caso contrario (`menu.setSelected(...)`) y pasa a `MENU`. |
 | `CONTINUE` | `Game` | **Comentado (aislado).** Previsto: reanudar la partida anterior (`begin(false)`): queda en pausa y se retoma con `ACTION_RIGHT` (Btn2, "Select / Pause") o `ACTION_LEFT`; si no hay partida en curso arranca una nueva. Al salir (`done()`) igual que `NEW`. |
-| `MENU_DIFFICULTY` | `MenuDifficulty` | **Comentado (aislado).** Previsto: selector de nivel 1..10 **sobre el `Menu` ya dibujado**: sustituye solo la banda de rombos (45..53) por `< N >`, sin `clear()`. `MOVE_LEFT`/`MOVE_RIGHT` editan con repetición (`SFX_CLICK` por paso), `ACTION_RIGHT` aplica y `ACTION_UP` cancela. Al salir (`done()`) el `Engine` llama `menu.restoreDiamondBand()` y hace `changeState(MENU, false)`: **no** vuelve a llamar `Menu::begin()` (que haría `clear()`), solo repinta esa banda. El nivel queda en `MenuDifficulty::_difficulty` (sección 10.3). |
+| `MENU_DIFFICULTY` | `MenuDifficulty` | **Activo (fuera del aislamiento)**, igual que `MENU_SOUND`; la entrada desde el `Menu` sigue sin cablear (`Menu::confirm()` comentado). Selector de nivel 1..10 **sobre el `Menu` ya dibujado**, misma banda que `MENU_SOUND`: borra y repinta la banda de rombos (45..53) con `< N >`. `MOVE_LEFT`/`MOVE_RIGHT` editan con repetición (`SFX_CLICK` por paso), `ACTION_RIGHT` aplica (`_difficulty = _selected`) y `ACTION_UP` cancela. Al salir (`done()`) vuelve al `Menu` con `changeState(MENU)`; el nivel queda en `MenuDifficulty::_difficulty` (sección 10.3). |
 | `MENU_SOUND` | `MenuSound` | **Activo (fuera del aislamiento)**; la entrada desde el `Menu` sigue sin cablear (`Menu::confirm()` comentado). Selector On/Off **sobre el `Menu` ya dibujado**, misma banda que `MENU_DIFFICULTY`. `MOVE_LEFT` apaga / `MOVE_RIGHT` enciende (`SFX_CLICK`), `ACTION_RIGHT` aplica con `sound.setEnabled()` (y `SFX_CONFIRM` solo si queda encendido), `ACTION_UP` cancela. Al salir (`done()`) vuelve al `Menu` con `changeState(MENU, false)`; hoy el regreso hace el `begin()` completo porque `restoreDiamondBand()` sigue comentada. El valor real vive en el servicio `Sound`, no en la ventana. |
 | `MENU_CREDITS` | `MenuCredits` | **Comentado (aislado).** Previsto: 3 entradas navegables con `MOVE_LEFT`/`MOVE_RIGHT` y transición lateral (rol tamaño 2 **seleccionado con cuadro de borde a borde** y centrado en el alto restante del Body; nombre tamaño 1 plano en el pie). La transición usa el **mismo `Scroller` que el menú** pero con **2 instancias sincronizadas** (`_scrollerRol` 12x16 + `_scrollerNombre` 6x8): cada banda tiene su **propia tira**, que se compone **solo al entrar y al navegar** (`loadEntry()` → `Scroller::setTexto`, que además fija la fila donde se imprimirá: `roleY()` y `nameY()`). Cada `Scroller` **rellena su propia banda** antes de volcar la franja (fondo negro, texto blanco), así que la entrada anterior se mantiene hasta que la nueva la cubre (superposición al navegar rápido) y `MenuCredits::print()` ya no pinta el fondo ni llama a `redraw()` tras su `clear()`. El deslizamiento **arranca desde el borde** (fuera de escena: `setTexto(..., true, ...)` fija la dirección —entra por la derecha— y `startSlide()` lo lanza) y avanza **1 px cada 4 ms con acumulador por tiempo** (`update()`, ≈0,5 s). Al navegar suena `SFX_CLICK` y al salir (`done()`) suena `SFX_BACK` (lo toca el `Engine`) y pasa directo a `MENU`. |
 
@@ -927,13 +935,13 @@ enum class State : uint8_t {
 | Método | Descripción |
 |--------|-------------|
 | `void begin()` | Primera transición: entra al test de píxeles (`changeState(State::BOOT)`). Se llama desde `setup()`. |
-| `void update()` | Lee/actualiza la ventana activa y gestiona las transiciones de estado. Hoy recorren `BOOT → LEGEND → MENU` y despachan `MENU_SOUND` (solo se alcanza si se entra por código: la entrada desde el `Menu` sigue comentada; los demás casos —`NEW`, `CONTINUE`, `MENU_DIFFICULTY`, `MENU_CREDITS`— están comentados). Reproduce los efectos del sonido: `SFX_CONFIRM` al confirmar una opción del menú y `SFX_BACK` al volver a `MENU` desde cualquier ventana (excepto desde `Legend`, que toca su propio sonido según el botón, y desde `MENU_DIFFICULTY`/`MENU_SOUND`, que **no** los añaden: cada selector toca su propio `SFX_CONFIRM` al aplicar o `SFX_BACK` al cancelar) — **esa entrada sigue comentada** por el aislamiento. |
+| `void update()` | Lee/actualiza la ventana activa y gestiona las transiciones de estado. Hoy recorren `BOOT → LEGEND → MENU` y despachan `MENU_SOUND` y `MENU_DIFFICULTY` (solo se alcanzan si se entra por código: la entrada desde el `Menu` sigue comentada; los demás casos —`NEW`, `CONTINUE`, `MENU_CREDITS`— están comentados). Reproduce los efectos del sonido: `SFX_CONFIRM` al confirmar una opción del menú y `SFX_BACK` al volver a `MENU` desde cualquier ventana (excepto desde `Legend`, que toca su propio sonido según el botón, y desde `MENU_DIFFICULTY`/`MENU_SOUND`, que **no** los añaden: cada selector toca su propio `SFX_CONFIRM` al aplicar o `SFX_BACK` al cancelar) — **esa entrada sigue comentada** por el aislamiento. |
 | `void print()` | Despacha el dibujo a la ventana activa. **Ya no limpia la
   pantalla (`display.clear()`)**: cada ventana la usa solo en su primer frame tras
   `begin()` y luego limpia/redibuja solo sus zonas dinámicas (sección 13). |
 | `bool isInGame()` | `true` si hay una partida en curso (el **reposo** no aplica, sección 26). Hoy devuelve siempre `false` (**AISLADO**: sin `Game` activo); al reactivarlo debe devolver `_state == State::NEW \|\| _state == State::CONTINUE`. Queda indicado en el comentario del `.cpp`. |
 | `void setBestScore(uint16_t)` | **Comentado** (aislado): reenviaría al menú para conservar el puntaje máximo entre sesiones. |
-| `void changeState(State, bool beginWindow = true)` | Transición común: guarda el estado y llama `begin()` de la ventana destino. `MENU_SOUND` ya la usa (`MenuSound::begin()`); `NEW`/`CONTINUE`/`MENU_DIFFICULTY`/`MENU_CREDITS` siguen comentados. **Hoy `_menu.begin()` es incondicional** (la guarda `if (beginWindow)` está comentada): el parámetro `beginWindow = false` —usado al volver de `MENU_DIFFICULTY`/`MENU_SOUND` para repintar solo la banda de rombos con `menu.restoreDiamondBand()` en vez del `clear()` de `Menu::begin()`— está deshabilitado, así que el regreso de `MenuSound` hace el `clear()` completo. El resto del cableado de la transición (p. ej. `setDifficulty` al entrar en `Game`) también está comentado. No reproduce sonidos: cada ventana toca el suyo al confirmar o cancelar. |
+| `void changeState(State, bool beginWindow = true)` | Transición común: guarda el estado y llama `begin()` de la ventana destino. `MENU_SOUND` y `MENU_DIFFICULTY` ya la usan (`MenuSound::begin()`/`MenuDifficulty::begin()`); `NEW`/`CONTINUE`/`MENU_CREDITS` siguen comentados. **Hoy `_menu.begin()` es incondicional** (la guarda `if (beginWindow)` está comentada): el parámetro `beginWindow = false` —usado al volver de `MENU_DIFFICULTY`/`MENU_SOUND` para repintar solo la banda de rombos con `menu.restoreDiamondBand()` en vez del `clear()` de `Menu::begin()`— está deshabilitado, así que el regreso de `MenuSound` hace el `clear()` completo. El resto del cableado de la transición (p. ej. `setDifficulty` al entrar en `Game`) también está comentado. No reproduce sonidos: cada ventana toca el suyo al confirmar o cancelar. |
 
 ### Patrón de ventana
 
@@ -1058,22 +1066,21 @@ llama a `display.clear()`, lo decide cada ventana.
    |---------|---------------------|---------------------|
    | `Boot` | Primer frame: clear completo + `firstPrint()` (banda blanca del mensaje en el Header + logo en el Body) | Solo el mensaje del Header cuando `_blink.changed(PERIOD, OFF)` (`blinkMessage()`: se repinta con `TEXT_6x8` blanco o se borra en negro); el logo no se toca |
      | `Menu` | Cuadro blanco `25..42`, texto de la opción en `26..41`, título y pie (banda blanca `55..63` con "Best" + versión) | Banda de la opción (`Scroller::print` con vuelo **activo** en `nextOption()`) + marcadores de posición (rombo del seleccionado en `46..52` y triángulos superiores en `50..53` de los no seleccionados) + parpadeo del rombo y el texto (`blinkOption()`: repinta el marcador y el texto según `_blink.changed(PERIOD, OFF)`/`_blink.isVisible(PERIOD, OFF)`, y reafirma visible si `_confirm` está puesto) |
-    | `MenuDifficulty` | — (entra sobre el `Menu` ya dibujado, no borra nada) | Selector `< N >`: borra y redibuja **cada frame** la banda 44..54 (número centrado estático con ancho constante + dos flechas laterales que parpadean juntas, ocultas en su límite; al mantener un botón el parpadeo se detiene y solo queda fija la flecha del botón activo, ocultándose la contraria; al llegar al límite se procesa igual que haber soltado el botón, volviendo el parpadeo normal) |
+    | `MenuDifficulty` | — (entra sobre el `Menu` ya dibujado, no borra nada) | Selector `< N >` (igual que `MenuSound`): `firstPrint()`/`clear()` borran la banda 45..53 y luego cada frame `nextOption()`/`blinkOption()` repintan el número (centrado, ancho constante, no parpadea) y las dos flechas laterales, que parpadean juntas. Ocultas en su límite y, al mantener un botón, se detiene el parpadeo y solo queda fija la flecha del botón activo (la contraria se oculta). |
     | `MenuSound` | — (entra sobre el `Menu` ya dibujado, no borra nada) | Selector ON/OFF: borra y redibuja **cada frame** la banda 44..54 (palabra centrada estática + flecha única en el lado del destino, que parpadea) |
 | `MenuCredits` | Título del Header (el cuadro blanco del rol lo pinta ahora el propio `Scroller` al rellenar su banda) | Bandas rol/nombre (`Scroller`, 2 instancias sincronizadas; cada una rellena su banda y se vuelca juntas en el mismo frame, y solo si hay algo nuevo que pintar, sección 14) |
 | `Legend` | Primer frame: clear + banda de título con "Move"/"Action", pad MOVE, los 4 rombos de ACTION y la banda del pie con `BTN_FUNC[0]` | Rombo activo (repintado cuando `_blink.changed(PERIOD, OFF)`, `blinkDiamond()`/`toggleDiamond`) + texto del pie (banda `FOOT_TOP-1..63`) por medio de su propio `Scroller` (`_scroller`): al cambiar de rombo **entra deslizándose** (`setTexto()` + `startSlide()`); mientras la franja se mueve, el ciclo de rombos se congela (`_scroller.update()` devuelve `true`) y al terminar se reanclan `_ticker` y `_blink.start()`. Al cambiar, se restaura completo el rombo que deja de ser activo (evita que quede borrado si el cambio lo pilló en su fase oculta) |
    | `Game` | Primer frame: clear completo + Header (puntaje 12x16 izq., segundos restantes de la comida especial 12x16 der.) y alimento y serpiente | Header solo si cambia el puntaje o `_food.specialTime()` (banda 0..15); tablero (Body 16..63) solo si `_dirtyBoard` (movimiento, comida nueva, transición de estado): borra el Body, redibuja alimento + serpiente; overlay "3-2-1"/"PAUSA"/"GAME OVER"/festejo de récord (texto invertido sobre banda blanca: cuadro centrado para el conteo, de lado a lado para PAUSA, GAME OVER y los letreros del festejo "BUT"/"YOU ARE"/"THE BEST") en cada frame según el estado —en el conteo, al final de cada dígito el número y su cuadro se ocultan (`COUNT_HIDE_MS`), marcando `_dirtyBoard` una sola vez para restaurar el tablero —; al morir superando el récord, el "GAME OVER" es un ciclo "GAME OVER" → "BUT" → "YOU ARE" → "THE BEST" (`NEW_BEST_SIGN_MS` cada uno) que se repite hasta que se presiona un botón, y el `SFX_NEW_BEST` suena solo la primera vez que aparece el letrero "THE BEST" |
 
-4. Las ventanas `MenuDifficulty` y `MenuSound` **no hacen `clear()`**: son
-   capas sobre el `Menu` ya dibujado. Comparten la banda de los rombos del menú
-   (ver sección 7): desde su primer frame la borran y la redibujan **cada
-   frame** con su selector (`< N >` o ON/OFF, con las flechas parpadeantes).
-   Todo lo demás del `Menu` (título, cuadro de la opción, pie con "Best")
-   queda intacto detrás. El regreso previsto es `menu.restoreDiamondBand()` +
-   `changeState(State::MENU, false)` (marca `_diamondsDirty` y repinta solo esa
-   banda sin `Menu::begin()`), pero **hoy está comentado** junto con esas
-   ventanas (sección 11). Los flags `_redrawSound` y `_redrawDifficulty` ya no
-   existen.
+4. Las ventanas `MenuDifficulty` y `MenuSound` son **capas sobre el `Menu`**: no
+   limpian la pantalla completa, solo la banda de los rombos del menú (ver
+   sección 7). Comparten estructura: `firstPrint()`/`clear()` borran esa banda
+   (45..53) en su primer frame y luego `nextOption()`/`blinkOption()` repintan el
+   selector (`< N >` o ON/OFF, con las flechas parpadeantes). Todo lo demás del
+   `Menu` (título, cuadro de la opción, pie con "Best") queda intacto detrás. El
+   regreso es `changeState(State::MENU)` (sin `restoreDiamondBand()`, aún
+   comentada), así que hoy vuelve a hacer el `begin()` completo del `Menu`. Los
+   flags `_redrawSound` y `_redrawDifficulty` ya no existen.
 
 ---
 
@@ -1762,7 +1769,7 @@ helper `Blink` (sección 24), que las ventanas usan igual que antes (`Boot`:
 |-------|------------------|--------|
 | `Boot` | `Blink _blink` (parpadeo del mensaje) | El mensaje parpadea con `Blink` (`changed(PERIOD, OFF)` / `on(PERIOD, OFF)`), anclado al `begin()` (`PERIOD`/`OFF` de `Config::DefaultTimer`; `HOLD` comentado). El antiguo `Stopwatch _timer` quedó encapsulado en el helper. El antiguo `Ticker _ticker` + plazo `TOTAL_MS` de las bandas están **comentados**. |
 | `Menu` | `Blink _blink` (parpadeo de la opción) + `ButtonRepeat _repeat` (repetición por mantención) | El parpadeo pasa al helper `Blink` (sección 24), anclado a `begin()` y al final de cada vuelo del scroller; la navegación con mantención usa el helper `ButtonRepeat` (sección 23, `expired(DELAY)`/`expired(TICK)` internamente). El `Ticker` de la animación vieja está comentado. |
-| `MenuDifficulty` | `Blink _blink` (flechas), `ButtonRepeat _repeat` (repetición por mantención) | Extraído de `Menu` con el selector: `Blink` (`on()`) y `ButtonRepeat`; se eliminaron las constantes locales `HOLD_REPEAT_DELAY`/`HOLD_REPEAT_TICK` y el viejo `holdRepeat`. |
+| `MenuDifficulty` | `Blink _blink` (flechas), `ButtonRepeat _repeat` (repetición por mantención) | Extraído de `Menu` con el selector: `Blink` (`changed()`/`isVisible()`, como `MenuSound`) y `ButtonRepeat`; se eliminaron las constantes locales `HOLD_REPEAT_DELAY`/`HOLD_REPEAT_TICK` y el viejo `holdRepeat`. |
 | `MenuSound` | `Blink _blink` (flecha) | Extraído de `Menu` con el selector: `Blink` (`on()`). |
 | `Legend` | `Ticker _ticker` (`NEXT`) + `Blink _blink` (`PERIOD`/`OFF`) | El ciclo de rombos avanza con `ticker.consume()` cada `NEXT = 2500 ms` y el parpadeo usa el helper `Blink`, anclado al `begin()` y reanclado (`start()`) al terminar el vuelo del scroller. `HOLD` (fase fija) y los viejos `DWELL_MS`/`HOLD_MS` ya no existen. |
 | `Scroller` | `Ticker _timer` (`ANIM_TICK`) | El acumulador `_colAcc`/`_animLast` pasa a `consume()` (misma cadencia, sin `while`). |
@@ -1910,10 +1917,10 @@ public:
   (!changed(PERIOD, OFF)) return; const bool visible = isVisible(PERIOD, OFF);
   toggleText(visible); toggleDiamond(_selected, visible);`. Se
   ancla en `begin()` (`start()`) y se reancla al terminar el vuelo (`start()`).
-- **`MenuDifficulty`** (`_blink`): solo usa la **fase cruda**
-  `isVisible(period, offPct)` para sus flechas. **`MenuSound`** (`_blink`):
-  `blinkOption()` consulta `changed(PERIOD, OFF)` y repinta la flecha con
-  `isVisible(PERIOD, OFF)` (la palabra no parpadea).
+- **`MenuDifficulty`** (`_blink`) y **`MenuSound`** (`_blink`): `blinkOption()`
+  consulta `changed(PERIOD, OFF)` y repinta su selector con
+  `isVisible(PERIOD, OFF)` (en `MenuDifficulty`, las flechas —fijas al mantener
+  el botón—; el número no parpadea).
 
 ### Decisiones
 
