@@ -110,7 +110,7 @@ private:
   // Helper: verifica un bit (botón 0-7) en un estado agrupado
   // ========================================================
 
-  static inline bool isSet(uint8_t states, uint8_t botton);
+  static bool isSet(uint8_t states, uint8_t botton);
 
   // ========================================================
   // Debounce

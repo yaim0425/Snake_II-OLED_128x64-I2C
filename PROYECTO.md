@@ -382,11 +382,11 @@ enum Button : uint8_t {
   actualizarlo (no hace falta guardar todo el estado previo).
 - Verificación de bits con el helper privado estático
   `bool isSet(uint8_t states, uint8_t boton)` → `states & (1 << boton)`,
-  **declarado en `Buttons.h` y definido en `Buttons.cpp`** (antes era
-  `static inline` con cuerpo en el header). **Bug conocido (pendiente):** la
-  definición del `.cpp` no lleva el calificador `Buttons::`, así que
-  `Buttons::isSet` queda sin definir y el enlace falla con *undefined
-  reference* (no corregido: no se toca código hasta que se ordene).
+  **declarado en `Buttons.h`** (ahora `static bool isSet(...)`, **sin `inline`**)
+  **y definido en `Buttons.cpp`** (`bool Buttons::isSet(...)`). Antes la
+  declaración era `static inline` sin cuerpo en el header, lo que dejaba
+  `Buttons::isSet` sin emitir y el enlace fallaba con *undefined reference*;
+  quitar el `inline` **resuelve** el bug (ya no está pendiente).
 - Detecta el cambio físico por bit (`raw ^ _rawButtons`) y toma nota del
   instante por botón.
 - Solo acepta el nuevo estado tras `_buttonDelay` ms de estabilidad.
