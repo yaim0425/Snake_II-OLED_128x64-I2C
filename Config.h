@@ -90,6 +90,8 @@ constexpr uint8_t OPTION_H = 48;
 // Dificultad (nivel 1..10), compartida por Menu y Game
 // ========================================================
 
+
+
 namespace Difficulty {
 
 constexpr uint8_t MIN_LEVEL = 1;
