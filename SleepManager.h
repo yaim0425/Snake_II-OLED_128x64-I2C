@@ -14,6 +14,10 @@
 // y qué hacer al volver (repintado forzado si un diagnóstico
 // deformó la imagen retenida del OLED).
 //
+// No bloquea: update() hace un paso por frame y devuelve si el
+// frame puede seguir (true) o si el loop() debe cortarlo con
+// `return` y reiniciarse (false), sin while ni delay.
+//
 // Usa los servicios globales (Display, Buttons, Sound — Globals.h)
 // directamente, como las ventanas, y recibe a Engine por referencia
 // solo para dos cosas: saber si hay partida en curso (el reposo no
@@ -44,12 +48,14 @@ public:
   void begin();
 
   // ========================================================
-  // Actualizar (cada frame): reinicia el contador de inactividad
-  // con cualquier botón y, si toca, entra en reposo (bloquea
-  // hasta despertar con un botón). No hace nada en partida.
+  // Un paso del reposo (cada frame, tras buttons.read()).
+  //   true  = "todo bien": el loop() sigue con engine.update(),
+  //           engine.print(), sound.update() y display.show().
+  //   false = durmiendo o mostrando el aviso: el loop() hace
+  //           `return` y vuelve a empezar. No bloquea en ningún caso.
   // ========================================================
 
-  void update();
+  bool update();
 
 private:
   static constexpr const int8_t* BUTTONS = Config::Pin::BUTTONS;
@@ -67,24 +73,27 @@ private:
   static constexpr uint8_t FOOT_H = Config::Screen::FOOT_H;
   static constexpr uint8_t FOOT_TOP = Config::Screen::FOOT_TOP;
 
-  // Cronómetro del reposo: cuenta el tiempo sin botones presionados
-  // fuera de partida; al llegar a Config::Power::IDLE_TIMEOUT_MS se
-  // duerme. Se reinicia con cualquier botón.
-  Stopwatch _idle;
+  // Fase actual del reposo
+  enum class State : uint8_t { AWAKE, SLEEPING, DIAG };
 
-  // true si hubo que mostrar el aviso de diagnóstico en pantalla:
-  // la imagen conservada en el OLED quedó deformada y hay que
-  // forzar el repintado completo al despertar con un botón.
-  bool _diagSeen;
-
-  // Engine al que consultar si hay partida y que repintar al volver.
-  Engine& _engine;
+  bool updateAwake();     // cuenta inactividad y decide dormir
+  bool updateSleeping();  // una rebanada de light sleep
+  bool updateDiag();      // aviso en pantalla por DIAG_MS
 
   // ========================================================
-  // Reposo (bloquea hasta que un botón despierta de verdad)
+  // Reposo (NO bloquea): apaga el panel y pasa a SLEEPING; el
+  // dormir real lo hace updateSleeping() rebanada a rebanada.
   // ========================================================
 
   void enterSleep();
+
+  // ========================================================
+  // Despertar con un botón real: reenciende el panel, repinta si
+  // el aviso deformó la imagen y re-ancla los botones (el que
+  // despertó no cuenta como pulsación). Pasa a AWAKE.
+  // ========================================================
+
+  void wake();
 
   // ========================================================
   // Aviso de diagnóstico: dibuja una pantalla completa ("ERROR",
@@ -95,7 +104,29 @@ private:
   // desconecta justo en el light sleep que no persiste.
   // ========================================================
 
-  void screenDiag();
+  void showDiag();
+
+  // Fase actual del reposo.
+  State _state;
+
+  // Wakes espurios seguidos dentro de SLEEPING.
+  uint8_t _spurious;
+
+  // Cronómetro del reposo: cuenta el tiempo sin botones presionados
+  // fuera de partida; al llegar a Config::Power::IDLE_TIMEOUT_MS se
+  // duerme. Se reinicia con cualquier botón.
+  Stopwatch _idle;
+
+  // Duración del aviso de diagnóstico (sustituye al delay(DIAG_MS)).
+  Stopwatch _diag;
+
+  // true si hubo que mostrar el aviso de diagnóstico en pantalla:
+  // la imagen conservada en el OLED quedó deformada y hay que
+  // forzar el repintado completo al despertar con un botón.
+  bool _diagSeen;
+
+  // Engine al que consultar si hay partida y que repintar al volver.
+  Engine& _engine;
 };
 
 #endif

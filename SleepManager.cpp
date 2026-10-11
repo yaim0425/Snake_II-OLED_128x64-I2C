@@ -9,12 +9,15 @@
 
 // ========================================================
 // Constructor: recibe el Engine (para consultar la partida y
-// repintar tras un diagnóstico); el contador de inactividad y el
-// flag del diagnóstico arrancan limpios.
+// repintar tras un diagnóstico); arranca en AWAKE y con los
+// contadores y flags limpios.
 // ========================================================
 
 SleepManager::SleepManager(Engine& engine)
-  : _idle(),
+  : _state(State::AWAKE),
+    _spurious(0),
+    _idle(),
+    _diag(),
     _diagSeen(false),
     _engine(engine) {}
 
@@ -27,8 +30,8 @@ SleepManager::SleepManager(Engine& engine)
 //   impide que el light sleep persista), así que se complementa
 //   con un timer de verificación.
 // - Timer cada WAKE_CHECK_MS: garantía de que la CPU despierta
-//   igualmente para re-verificar por polling en enterSleep(); con
-//   HW sano el botón despierta al instante por el GPIO por nivel.
+//   igualmente para re-verificar por polling en updateSleeping();
+//   con HW sano el botón despierta al instante por el GPIO por nivel.
 // ========================================================
 
 void SleepManager::begin() {
@@ -36,68 +39,120 @@ void SleepManager::begin() {
     gpio_wakeup_enable((gpio_num_t)BUTTONS[i], GPIO_INTR_HIGH_LEVEL);
   esp_sleep_enable_gpio_wakeup();
   esp_sleep_enable_timer_wakeup((uint64_t)WAKE_CHECK_MS * 1000ULL);
+
+  _state = State::AWAKE;
+  _spurious = 0;
+  _diagSeen = false;
+  _idle.start();
 }
 
 // ========================================================
-// Actualizar (cada frame, tras buttons.read()).
-//
-// Igual que antes vivía en loop(): cualquier botón presionado
-// (estado físico, sin supresión) = actividad y reinicia el
-// contador; fuera de partida y sin actividad durante
-// IDLE_TIMEOUT_MS se entra en reposo (bloquea hasta que un botón
-// despierta; al volver, no dormir al instante). Nunca se entra
-// con un pin en HIGH: el wake por nivel despertaría al instante.
+// Un paso del reposo, no bloqueante (ver el .h). Despacha por
+// fase: AWAKE cuenta inactividad, SLEEPING hace una rebanada de
+// light sleep y DIAG mantiene el aviso sin delay.
 // ========================================================
 
-void SleepManager::update() {
+bool SleepManager::update() {
+  switch (_state) {
+    case State::AWAKE:    return updateAwake();
+    case State::SLEEPING: return updateSleeping();
+    case State::DIAG:     return updateDiag();
+  }
+  return true;   // inalcanzable (cubre -Wreturn-type)
+}
+
+// ========================================================
+// AWAKE: cuenta la inactividad y decide entrar en reposo.
+// Cualquier botón físico (sin supresión) = actividad y reinicia
+// el contador; fuera de partida y sin actividad durante
+// IDLE_TIMEOUT_MS se entra en reposo. Nunca se entra con un pin
+// en HIGH: el wake por nivel despertaría al instante.
+// ========================================================
+
+bool SleepManager::updateAwake() {
   if (buttons.anyPhysical()) _idle.start();
 
   if (!_engine.isInGame() && !buttons.anyPhysical() && _idle.expired(IDLE_TIMEOUT_MS)) {
     enterSleep();
-    _idle.start();
+    return false;   // se durmió: corta el frame
   }
+  return true;      // sigue el frame normal
 }
 
 // ========================================================
-// Reposo (light sleep)
-//
-// Apaga el OLED y detiene la CPU con esp_light_sleep_start():
-// el light sleep conserva la RAM (los estados de las ventanas
-// y Storage siguen vivos) y despierta por cualquier botón
-// (gpio_wakeup_enable con nivel HIGH, configurado en begin()).
-// Al despertar, loop() continúa donde quedó.
+// SLEEPING: una rebanada de light sleep por frame. Despierta por
+// botón (GPIO por nivel, vía rápida) o por el timer de
+// verificación; el wake real se confirma por polling
+// (buttons.read()). Nunca se sale del reposo sin botón real.
+// ========================================================
+
+bool SleepManager::updateSleeping() {
+  uint64_t t0 = nowMs();
+  esp_err_t err = esp_light_sleep_start();
+  buttons.read();                    // refresca el estado físico tras despertar
+  uint64_t slept = nowMs() - t0;
+
+  if (buttons.anyPhysical()) {       // botón real: despierta
+    wake();
+    return true;
+  }
+
+  // Light sleep que no persiste: volvió casi sin dormir y sin botón
+  // (rechazado o wake espurio). En una placa sana duerme ~WAKE_CHECK_MS
+  // hasta el timer de verificación. N espurios seguidos = aviso.
+  if (err == ESP_ERR_SLEEP_REJECT || slept < MIN_SLEEP_MS) {
+    if (++_spurious >= SPURIOUS_LIMIT) {
+      _spurious = 0;
+      showDiag();
+    }
+  } else {
+    _spurious = 0;
+  }
+  return false;   // sigue durmiendo
+}
+
+// ========================================================
+// DIAG: el aviso se mantiene DIAG_MS sin delay(). Se duerme por
+// rebanadas para no girar en vacío; la imagen del aviso permanece
+// en el panel (power on) y un botón también despierta.
+// ========================================================
+
+bool SleepManager::updateDiag() {
+  if (_diag.expired(DIAG_MS)) {   // se acabó el aviso
+    display.power(false);
+    _state = State::SLEEPING;
+    return false;
+  }
+
+  esp_light_sleep_start();        // panel encendido: la imagen del aviso permanece
+  buttons.read();
+  if (buttons.anyPhysical()) {    // botón durante el aviso: despierta igual
+    wake();
+    return true;
+  }
+  return false;
+}
+
+// ========================================================
+// Arranque del reposo (NO bloquea): apaga el OLED y pasa a
+// SLEEPING. El light sleep real lo hace updateSleeping(),
+// rebanada a rebanada, conservando la RAM (los estados de las
+// ventanas y Storage siguen vivos) y despertando por cualquier
+// botón (gpio_wakeup_enable con nivel HIGH, configurado en begin()).
 // ========================================================
 
 void SleepManager::enterSleep() {
   display.power(false);  // apaga el panel OLED (ahorro; la RAM del OLED se conserva)
   sound.stop();          // corta un efecto en curso
+  _spurious = 0;
+  _state = State::SLEEPING;
+}
 
-  // Wake de verificación: aunque esp_light_sleep_start() vuelva "solo"
-  // (nivel que ya no persiste, USB host, etc.), no se sale del reposo si
-  // no hay un botón realmente presionado; se vuelve a dormir al instante.
-  // El wake real se detecta por polling (timer cada WAKE_CHECK_MS + el GPIO
-  // por nivel como vía rápida) y la pantalla queda apagada hasta entonces.
-  uint8_t spurious = 0;
-  while (!buttons.anyPhysical()) {
-    uint64_t t0 = nowMs();
-    esp_err_t err = esp_light_sleep_start();  // bloquea hasta el wake de un botón o del timer
-    buttons.read();                           // refresca el estado físico tras despertar
-    uint64_t slept = nowMs() - t0;
+// ========================================================
+// Despertar con un botón real.
+// ========================================================
 
-    if (buttons.anyPhysical()) break;
-
-    // Light sleep que no persiste: volvió casi sin dormir y sin botón
-    // (rechazado o wake espurio). En una placa sana duerme ~WAKE_CHECK_MS
-    // hasta el timer de verificación. N espurios seguidos = aviso.
-    if (err == ESP_ERR_SLEEP_REJECT || slept < MIN_SLEEP_MS) {
-      if (spurious++ >= SPURIOUS_LIMIT) {
-        spurious = 0;
-        screenDiag();
-      }
-    } else spurious = 0;
-  }
-
-  // --- al despertar con un botón real ---
+void SleepManager::wake() {
   display.power(true);  // el framebuffer del OLED sigue en el panel: misma imagen
   if (_diagSeen) {      // ...salvo que un diagnóstico la deformara
     _diagSeen = false;
@@ -105,6 +160,8 @@ void SleepManager::enterSleep() {
   }
   buttons.begin();               // re-ancla el estado: el botón que despertó no es un "press"
   buttons.ignoreUntilRelease();  // ...ni cuenta como pulsación sostenida hasta soltarlo
+  _idle.start();                 // no volver a dormir de inmediato
+  _state = State::AWAKE;
 }
 
 // ========================================================
@@ -118,14 +175,14 @@ void SleepManager::enterSleep() {
 // ventana activa.
 // ========================================================
 
-void SleepManager::screenDiag() {
+void SleepManager::showDiag() {
   _diagSeen = true;
 
   display.power(true);
   display.clear();
 
   char* msg;
-  int16_t msgW;
+  // int16_t msgW;
 
   msg = "ERROR";
   display.drawText(msg, (WIDTH - strlen(msg) * 12) / 2, HEADER_TOP + 1, TEXT_12x16, true, false);
@@ -139,8 +196,8 @@ void SleepManager::screenDiag() {
   display.drawText(msg, (WIDTH - strlen(msg) * 6) / 2, FOOT_TOP, TEXT_6x8, false, true);
 
   display.show();
-  delay(DIAG_MS);
-  display.power(false);
+  _diag.start();
+  _state = State::DIAG;
 }
 
 // ====================================================================================

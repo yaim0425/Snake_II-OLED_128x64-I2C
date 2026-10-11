@@ -24,8 +24,10 @@
 //
 // setup() inicia el hardware y luego engine.begin() (entra al primer
 // estado, Boot); loop() hace la única lectura de botones del frame
-// (buttons.read()) y llama sleepManager.update(), engine.update(),
-// engine.print(), sound.update() y display.show().
+// (buttons.read()) y llama sleepManager.update(): si devuelve false
+// (durmiendo o mostrando el aviso de diagnóstico), corta el frame con
+// `return` y reinicia el loop(); si devuelve true, sigue con
+// engine.update(), engine.print(), sound.update() y display.show().
 // ====================================================================================
 
 #include "Config.h"
@@ -87,7 +89,7 @@ void setup() {
 
 void loop() {
   buttons.read();
-  sleepManager.update();
+  if (!sleepManager.update()) return;   // durmiendo o aviso: reinicia el loop()
   engine.update();
   engine.print();
   sound.update();
