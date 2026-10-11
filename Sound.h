@@ -42,6 +42,7 @@ public:
     SFX_NEW_BEST,   // festejo de nuevo récord (suena en el letrero "THE BEST")
     SFX_BOOT,       // fanfarria de arranque del programa (suena en Boot al encender)
     SFX_PIRATES,    // canción "Pirates of the Caribbean" (He's a Pirate), completa
+    SFX_CANON,      // canción "Canon en Re mayor" de Pachelbel (parte alegre), en bucle
     SFX_COUNT       // cantidad de efectos (tamaño de EFFECTS, tabla indexada por Sfx)
   };
 
@@ -67,10 +68,13 @@ public:
   bool enabled() const;
 
   // ========================================================
-  // Reproducir un efecto (arranca la secuencia, no bloquea)
+  // Reproducir un efecto (arranca la secuencia, no bloquea).
+  // loop = true lo repite en bucle (música de fondo, p. ej. los
+  // créditos) hasta que play() arranque otro efecto o stop()
+  // corte. Si suena otro efecto, se corta al empezar.
   // ========================================================
 
-  void play(Sfx effect);
+  void play(Sfx effect, bool loop = false);
 
   // ========================================================
   // Actualizar: avanza a la siguiente nota del efecto.
@@ -127,10 +131,11 @@ private:
   static const Note SEQ_NEW_BEST[];
   static const Note SEQ_BOOT[];
   static const Note SEQ_PIRATES[];
+  static const Note SEQ_CANON[];
 
   // ========================================================
   // Tabla de efectos indexada por Sfx (definida en Sound.cpp):
-  // EFFECTS[SFX_NONE]..EFFECTS[SFX_PIRATES], en el mismo orden
+  // EFFECTS[SFX_NONE]..EFFECTS[SFX_CANON], en el mismo orden
   // del enum. Reemplaza a las constantes LEN_*: el largo de
   // cada secuencia se deriva con sizeof dentro de la tabla.
   // ========================================================
@@ -141,11 +146,12 @@ private:
   // Estado
   // ========================================================
 
-  Buzzer   _buzzer;  // capa de hardware (propia de Sound)
-  const Note* _seq;   // secuencia en curso (null = sin efecto)
-  uint8_t  _len;      // cantidad de notas de la secuencia
-  uint8_t  _step;     // nota actual
-  bool     _enabled;  // sonido activado (menú "Sound")
+  Buzzer     _buzzer;   // capa de hardware (propia de Sound)
+  const Note* _seq;     // secuencia en curso (null = sin efecto)
+  uint16_t   _len;      // cantidad de notas de la secuencia (uint16: canciones largas)
+  uint16_t   _step;     // nota actual
+  bool       _loop;     // repetir la secuencia en bucle
+  bool       _enabled;  // sonido activado (menú "Sound")
 };
 
 #endif

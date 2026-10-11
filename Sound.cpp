@@ -107,6 +107,8 @@ const Sound::Note Sound::SEQ_PIRATES[] = {
   // Secuencia de notas tomada del repo de xitanggg (licencia MIT,
   // ver THIRD_PARTY_NOTICES.md). Pares {freq, durMs}; 0 = silencio.
   // Cada fila es una frase; el comentario lleva sus notas.
+  // Al final se añade un enlace propio (G4 E4) para que el bucle
+  // (play con loop=true) vuelva limpio al motivo inicial (E4).
 
   // Frase A (motivo principal)
   {  330, 125 }, {  392, 125 }, {  440, 250 }, {  440, 125 }, {    0, 125 },  // E4 G4 A4 A4 -
@@ -154,11 +156,46 @@ const Sound::Note Sound::SEQ_PIRATES[] = {
   {  659, 250 }, {    0, 125 }, {    0, 375 }, {  698, 250 }, {    0, 125 }, {    0, 375 },  // E5 - - F5 - -
   {  659, 125 }, {  659, 125 }, {    0, 125 }, {  784, 125 }, {    0, 125 }, {  659, 125 }, {  587, 125 }, {    0, 125 }, {    0, 375 },  // E5 E5 - G5 - E5 D5 - -
   {  587, 250 }, {    0, 125 }, {    0, 375 }, {  523, 250 }, {    0, 125 }, {    0, 375 },  // D5 - - C5 - -
-  {  494, 125 }, {  523, 125 }, {    0, 125 }, {  494, 125 }, {    0, 125 }, {  440, 500 }   // B4 C5 - B4 - A4
+  {  494, 125 }, {  523, 125 }, {    0, 125 }, {  494, 125 }, {    0, 125 }, {  440, 500 },  // B4 C5 - B4 - A4
+  {  392, 125 }, {  330, 375 }                                                               // G4 E4: enlace que devuelve al motivo inicial en el bucle
+};
+
+const Sound::Note Sound::SEQ_CANON[] = {
+  // "Canon en Re mayor" (Pachelbel), parte alegre, pensada para
+  // sonar en bucle (SFX_CANON). Arreglo propio sobre la progresión
+  // del cánon (I - V - vi - iii - IV - I - IV - V): cada barra es
+  // una fila con su acorde comentado. Dura ~25 s y termina en la
+  // tónica (Re) para reanudar limpiamente desde la primera barra.
+
+  // Pasada 1 (motivo sobre cada grado)
+  { 294, 150 }, { 370, 150 }, { 440, 150 }, { 587, 150 }, { 440, 150 }, { 370, 150 }, { 587, 150 }, { 370, 150 },  // D
+  { 277, 150 }, { 330, 150 }, { 440, 150 }, { 554, 150 }, { 440, 150 }, { 330, 150 }, { 554, 150 }, { 440, 150 },  // A
+  { 247, 150 }, { 294, 150 }, { 370, 150 }, { 494, 150 }, { 370, 150 }, { 294, 150 }, { 494, 150 }, { 294, 150 },  // Bm
+  { 277, 150 }, { 330, 150 }, { 440, 150 }, { 554, 150 }, { 440, 150 }, { 330, 150 }, { 554, 150 }, { 440, 150 },  // F#m
+  { 196, 150 }, { 247, 150 }, { 294, 150 }, { 392, 150 }, { 294, 150 }, { 247, 150 }, { 392, 150 }, { 247, 150 },  // G
+  { 185, 150 }, { 220, 150 }, { 294, 150 }, { 440, 150 }, { 294, 150 }, { 220, 150 }, { 440, 150 }, { 294, 150 },  // D
+  { 196, 150 }, { 247, 150 }, { 294, 150 }, { 392, 150 }, { 294, 150 }, { 247, 150 }, { 392, 150 }, { 247, 150 },  // G
+  { 220, 150 }, { 277, 150 }, { 330, 150 }, { 440, 150 }, { 330, 150 }, { 277, 150 }, { 440, 150 }, { 330, 150 },  // A
+
+  // Pasada 2 (variación)
+  { 587, 150 }, { 440, 150 }, { 370, 150 }, { 294, 150 }, { 370, 150 }, { 440, 150 }, { 587, 150 }, { 370, 150 },  // D
+  { 554, 150 }, { 440, 150 }, { 330, 150 }, { 277, 150 }, { 330, 150 }, { 440, 150 }, { 554, 150 }, { 440, 150 },  // A
+  { 494, 150 }, { 370, 150 }, { 294, 150 }, { 247, 150 }, { 294, 150 }, { 370, 150 }, { 494, 150 }, { 370, 150 },  // Bm
+  { 554, 150 }, { 440, 150 }, { 330, 150 }, { 277, 150 }, { 330, 150 }, { 440, 150 }, { 554, 150 }, { 440, 150 },  // F#m
+  { 392, 150 }, { 294, 150 }, { 247, 150 }, { 196, 150 }, { 247, 150 }, { 294, 150 }, { 392, 150 }, { 294, 150 },  // G
+  { 440, 150 }, { 294, 150 }, { 220, 150 }, { 185, 150 }, { 220, 150 }, { 294, 150 }, { 440, 150 }, { 294, 150 },  // D
+  { 392, 150 }, { 294, 150 }, { 247, 150 }, { 196, 150 }, { 247, 150 }, { 294, 150 }, { 392, 150 }, { 294, 150 },  // G
+  { 440, 150 }, { 330, 150 }, { 277, 150 }, { 220, 150 }, { 277, 150 }, { 330, 150 }, { 440, 150 }, { 330, 150 },  // A
+
+  // Coda (más espaciada, cierra en la tónica Re)
+  { 392, 300 }, { 294, 150 }, { 247, 150 }, { 392, 300 }, { 294, 150 }, { 247, 150 },                              // G
+  { 440, 300 }, { 370, 150 }, { 294, 150 }, { 440, 300 }, { 370, 150 }, { 294, 150 },                              // D
+  { 554, 300 }, { 440, 150 }, { 330, 150 }, { 554, 300 }, { 440, 300 },                                            // A
+  { 587, 600 }, { 440, 300 }, { 370, 300 }, { 587, 300 }, { 440, 300 }, { 587, 600 }                               // D (tónica)
 };
 
 // ========================================================
-// Tabla de efectos: índice = Sfx (SFX_NONE..SFX_PIRATES,
+// Tabla de efectos: índice = Sfx (SFX_NONE..SFX_CANON,
 // mismo orden que el enum). Cada entrada apunta a su secuencia
 // y deriva el largo con sizeof en sitio (ya no hace falta
 // LEN_*). SFX_NONE no tiene secuencia (no suena nada).
@@ -179,7 +216,8 @@ const Sound::Seq Sound::EFFECTS[] = {
   { SEQ_RESUME,    sizeof(SEQ_RESUME)      / sizeof(Sound::Note) }, // SFX_RESUME
   { SEQ_NEW_BEST,  sizeof(SEQ_NEW_BEST)    / sizeof(Sound::Note) },  // SFX_NEW_BEST
   { SEQ_BOOT,      sizeof(SEQ_BOOT)        / sizeof(Sound::Note) },  // SFX_BOOT
-  { SEQ_PIRATES,   sizeof(SEQ_PIRATES)     / sizeof(Sound::Note) }   // SFX_PIRATES
+  { SEQ_PIRATES,   sizeof(SEQ_PIRATES)     / sizeof(Sound::Note) },  // SFX_PIRATES
+  { SEQ_CANON,     sizeof(SEQ_CANON)       / sizeof(Sound::Note) }   // SFX_CANON
 };
 
 // ========================================================
@@ -191,6 +229,7 @@ Sound::Sound(uint8_t pin)
     _seq(nullptr),
     _len(0),
     _step(0),
+    _loop(false),
     _enabled(true) {}
 
 // ========================================================
@@ -219,12 +258,13 @@ bool Sound::enabled() const {
 // Reproducir un efecto (no bloqueante)
 // ========================================================
 
-void Sound::play(Sfx effect) {
+void Sound::play(Sfx effect, bool loop) {
   if (!_enabled) return;
   if (effect >= SFX_COUNT) effect = SFX_NONE;   // solo por defensa: los caller pasan valores del enum
 
-  _seq = EFFECTS[effect].notes;
-  _len = EFFECTS[effect].len;
+  _seq  = EFFECTS[effect].notes;
+  _len  = EFFECTS[effect].len;
+  _loop = loop;
 
   _step = 0;
   if (_len > 0) _buzzer.tone(_seq[0].freq, _seq[0].durMs);
@@ -247,6 +287,12 @@ void Sound::update() {
 
   if (_step < _len) {
     _buzzer.tone(_seq[_step].freq, _seq[_step].durMs);
+  } else if (_loop) {
+    // El bucle reinicia desde la primera nota: la música de fondo
+    // suena indefinidamente hasta que play() arranque otro efecto
+    // o stop() corte (p. ej. al salir de los créditos).
+    _step = 0;
+    _buzzer.tone(_seq[0].freq, _seq[0].durMs);
   } else {
     _seq = nullptr;
   }
@@ -260,6 +306,7 @@ void Sound::stop() {
   _seq = nullptr;
   _len = 0;
   _step = 0;
+  _loop = false;
   _buzzer.stop();
 }
 

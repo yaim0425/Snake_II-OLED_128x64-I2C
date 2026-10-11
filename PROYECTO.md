@@ -121,7 +121,7 @@ Directorio: `D:\Documents\ESP32S3\Snake_II-OLED_128x64-I2C`
 | `Engine.h/.cpp` | Clase `Engine` (antes `App`): despachador; posee las ventanas `_boot`, `_menu`, `_menuDifficulty`, `_menuSound`, `_menuCredits`, `_game`, `_legend`; `changeState()` llama `begin()` de la entrante (parámetro `beginWindow=false` previsto para volver sin repintar); `isInGame()`. Completa. |
 | `Snake_II-OLED_128x64-I2C.ino` | Wiring: define servicios globales y `storage`; crea `Engine engine;` y `SleepManager sleepManager(engine);`. `setup()`: `display.begin()`, `buttons.begin()`, `sound.begin()`, `engine.begin()`, `sleepManager.begin()`. `loop()`: `buttons.read()` (única lectura), `if (!sleepManager.update()) return;` (si `false` = durmiendo/aviso, corta el frame), `engine.update()`, `engine.print()`, `sound.update()`, `display.show()`. |
 | `Buzzer.h/.cpp` | Clase `Buzzer`: hardware, 1 tono no bloqueante (LEDC). Propiedad de `Sound` por valor. Completa. |
-| `Sound.h/.cpp` | Clase `Sound`: secuencias de efectos sobre su `Buzzer` interno; `setEnabled`. Completa. |
+| `Sound.h/.cpp` | Clase `Sound`: secuencias de efectos sobre su `Buzzer` interno; `play(effect, loop)` con bucle (música de fondo); canciones `SFX_PIRATES` y `SFX_CANON`; `setEnabled`. Completa. |
 | `Storage.h/.cpp` | Clase `Storage`: mejor puntaje, sonido, dificultad (defaults de `Config`; clamp en `setDifficulty`). Datos puros, sin `begin`/`update`/hardware. Instancia global `storage` (§22). Completa; **pendiente de integrar**. |
 | `Sprite.h` | Namespace `Sprite`: sprites de la serpiente (4×4) + comida especial (8×4) + logo `LOGO` (80×48). Solo datos (header-only). |
 | `Timer.h/.cpp` | Reloj de 64 bits (`nowMs()`, `Stopwatch`, `Ticker`) sobre `esp_timer_get_time()`. Definiciones en el `.cpp`. |
@@ -402,7 +402,7 @@ Buzzer(uint8_t pin = Config::Pin::BUZZER);   // pin 14
 
 `Sound.h/.cpp`. Efectos = **secuencias de tonos** (`Note` = `{freq, durMs}`, `0` = silencio) sobre su **`Buzzer` interno** (por valor, inicializado en `begin()`). No bloqueante: `play()` arranca y `update()` avanza nota a nota. Desactivado, `play()` no hace nada (`setEnabled(false)`).
 
-Las secuencias `SEQ_*` son **miembros estáticos privados** (`Sound.h`, definidos en `Sound.cpp`) indexadas por una **única tabla `EFFECTS[]` de `{const Note* notes, uint8_t len}`** (orden = enum `Sfx`, `SFX_NONE` incluido con secuencia vacía): reemplaza a las constantes `LEN_*` (largo por `sizeof`) y al `switch` de `play()`, que ahora lee `EFFECTS[effect]`. Detalle de implementación: la API pública no expone `Note`, `Seq` ni tablas.
+Las secuencias `SEQ_*` son **miembros estáticos privados** (`Sound.h`, definidos en `Sound.cpp`) indexadas por una **única tabla `EFFECTS[]` de `{const Note* notes, uint16_t len}`** (`uint16_t`: canciones largas; antes `uint8_t`, tope 255 notas) — orden = enum `Sfx`, `SFX_NONE` incluido con secuencia vacía: reemplaza a las constantes `LEN_*` (largo por `sizeof`) y al `switch` de `play()`, que ahora lee `EFFECTS[effect]`. Detalle de implementación: la API pública no expone `Note`, `Seq` ni tablas.
 
 ### Constructor
 ```cpp
@@ -416,7 +416,7 @@ enum Sfx : uint8_t {
   SFX_NONE = 0, SFX_CLICK, SFX_CONFIRM, SFX_BACK,
   SFX_EAT, SFX_START, SFX_LEVEL_UP, SFX_GAME_OVER,
   SFX_TICK, SFX_TURN, SFX_PAUSE, SFX_RESUME,
-  SFX_NEW_BEST, SFX_BOOT, SFX_PIRATES,
+  SFX_NEW_BEST, SFX_BOOT, SFX_PIRATES, SFX_CANON,
   SFX_COUNT   // SFX_COUNT = tamaño de EFFECTS
 };
 ```
@@ -436,16 +436,17 @@ enum Sfx : uint8_t {
 | `SFX_RESUME` | Reanudar | 500/50, 900/60 |
 | `SFX_NEW_BEST` | Festejo de récord (suena en "THE BEST") | 523/100, 659/100, 784/100, 1047/140, 784/100, 1047/140, 1319/420 |
 | `SFX_BOOT` | Fanfarria de arranque (en `Boot`) | 523/120, 659/120, 784/120, 1047/180, 784/120, 1047/180, 1319/360 |
-| `SFX_PIRATES` | Canción "Pirates of the Caribbean" (He's a Pirate), completa | 203 notas `{freq, durMs}` en `Sound.cpp` (`SEQ_PIRATES`); sin uso todavía. Fuente: repo de xitanggg (MIT, ver `THIRD_PARTY_NOTICES.md`). |
+| `SFX_PIRATES` | Canción "Pirates of the Caribbean" (He's a Pirate), completa | 205 notas `{freq, durMs}` en `Sound.cpp` (`SEQ_PIRATES`); con enlace final (G4-E4) que devuelve el bucle al motivo inicial (E4); sin uso todavía. Fuente: repo de xitanggg (MIT, ver `THIRD_PARTY_NOTICES.md`), salvo el enlace final (propio). |
+| `SFX_CANON` | Canción "Canon en Re mayor" (Pachelbel), parte alegre, pensada para sonar en bucle | 151 notas `{freq, durMs}` en `Sound.cpp` (`SEQ_CANON`), ~25 s; sin uso todavía. Arreglo propio sobre la progresión del cánon (dominio público), cierra en la tónica para repetir limpio. |
 
-Paleta del `GameBuzzer` original (salvo `SFX_PIRATES`, tomada de la partitura/enlace citado arriba).
+Paleta del `GameBuzzer` original (salvo `SFX_PIRATES`, tomada de la partitura/enlace citado arriba, y `SFX_CANON`, arreglo propio sobre dominio público).
 
 ### Métodos
 | Método | Descripción |
 |--------|-------------|
 | `void begin()` | `_buzzer.begin()` (adjunta LEDC) y luego `stop()`. Único lugar que inicializa el `Buzzer`. |
 | `void setEnabled(bool)` / `enabled()` | Activa/desactiva (opción "Sound"); al desactivar corta el efecto en curso. |
-| `void play(Sfx)` | Arranca la secuencia (no bloqueante). |
+| `void play(Sfx, bool loop = false)` | Arranca la secuencia (no bloqueante). `loop=true` la repite en bucle hasta `stop()`/otro `play()` (música de fondo de los créditos). |
 | `void update()` | Avanza a la siguiente nota (llama `_buzzer.update()` antes). Una vez por `loop()`. |
 | `void stop()` | Corta el efecto y silencia. |
 | `bool playing()` | `true` mientras suena un efecto. |
