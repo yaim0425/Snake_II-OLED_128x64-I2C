@@ -141,10 +141,10 @@ void Menu::begin(bool showContinue, int8_t selected) {
 // Repintado forzado (tras un diagnóstico del reposo)
 // ========================================================
 
-void Menu::forceRedraw() {
-  _done = false;   // el parche MenuSound convive con un Menu ya "confirmado"
-  _clear = true;   // el próximo print() vuelve a dibujar el frame completo
-}
+// void Menu::forceRedraw() {
+//   _done = false;   // el parche MenuSound convive con un Menu ya "confirmado"
+//   _clear = true;   // el próximo print() vuelve a dibujar el frame completo
+// }
 
 // ========================================================
 // Opciones (cantidad variable)
@@ -346,9 +346,9 @@ void Menu::print() {
   // if (_redraw) {
   //   display.clear();
   firstPrint();
-  blinkOption();
   nextOption();
   _scroller.print();
+  blinkOption();
   //   _redraw = false;
   // }
 
@@ -406,13 +406,14 @@ void Menu::print() {
   // _scroller.print();
 }
 
-void Menu::firstPrint() {
-  if (!_clear) return;
+void Menu::firstPrint(bool forceRedraw) {
+  if (!_clear && !forceRedraw) return;
+  display.clear();
+  _clear = false;
 
   // ------------------------------------------------------
 
-  display.clear();
-  _clear = false;
+  _blink.start();
 
   // ------------------------------------------------------
 

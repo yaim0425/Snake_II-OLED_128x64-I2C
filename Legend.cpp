@@ -31,7 +31,7 @@ Legend::Legend()
     _lastBtn(0),
     _ticker(NEXT),
     _blink(),
-    _lastScroll(false),
+    _lastScroll(true),
     _done(false),
     _clear(true) {}
 
@@ -44,7 +44,7 @@ void Legend::begin() {
   _lastBtn = 0;
   _ticker.start();
   _blink.start();
-  _lastScroll = false;
+  _lastScroll = true;
   _done = false;
   _clear = true;
 }
@@ -53,9 +53,9 @@ void Legend::begin() {
 // Repintado forzado (tras un diagnóstico del reposo)
 // ========================================================
 
-void Legend::forceRedraw() {
-  _clear = true;
-}
+// void Legend::forceRedraw() {
+//   _clear = true;
+// }
 
 // ========================================================
 // Actualizar (consume eventos de botones ya leídos, reproduce
@@ -114,9 +114,9 @@ void Legend::update() {
 
 void Legend::print() {
   firstPrint();
-  blinkDiamond();
   nextBtn();
   _scroller.print();
+  blinkDiamond();
   // if (true) return;
 
   // if (_prevBtn != _btn) {
@@ -151,13 +151,15 @@ void Legend::print() {
 // Primer frame: clear() completo + dibujar todo (estáticos)
 // ========================================================
 
-void Legend::firstPrint() {
-  if (!_clear) return;
+void Legend::firstPrint(bool forceRedraw) {
+  if (!_clear && !forceRedraw) return;
+  display.clear();
+  _clear = false;
 
   // ------------------------------------------------------
 
-  display.clear();
-  _clear = false;
+  _ticker.start();
+  _blink.start();
 
   // ------------------------------------------------------
 
@@ -252,7 +254,8 @@ void Legend::firstPrint() {
 }
 
 void Legend::blinkDiamond() {
-  if (_lastScroll) return;
+  if (!_scroller.done()) return;
+  else if (_lastBtn != _btn) return;
   else if (!_blink.changed(PERIOD, OFF)) return;
   toggleDiamond(_btn, _blink.isVisible(PERIOD, OFF));
 

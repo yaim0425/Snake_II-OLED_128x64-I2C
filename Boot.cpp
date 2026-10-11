@@ -51,9 +51,11 @@ void Boot::begin() {
 // Repintado forzado (tras un diagnóstico del reposo)
 // ========================================================
 
-void Boot::forceRedraw() {
-  _clear = true;
-}
+// void Boot::forceRedraw() {
+//   _clear = true;
+//   firstPrint();
+//   _blink.start();
+// }
 
 // ========================================================
 // Actualizar (procesa eventos de botones ya leídos y avanza el desplazamiento)
@@ -147,14 +149,15 @@ void Boot::print() {
 // se corta por el borde derecho.
 // ========================================================
 
-void Boot::firstPrint() {
-  if (!_clear) return;
-
-  // ------------------------------------------------------
-
+void Boot::firstPrint(bool forceRedraw) {
+  if (!_clear && !forceRedraw) return;
   display.clear();
   _clear = false;
 
+  // ------------------------------------------------------
+  
+  _blink.start();
+  
   // ------------------------------------------------------
 
   // int16_t headerTop = Config::Screen::HEADER_TOP;

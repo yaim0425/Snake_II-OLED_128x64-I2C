@@ -50,13 +50,14 @@ public:
   // ========================================================
 
   void print();
+  void firstPrint(bool forceRedraw = false);
 
   // ========================================================
   // Repintado forzado (tras un diagnóstico del reposo: el próximo
   // print() dibuja el frame completo, con clear() incluido)
   // ========================================================
 
-  void forceRedraw();
+  // void forceRedraw();
 
   // ========================================================
   // Salida (true = la animación terminó)
@@ -136,7 +137,6 @@ private:
   // Dibuja las franjas iniciales: las BAR_W-1 columnas de la cola de cada
   // franja (la de cabeza la pone drawBars, que es la única columna nueva
   // en cada avance de 1 px)
-  void firstPrint();
   void blinkMessage();
   void drawMessage(bool show);
 

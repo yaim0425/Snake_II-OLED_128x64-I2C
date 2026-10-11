@@ -85,6 +85,7 @@ public:
 
   void print();
   void showOptions();
+  void firstPrint(bool forceRedraw = false);
 
   // ========================================================
   // Repintado forzado (tras un diagnóstico del reposo: el próximo
@@ -93,7 +94,7 @@ public:
   // el parche MenuSound, que convive con un Menu ya "confirmado")
   // ========================================================
 
-  void forceRedraw();
+  // void forceRedraw();
 
   // ========================================================
   // Accesos
@@ -119,7 +120,6 @@ public:
 
 private:
   void action();
-  void firstPrint();
   void blinkOption();
   void nextOption();
   void toggleText(bool show);
@@ -173,7 +173,6 @@ private:
 
   static constexpr char* NAME = Config::Version::NAME;
   static constexpr uint8_t HEADER_TOP = Config::Screen::HEADER_TOP;
-  static constexpr int16_t FOOT_TOP = Config::Screen::FOOT_TOP;
   static constexpr int16_t FOOT_H = Config::Screen::FOOT_H;
   static constexpr char* VERSION = Config::Version::VERSION;
   // Posición del texto del cuadro (1 px dentro, centrado verticalmente)

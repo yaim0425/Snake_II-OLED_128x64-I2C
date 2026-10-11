@@ -166,17 +166,15 @@ void Engine::repaint() {
   display.clear();
 
   switch (_state) {
-    case State::BOOT: _boot.forceRedraw(); break;
-    case State::LEGEND: _legend.forceRedraw(); break;
-    case State::MENU: _menu.forceRedraw(); break;
+    case State::BOOT: _boot.firstPrint(true); break;
+    case State::LEGEND: _legend.firstPrint(true); break;
+    case State::MENU: _menu.firstPrint(true); break;
 
     case State::MENU_SOUND:
       // La base del Menu ya no se va a volver a dibujar por el loop
       // (la ventana activa es el parche): se dibuja aquí mismo.
-      _menu.forceRedraw();
-      _menu.print();
-      _menuSound.begin();
-      _menuSound.print();
+      _menu.firstPrint(true);
+      _menuSound.firstPrint(true);
       break;
   }
 }

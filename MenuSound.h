@@ -54,6 +54,8 @@ public:
   // ========================================================
 
   void print();
+  void firstPrint(bool forceRedraw = false);
+  void clear();
 
   // ========================================================
   // Estado
@@ -97,22 +99,31 @@ private:
   static constexpr int16_t VALUE_HEIGHT = Config::MenuStrip::VALUE_HEIGHT;
   static constexpr int16_t VALUE_TOP = Config::MenuStrip::VALUE_TOP;
 
+  static constexpr int16_t TRIANGLE_L = (WIDTH - 6 * 3) / 2 - 4;
+  static constexpr int16_t TRIANGLE_R = (WIDTH - 6 * 3) / 2 + (6 * 3) +  2;
+  static constexpr int16_t LABEL_X = TRIANGLE_L + 4;
+  
   static constexpr int16_t DIAMOND_Y = Config::MenuStrip::DIAMOND_Y;
 
   // ========================================================
   // Métodos internos
   // ========================================================
 
-  void drawSelector();
+  void blinkOption();
+  void nextOption(bool show = false);
 
   // ========================================================
   // Estado
   // ========================================================
 
-  bool _enabled;  // valor en edición (no aplicado hasta confirmar)
+  // bool _enabled;  // valor en edición (no aplicado hasta confirmar)
   bool _done;     // confirmó o canceló: el Engine vuelve al Menu
 
+  bool _selected;
+  bool _lastSelected;
+
   Blink _blink;  // parpadeo de la flecha (fase cruda)
+  bool _clear;
 };
 
 #endif

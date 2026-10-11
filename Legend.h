@@ -60,13 +60,14 @@ public:
   // ========================================================
 
   void print();
+  void firstPrint(bool forceRedraw = false);
 
   // ========================================================
   // Repintado forzado (tras un diagnóstico del reposo: el próximo
   // print() dibuja el frame completo, con clear() incluido)
   // ========================================================
 
-  void forceRedraw();
+  // void forceRedraw();
 
   // ========================================================
   // Salida (true = se pidió ir al menú)
@@ -75,7 +76,6 @@ public:
   bool done() const;
 
 private:
-  void firstPrint();
   void diamondCenter(int8_t diamond, int16_t& centerX, int16_t& centerY);
   void toggleDiamond(int8_t diamond, bool show = false);
   void blinkDiamond();
