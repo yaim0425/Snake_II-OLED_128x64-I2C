@@ -402,7 +402,7 @@ Buzzer(uint8_t pin = Config::Pin::BUZZER);   // pin 14
 
 `Sound.h/.cpp`. Efectos = **secuencias de tonos** (`Note` = `{freq, durMs}`, `0` = silencio) sobre su **`Buzzer` interno** (por valor, inicializado en `begin()`). No bloqueante: `play()` arranca y `update()` avanza nota a nota. Desactivado, `play()` no hace nada (`setEnabled(false)`).
 
-Las 12 secuencias `SEQ_*` son **miembros estáticos privados** (`Sound.h`, definidos en `Sound.cpp`) indexadas por una **única tabla `EFFECTS[]` de `{const Note* notes, uint8_t len}`** (orden = enum `Sfx`, `SFX_NONE` incluido con secuencia vacía): reemplaza a las 12 `LEN_*` (largo por `sizeof`) y al `switch` de `play()`, que ahora lee `EFFECTS[effect]`. Detalle de implementación: la API pública no expone `Note`, `Seq` ni tablas.
+Las secuencias `SEQ_*` son **miembros estáticos privados** (`Sound.h`, definidos en `Sound.cpp`) indexadas por una **única tabla `EFFECTS[]` de `{const Note* notes, uint8_t len}`** (orden = enum `Sfx`, `SFX_NONE` incluido con secuencia vacía): reemplaza a las constantes `LEN_*` (largo por `sizeof`) y al `switch` de `play()`, que ahora lee `EFFECTS[effect]`. Detalle de implementación: la API pública no expone `Note`, `Seq` ni tablas.
 
 ### Constructor
 ```cpp
@@ -416,7 +416,8 @@ enum Sfx : uint8_t {
   SFX_NONE = 0, SFX_CLICK, SFX_CONFIRM, SFX_BACK,
   SFX_EAT, SFX_START, SFX_LEVEL_UP, SFX_GAME_OVER,
   SFX_TICK, SFX_TURN, SFX_PAUSE, SFX_RESUME,
-  SFX_NEW_BEST, SFX_BOOT, SFX_COUNT   // SFX_COUNT = tamaño de EFFECTS
+  SFX_NEW_BEST, SFX_BOOT, SFX_PIRATES,
+  SFX_COUNT   // SFX_COUNT = tamaño de EFFECTS
 };
 ```
 
@@ -435,8 +436,9 @@ enum Sfx : uint8_t {
 | `SFX_RESUME` | Reanudar | 500/50, 900/60 |
 | `SFX_NEW_BEST` | Festejo de récord (suena en "THE BEST") | 523/100, 659/100, 784/100, 1047/140, 784/100, 1047/140, 1319/420 |
 | `SFX_BOOT` | Fanfarria de arranque (en `Boot`) | 523/120, 659/120, 784/120, 1047/180, 784/120, 1047/180, 1319/360 |
+| `SFX_PIRATES` | Canción "Pirates of the Caribbean" (He's a Pirate), completa | 203 notas `{freq, durMs}` en `Sound.cpp` (`SEQ_PIRATES`); sin uso todavía. Fuente: repo de xitanggg (MIT, ver `THIRD_PARTY_NOTICES.md`). |
 
-Paleta del `GameBuzzer` original.
+Paleta del `GameBuzzer` original (salvo `SFX_PIRATES`, tomada de la partitura/enlace citado arriba).
 
 ### Métodos
 | Método | Descripción |

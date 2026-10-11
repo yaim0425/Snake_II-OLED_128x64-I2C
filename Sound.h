@@ -41,6 +41,7 @@ public:
     SFX_RESUME,     // reanudar la partida
     SFX_NEW_BEST,   // festejo de nuevo récord (suena en el letrero "THE BEST")
     SFX_BOOT,       // fanfarria de arranque del programa (suena en Boot al encender)
+    SFX_PIRATES,    // canción "Pirates of the Caribbean" (He's a Pirate), completa
     SFX_COUNT       // cantidad de efectos (tamaño de EFFECTS, tabla indexada por Sfx)
   };
 
@@ -125,11 +126,12 @@ private:
   static const Note SEQ_RESUME[];
   static const Note SEQ_NEW_BEST[];
   static const Note SEQ_BOOT[];
+  static const Note SEQ_PIRATES[];
 
   // ========================================================
   // Tabla de efectos indexada por Sfx (definida en Sound.cpp):
-  // EFFECTS[SFX_NONE]..EFFECTS[SFX_BOOT], en el mismo orden
-  // del enum. Reemplaza a las 12 constantes LEN_*: el largo de
+  // EFFECTS[SFX_NONE]..EFFECTS[SFX_PIRATES], en el mismo orden
+  // del enum. Reemplaza a las constantes LEN_*: el largo de
   // cada secuencia se deriva con sizeof dentro de la tabla.
   // ========================================================
 

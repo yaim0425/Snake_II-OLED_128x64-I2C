@@ -8,14 +8,50 @@ No forma parte del código fuente del proyecto, que se licencia bajo
 
 ## Qué se distribuye en este repositorio
 
-Este repositorio **no contiene código, fuentes ni artwork de terceros**:
+Este repositorio contiene **código original** y **un contenido de terceros
+atribuido** (la secuencia de notas de una canción; ver más abajo):
 
-- Todo el código fuente (`.h`, `.cpp`, `.ino`) es original de este proyecto.
+- Todo el código fuente (`.h`, `.cpp`, `.ino`) es original de este proyecto,
+  salvo la tabla de notas `Sound::SEQ_PIRATES` (`Sound.cpp`).
 - Los sprites de la serpiente son tablas de bits generadas a mano en
   `Sprite.h` (namespace `Sprite`), no imágenes importadas.
 - No se incluye ninguna fuente de Adafruit ni de Espressif Systems: las
   librerías se resuelven en tiempo de compilación desde el gestor de librerías
   de Arduino IDE, no desde el repositorio.
+
+## Contenido de terceros incluido
+
+- **Canción "Pirates of the Caribbean" (He's a Pirate)** — la secuencia de
+  notas de `Sound::SEQ_PIRATES` (`Sound.cpp`) proviene del repositorio
+  [xitanggg/-Pirates-of-the-Caribbean-Theme-Song](https://github.com/xitanggg/-Pirates-of-the-Caribbean-Theme-Song)
+  de Xitang Zhao, publicado bajo licencia **MIT**. Se incorpora como una tabla
+  de frecuencias y duraciones (`{freq, durMs}`) reformateada al estilo de este
+  proyecto. A continuación se reproduce el aviso de copyright y la licencia
+  exigidos por sus términos:
+
+```
+MIT License
+
+Copyright (c) 2021 Xitang Zhao
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+```
 
 ## Dependencias (no vendorizadas)
 
