@@ -89,7 +89,7 @@ const Sound::Note Sound::SEQ_NEW_BEST[] = {
   { 1319, 420 }   // E6  cierre largo
 };
 
-const Sound::Note Sound::SEQ_FANFARE[] = {
+const Sound::Note Sound::SEQ_BOOT[] = {
   // Fanfarria de arranque del programa (Boot): motivo ascendente de
   // fanfarria (C5-E5-G5-C6) con repetición y cierre largo en E6; más
   // breve que el festejo de nuevo récord para no retrasar el inicio
@@ -103,7 +103,7 @@ const Sound::Note Sound::SEQ_FANFARE[] = {
 };
 
 // ========================================================
-// Tabla de efectos: índice = Sfx (SFX_NONE..SFX_FANFARE,
+// Tabla de efectos: índice = Sfx (SFX_NONE..SFX_BOOT,
 // mismo orden que el enum). Cada entrada apunta a su secuencia
 // y deriva el largo con sizeof en sitio (ya no hace falta
 // LEN_*). SFX_NONE no tiene secuencia (no suena nada).
@@ -123,7 +123,7 @@ const Sound::Seq Sound::EFFECTS[] = {
   { SEQ_PAUSE,     sizeof(SEQ_PAUSE)       / sizeof(Sound::Note) }, // SFX_PAUSE
   { SEQ_RESUME,    sizeof(SEQ_RESUME)      / sizeof(Sound::Note) }, // SFX_RESUME
   { SEQ_NEW_BEST,  sizeof(SEQ_NEW_BEST)    / sizeof(Sound::Note) },  // SFX_NEW_BEST
-  { SEQ_FANFARE,   sizeof(SEQ_FANFARE)     / sizeof(Sound::Note) }   // SFX_FANFARE
+  { SEQ_BOOT,      sizeof(SEQ_BOOT)        / sizeof(Sound::Note) }   // SFX_BOOT
 };
 
 // ========================================================

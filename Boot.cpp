@@ -44,7 +44,7 @@ void Boot::begin() {
 
   // Fanfarria de arranque del programa (suena una sola vez, al encender;
   // respeta el estado de sonido del servicio Sound)
-  sound.play(Sound::SFX_FANFARE);
+  sound.play(Sound::SFX_BOOT);
 }
 
 // ========================================================
