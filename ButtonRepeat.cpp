@@ -11,7 +11,7 @@ bool ButtonRepeat::step(uint8_t button) {
     return true;
   }
 
-  if (buttons.hold(button) && _repeat.expired(_delay) && _repeatTick.expired(_tick)) {
+  if (buttons.heldDown(button) && _repeat.expired(_delay) && _repeatTick.expired(_tick)) {
     _repeatTick.start();
     return true;
   }

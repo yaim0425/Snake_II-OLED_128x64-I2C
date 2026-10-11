@@ -125,8 +125,8 @@ void MenuDifficulty::nextOption(bool show) {
   // contraria se oculta. Sin mantener, ambas flechas se dibujan visibles y
   // es blinkOption() quien las hace parpadear. No se dibuja la flecha del
   // lado que está en su límite.
-  const bool leftHeld = buttons.hold(Buttons::MOVE_LEFT) && _selected > MIN_LEVEL;
-  const bool rightHeld = buttons.hold(Buttons::MOVE_RIGHT) && _selected < MAX_LEVEL;
+  const bool leftHeld = buttons.heldDown(Buttons::MOVE_LEFT) && _selected > MIN_LEVEL;
+  const bool rightHeld = buttons.heldDown(Buttons::MOVE_RIGHT) && _selected < MAX_LEVEL;
 
   Draw::triangle(Draw::DIR_LEFT, TRIANGLE_L, DIAMOND_Y, _selected > MIN_LEVEL && !rightHeld);
   Draw::triangle(Draw::DIR_RIGHT, TRIANGLE_R, DIAMOND_Y, _selected < MAX_LEVEL && !leftHeld);
@@ -139,8 +139,8 @@ void MenuDifficulty::blinkOption() {
   if (!_blink.changed(PERIOD, OFF)) return;
 
   const bool visible = _blink.isVisible(PERIOD, OFF);
-  const bool leftHeld = buttons.hold(Buttons::MOVE_LEFT) && _selected > MIN_LEVEL;
-  const bool rightHeld = buttons.hold(Buttons::MOVE_RIGHT) && _selected < MAX_LEVEL;
+  const bool leftHeld = buttons.heldDown(Buttons::MOVE_LEFT) && _selected > MIN_LEVEL;
+  const bool rightHeld = buttons.heldDown(Buttons::MOVE_RIGHT) && _selected < MAX_LEVEL;
 
   // Flecha izquierda: fija al mantener MOVE_LEFT; oculta mientras se
   // mantiene MOVE_RIGHT; sin mantener parpadea. No se dibuja en el mínimo.

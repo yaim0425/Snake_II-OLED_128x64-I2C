@@ -51,7 +51,7 @@ public:
   // Estado actual
   // ========================================================
 
-  bool hold(uint8_t index) const;
+  bool heldDown(uint8_t index) const;
   bool pressed(uint8_t index) const;
   bool released(uint8_t index) const;
 

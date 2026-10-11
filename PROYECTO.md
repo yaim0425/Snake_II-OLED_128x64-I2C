@@ -107,7 +107,7 @@ Directorio: `D:\Documents\ESP32S3\Snake_II-OLED_128x64-I2C`
 | `Display.h/.cpp` | Clase `Display`: OLED (`begin`, `clear`/`show`, `power(on)`, `fillRect`, `fillTriangle`, `drawText`, `drawBitmap`). Completa. |
 | `Config.h` | Constantes compartidas (namespace `Config`, §19): pines, geometría/regiones, `Difficulty`, `Version`, `Credits`, `Legend`, `Diamond`, `Button`, `Scroller`, `MenuStrip`, `DefaultTimer`, `Power`. Sin `#define` para valores. |
 | `Globals.h` | `extern` globales: `display`, `buttons`, `sound`, `storage` (definidos en el `.ino`). No declara `Buzzer` ni ventanas. |
-| `Buttons.h/.cpp` | Clase `Buttons`: debounce; `hold`/`pressed`/`released`/`anyHeld`/`anyPhysical`/`ignoreUntilRelease`; `MAX_BUTTONS` = contador del enum `Button`; `isSet` declarado en `.h` y definido en `.cpp`. Completa. |
+| `Buttons.h/.cpp` | Clase `Buttons`: debounce; `heldDown`/`pressed`/`released`/`anyHeld`/`anyPhysical`/`ignoreUntilRelease`; `MAX_BUTTONS` = contador del enum `Button`; `isSet` declarado en `.h` y definido en `.cpp`. Completa. |
 | `Boot.h/.cpp` | Clase `Boot`: Header "Press any button / to start" parpadeando (`PERIOD=500`, `OFF=20%`), Body con logo `Sprite::LOGO` (80×48) vía `drawBitmap(...,true,false)`. `begin()` suena `SFX_BOOT`; cualquier botón termina (sonido según botón). Animación de bandas anterior comentada. Completa. |
 | `Legend.h/.cpp` | Clase `Legend`: pad MOVE (4 flechas) + 4 rombos ACTION que parpadean de a uno en ciclo lento (`NEXT=2500ms`, `PERIOD=100ms`/`OFF=50%`) y texto de la función del rombo activo en el pie (`Scroller` propio, entra deslizándose). Cualquier botón cierra con sonido (MOVE=`CLICK`, `ACTION_UP`=`BACK`, `ACTION_RIGHT`=`CONFIRM`). Completa. |
 | `Scroller.h/.cpp` | Clase `Scroller`: scroller de 1 bit, 1 banda de ancho completo; texto `int8_t[]` (byte = 1 columna de 8 px); fondo negro, texto blanco. `setTexto()` compone centrado y trunca al límite; `startSlide()`; `update()` 1 px/4 ms; `print()` con cortina activa. Usada por `Menu` (1), `MenuCredits` (2 sincronizadas), `Legend` (1). Completa. |
@@ -254,7 +254,7 @@ enum Button : uint8_t {
 | `Buttons(const int8_t* pins, uint32_t buttonDelay = 30)` | Pines + debounce (ms). |
 | `void begin()` | `INPUT_PULLDOWN` y lee estado inicial. |
 | `void read()` | Lee, filtra y genera eventos. **Una vez por `loop()`** (antes de `engine.update()`). |
-| `bool hold(index)` / `pressed(index)` / `released(index)` | Acceso único por botón: `hold` = mantenido (antes `state()`), `pressed` = pulso del ciclo, `released` = liberación. Los 24 getters con nombre se eliminaron. |
+| `bool heldDown(index)` / `pressed(index)` / `released(index)` | Acceso único por botón: `heldDown` = mantenido (antes `hold`/`state()`), `pressed` = pulso del ciclo, `released` = liberación. Los 24 getters con nombre se eliminaron. |
 | `bool anyHeld()` | Algún botón confirmado (sujeto a la supresión `ignoreUntilRelease()`). |
 | `bool anyPhysical()` | Algún botón físicamente presionado (`_rawButtons`, sin debounce ni supresión). La usa el reposo (§26). |
 
@@ -293,7 +293,7 @@ Servicios globales (§20); único parámetro: puntaje máximo. `_scroller()` por
 ### Internos (privados)
 | Método | Descripción |
 |--------|-------------|
-| `void holdButtons()` | Anti-entrada: si `_holdButtons`, solo mira `buttons.hold()` de los 8; al liberarse **todos**, se apaga. Evita que entrar con un botón pulsado mueva la selección. |
+| `void holdButtons()` | Anti-entrada: si `_holdButtons`, solo mira `buttons.heldDown()` de los 8; al liberarse **todos**, se apaga. Evita que entrar con un botón pulsado mueva la selección. |
 | `void navigate()` | `MOVE_LEFT`/`MOVE_RIGHT` con `_repeat.step()` (paso inmediato + cada `TICK` tras `DELAY`); salta `OPT_CONTINUE` si `_showContinue` es `false`; `SFX_CLICK` al mover; límites `OPT_NEW`/`OPT_COUNT-1`. |
 | `void action()` | `ACTION_UP` → vuelve a `OPT_CONTINUE`/`OPT_NEW` (`SFX_BACK`); `ACTION_RIGHT` → alterna `_confirm` (`SFX_CONFIRM`; salida comentada). |
 | `void blinkOption()` | Con `_confirm` sale (`_confirm=false; _done=true`); si no: guards `if (!_scroller.done()) return;`, `else if (_lastSelected != _selected) return;`, `else if (!_blink.changed(PERIOD, OFF)) return;`. Si el `Scroller` vuela, borra el cuadro (`fillRect(0, BOX_TOP-1, WIDTH, BOX_HEIGHT+2)`) y lo recompone (`_scroller.begin()`); repinta texto + rombo (`toggleText` + `toggleDiamond`) con `visible = _done \|\| _blink.isVisible(PERIOD, OFF)`. |
@@ -1004,7 +1004,7 @@ La clase y su instancia global **existen pero no las consume nadie**: `Menu` gua
 
 ## 23. `ButtonRepeat.h` — repetición al mantener un botón
 
-`ButtonRepeat.h/.cpp`. Helper **por composición** (no hereda ni es heredado): encapsula "paso inmediato al pulsar y, si se mantiene, un paso cada `tick` ms tras `delay` ms". Sustituye los dos `Stopwatch` (`_repeat`/`_repeatTick`) que `Menu` y `MenuDifficulty` llevaban sueltos, que además habían **divergido** (`Menu` repetía con `buttons.hold()`; `MenuDifficulty` con el viejo `buttons.state()`). Aquí se unifica en `hold()`.
+`ButtonRepeat.h/.cpp`. Helper **por composición** (no hereda ni es heredado): encapsula "paso inmediato al pulsar y, si se mantiene, un paso cada `tick` ms tras `delay` ms". Sustituye los dos `Stopwatch` (`_repeat`/`_repeatTick`) que `Menu` y `MenuDifficulty` llevaban sueltos, que además habían **divergido** (`Menu` repetía con `buttons.heldDown()`; `MenuDifficulty` con el viejo `buttons.state()`). Aquí se unifica en `heldDown()`.
 
 ### API
 ```cpp
@@ -1016,12 +1016,12 @@ public:
   bool step(uint8_t button);   // ¿toca aplicar un paso en este frame?
 };
 ```
-- `step(button)`: `true` si el botón pasó a presión (`pressed`, reinicia ambos cronómetros) o si sigue mantenido (`hold`) y ya vencieron `delay` y `tick` (reinicia solo el de cadencia). `false` en cualquier otro caso.
+- `step(button)`: `true` si el botón pasó a presión (`pressed`, reinicia ambos cronómetros) o si sigue mantenido (`heldDown`) y ya vencieron `delay` y `tick` (reinicia solo el de cadencia). `false` en cualquier otro caso.
 
 ### Decisiones
 - **Sin `reset()`**: ningún call site lo necesita hoy (YAGNI); si aparece, se agrega.
 - **Tiempos por defecto de `Config::Button`** (`DELAY = 400`, `TICK = 100`): las ventanas no repiten constantes propias.
-- Usa `buttons.hold()` (no `state()`), el método vigente.
+- Usa `buttons.heldDown()` (no `state()`), el método vigente.
 
 ### Quién lo usa
 - `Menu` (`_repeat`): en `navigate()` para `MOVE_LEFT`/`MOVE_RIGHT` (§7).
