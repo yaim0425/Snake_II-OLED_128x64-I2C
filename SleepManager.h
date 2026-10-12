@@ -115,7 +115,7 @@ private:
   // Cronómetro del reposo: cuenta el tiempo sin botones presionados
   // fuera de partida; al llegar a Config::Power::IDLE_TIMEOUT_MS se
   // duerme. Se reinicia con cualquier botón.
-  Stopwatch _idle;
+  Stopwatch _timer;
 
   // Duración del aviso de diagnóstico (sustituye al delay(DIAG_MS)).
   Stopwatch _diag;

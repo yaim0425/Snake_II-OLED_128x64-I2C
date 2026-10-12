@@ -16,7 +16,7 @@
 SleepManager::SleepManager(Engine& engine)
   : _state(State::AWAKE),
     _spurious(0),
-    _idle(),
+    _timer(),
     _diag(),
     _diagSeen(false),
     _engine(engine) {}
@@ -43,7 +43,7 @@ void SleepManager::begin() {
   _state = State::AWAKE;
   _spurious = 0;
   _diagSeen = false;
-  _idle.start();
+  _timer.start();
 }
 
 // ========================================================
@@ -67,12 +67,22 @@ bool SleepManager::update() {
 // el contador; fuera de partida y sin actividad durante
 // IDLE_TIMEOUT_MS se entra en reposo. Nunca se entra con un pin
 // en HIGH: el wake por nivel despertaría al instante.
+//
+// El reposo NO aplica en partida ni mientras corre el roll de
+// créditos (Engine::sleepBlocked): el contador se mantiene a
+// cero durante ese tiempo y solo empieza a contar cuando el
+// bloqueo termina (roll acabado / partida acabada).
 // ========================================================
 
 bool SleepManager::updateAwake() {
-  if (buttons.anyPhysical()) _idle.start();
+  if (buttons.anyPhysical()) _timer.start();
 
-  if (!_engine.isInGame() && !buttons.anyPhysical() && _idle.expired(IDLE_TIMEOUT_MS)) {
+  if (_engine.sleepBlocked()) {
+    _timer.start();   // el conteo de inactividad empieza al acabar el bloqueo
+    return true;
+  }
+
+  if (!buttons.anyPhysical() && _timer.expired(IDLE_TIMEOUT_MS)) {
     enterSleep();
     return false;   // se durmió: corta el frame
   }
@@ -160,7 +170,7 @@ void SleepManager::wake() {
   }
   buttons.begin();               // re-ancla el estado: el botón que despertó no es un "press"
   buttons.ignoreUntilRelease();  // ...ni cuenta como pulsación sostenida hasta soltarlo
-  _idle.start();                 // no volver a dormir de inmediato
+  _timer.start();                 // no volver a dormir de inmediato
   _state = State::AWAKE;
 }
 
