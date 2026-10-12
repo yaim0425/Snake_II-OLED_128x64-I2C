@@ -18,7 +18,7 @@ MenuCredits::MenuCredits()
     _winner(false),
     _clear(true),
     _done(true),
-    _blink(),
+    _blink(), 
     _yUp(0),
     _yMiddle(0),
     _blockStart(0),

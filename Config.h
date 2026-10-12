@@ -140,17 +140,16 @@ constexpr char* CREDITS[COUNT] = {
   "License",
   "Polyform",
   "Noncommercial 1.0.0",
-  "Copyright (c)",
-  "2026 yaim0425"
+  "Copyright(c) 2026"
 };
 constexpr char* THANKS = "Thanks for playing!";
-constexpr uint32_t PAUSE_MS = 1500;  // pausa con el bloque centrado
-constexpr uint32_t PX_MS = 1500;      // ms por px de desplazamiento (~25 px/s)
+constexpr uint32_t PAUSE_MS = 1.5 * 1000;  // pausa con el bloque centrado
+constexpr uint32_t PX_MS = 1.5 * 1000;      // ms por px de desplazamiento (~25 px/s)
 }
 
 namespace Legend {
 // constexpr uint32_t HOLD = 250;    // visible fija antes de parpadear
-constexpr uint32_t NEXT = 2000;   // duración total por rombo (avance lento)
+constexpr uint32_t NEXT = 2 * 1000;   // duración total por rombo (avance lento)
 constexpr uint32_t PERIOD = 100;  // período del parpadeo MUY rápido (ms)
 constexpr uint8_t OFF = 50;       // % del período en que está oculto
 }
