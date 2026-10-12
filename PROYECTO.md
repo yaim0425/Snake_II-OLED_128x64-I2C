@@ -110,7 +110,8 @@ Directorio: `D:\Documents\ESP32S3\Snake_II-OLED_128x64-I2C`
 | `Buttons.h/.cpp` | Clase `Buttons`: debounce; `heldDown`/`pressed`/`released`/`anyHeld`/`anyPhysical`/`ignoreUntilRelease`; `MAX_BUTTONS` = contador del enum `Button`; `isSet` declarado en `.h` y definido en `.cpp`. Completa. |
 | `Boot.h/.cpp` | Clase `Boot`: Header "Press any button / to start" parpadeando (`PERIOD=500`, `OFF=20%`), Body con logo `Sprite::LOGO` (80×48) vía `drawBitmap(...,true,false)`. `begin()` suena `SFX_BOOT`; cualquier botón termina (sonido según botón). Animación de bandas anterior comentada. Completa. |
 | `Legend.h/.cpp` | Clase `Legend`: pad MOVE (4 flechas) + 4 rombos ACTION que parpadean de a uno en ciclo lento (`NEXT=2500ms`, `PERIOD=100ms`/`OFF=50%`) y texto de la función del rombo activo en el pie (`Scroller` propio, entra deslizándose). Cualquier botón cierra con sonido (MOVE=`CLICK`, `ACTION_UP`=`BACK`, `ACTION_RIGHT`=`CONFIRM`). Completa. |
-| `Scroller.h/.cpp` | Clase `Scroller`: scroller de 1 bit, 1 banda de ancho completo; texto `int8_t[]` (byte = 1 columna de 8 px); fondo negro, texto blanco. `setTexto()` compone centrado y trunca al límite; `startSlide()`; `update()` 1 px/4 ms; `print()` con cortina activa. Usada por `Menu` (1) y `Legend` (1). Completa. |
+| `ScrollerH.h/.cpp` | Clase `Scroller` (§14): scroller de 1 bit, 1 banda de ancho completo; texto `int8_t[]` (byte = 1 columna de 8 px); fondo negro, texto blanco. `setTexto()` compone centrado y trunca al límite; `startSlide()`; `update()` 1 px/4 ms; `print()` con cortina activa. Usada por `Menu` (1) y `Legend` (1). Completa. (El archivo era `Scroller.cpp`; se renombró a `ScrollerH.cpp` y su guarda es `SCROLLERH_H`.) |
+| `Scroller.h/.cpp` | Clase `Scroller` (§14.2, **nueva**): scroller de 1 bit **en 4 direcciones** (arriba/derecha/abajo/izquierda); bloque de **varias líneas** con color de letra/fondo y `size` por línea; entra, cruza, **pausa opcional** y desaparece. **Creada; aún sin uso** (reemplazará a `ScrollerH` y `ScrollerV`). |
 | `ScrollerV.h/.cpp` | Clase `ScrollerV` (§14.1): scroller de 1 bit **vertical**, 1 banda; compone un **bloque de varias filas** (barra blanca opcional en la primera, letra negra; nombres en blanco) y lo desliza **dentro de la banda** (entra desde abajo/arriba y se centra). `setBloque()`/`startSlide()`/`update()`/`print()`/`done()`; `_strip` por valor (sin memoria dinámica). **Nueva**; la usa `MenuCredits` (el roll, §10.4). |
 | `Menu.h/.cpp` | Clase `Menu`: scroller de 1 bit, rombos/triángulos de posición, navegación con repetición y anti-entrada `_holdButtons`. `begin(showContinue, selected)`, `navigate()`, `action()` (`ACTION_UP`→New/Continue, `ACTION_RIGHT` alterna `_confirm`), `holdButtons()`, `blinkOption()`, `nextOption()`. API anterior (`setOptions`, `setContinueAvailable`, `setBestScore`, `setSelected`, `setTitle`, `setShowFooter`, `confirm()`, `restoreDiamondBand()`) comentada en `Menu.h`. |
 | `MenuDifficulty.h/.cpp` | Clase `MenuDifficulty`: selector nivel 1..10 `< N >` con repetición al mantener. Refactorizada al estilo `MenuSound` (`firstPrint()`/`clear()`/`nextOption()`/`blinkOption()`; `_selected`/`_lastSelected`/`_clear`; `Draw::triangle`; `Blink::changed`/`isVisible`) y activa en el `Engine` (`MENU_DIFFICULTY`); entrada desde `Menu` pendiente. Capa sobre el `Menu` (banda 45..53). `difficulty()` → `Game::setDifficulty`. |
@@ -679,6 +680,25 @@ Versión **vertical** de `Scroller` (§14): compone un **bloque de varias filas*
 - **`print()`** — rellena la banda con negro (`fillRect`) y vuelca los píxeles del bloque que caen **dentro** de la banda (recorte: nada asoma a medias por los bordes). Al llegar al centro (`targetY = (height − _height)/2`) pinta el frame final, pone `_done` y ya no repinta; con `_y == _lastY` (sin movimiento) tampoco repinta.
 - **Usos:** `MenuCredits` (1 instancia, banda `BODY_TOP/BODY_H`, §10.4): un slide por bloque del roll.
 
+### 14.2 Clase `Scroller` — scroller de 1 bit en 4 direcciones (nueva)
+
+Segunda generación de §14, que unifica `ScrollerH` (§14) y `ScrollerV` (§14.1) en **una sola clase** capaz de deslizar en las 4 direcciones de `Draw::Direction` (`DIR_UP`=1, `DIR_RIGHT`=2, `DIR_DOWN`=3, `DIR_LEFT`=4). **Creada; todavía sin uso** (ninguna ventana la instancia aún): el plan es migrar `Menu`/`Legend` y `MenuCredits`, y luego retirar `ScrollerH`/`ScrollerV`. Sin memoria dinámica (`_strip` por valor). Archivos `Scroller.h/.cpp`.
+
+- **`_strip`:** mapa de 1 bit/píxel de **toda la pantalla** `[HEIGHT/8][WIDTH]` (8×128 B = 1024 B); cada byte = 1 columna de 8 px (bit 0 = fila 0, bit 7 = fila 7). Cada línea se compone en `_strip` centrada horizontalmente en la pantalla (`display.centerX`).
+- **Constantes:** `WIDTH`/`HEIGHT`/`CHAR_W`/`CHAR_H` de `Config::Screen`; `MAX_LINES = Config::Scroller::MAX_LINES` (12), `ANIM_H = Config::Scroller::ANIMATION_H` (4 ms/px), `ANIM_V = Config::Scroller::ANIMATION_V` (12 ms/px).
+- **API:**
+  - `void begin(int8_t dir)` — fija la orientación (`Draw::Direction`) y reinicia todo el estado (`_done = true`, sin bloque). Horizontal = `DIR_LEFT`/`DIR_RIGHT`; vertical = `DIR_UP`/`DIR_DOWN`.
+  - `void addText(const char* text, uint8_t size, bool tColor, bool bgColor)` — apila una **línea pendiente** (texto + color de letra/fondo + escala 1..3, recortada en silencio). Hasta `MAX_LINES` (las siguientes se ignoran). **No copia el texto** (guarda el puntero): la cadena debe seguir viva hasta `startSlide()`.
+  - `void setHorizontal(int16_t leftLimit, int16_t rightLimit, int16_t y)` — modo horizontal: columnas donde aparece/desaparece y fila `y` del bloque. `void setVertical(int16_t upLimit, int16_t downLimit)` — modo vertical: filas donde aparece/desaparece; el bloque se centra **horizontalmente en la pantalla**. Los límites son coordenadas de pantalla y pueden quedar fuera.
+  - `void pause(uint16_t pause = 0, int16_t y = -1)` — pausa **solo vertical**: detiene el bloque al llegar a la fila absoluta `y`; con `y < 0` (por defecto) la parada es con el bloque **centrado entre los límites**. `pause != 0` reanuda sola a los `pause` ms; `pause == 0` espera a `resume()`. Tras la parada **sigue y desaparece**.
+  - `void resume()` — levanta una parada con `pause == 0`.
+  - `void startSlide()` — mide el bloque (alto = Σ `size·CHAR_H + 2`; ancho = mayor línea), lo rasteriza a `_strip` (`compose()`), resuelve la parada por defecto (`centerY()`), fija la posición inicial (`startPos()`, límite de aparición) y final (`endPos()`, desaparición), arranca el `Ticker` **y libera** las líneas (`_lineCount = 0`).
+  - `bool update()` — avanza `_step` px por cada paso del `Ticker` (4 ms/px en H, 12 ms/px en V); al llegar a la parada se detiene (drenando el reloj, para no saltar al reanudar). Devuelve `true` mientras anima y `false` si `_done`.
+  - `bool print()` — **borra el rectángulo barrido** por el bloque (unión del anterior y el actual; en horizontal se ensancha para cubrir la cortina) y **pinta el bloque** actual. Devuelve `false` si no cambió de posición o si `_done`. Pone `_done` en el frame en que llega al límite de desaparición.
+  - `bool done() const` — `true` al alcanzar el límite de desaparición.
+- **Privados:** `curtain()`/`timeCurtain()` (adorno de entrada, **solo horizontal**, portado de `ScrollerH`; usa el `size` de la primera línea), `getStripPixel()`/`setStripPixel()`, `clearStrip()`, `compose()`, `centerY()`/`startPos()`/`endPos()`/`blockX()`/`blockY()`, `ticker()`.
+- **Diferencias con `ScrollerH`:** `begin(dir)` con dirección explícita; `addText()` pide `size` por línea; bloque multilínea (estilo `ScrollerV`); reposo por **centro de la banda**; `print()` borra en vez de rellenar la banda; la cortina es un extra y **no arrastra** al bloque (el recorrido no depende de `timeCurtain()`).
+
 ## 15. Namespace `Sprite` — API (sprites de la serpiente y comida especial)
 
 `Sprite.h`. Tabla estática con los sprites (estilo Nokia) y el de la **comida especial**. **Namespace de solo datos** (sin instancia ni `.cpp`): `Sprite::pixel(part, x, y)` y `Sprite::specialPixel(x, y)`. El **logo** (`LOGO`, §8) se dibuja por bloques con `Display::drawBitmap()`.
@@ -923,7 +943,7 @@ namespace Button {          // repetición al mantener un botón (nuevo)
 }
 ```
 
-Los namespaces internos (`Pin`, `Screen`, `Difficulty`, `Version`, `Credits`, `Legend`, `Diamond`, `Button`, `Scroller`, `ScrollerV`, `MenuStrip`, `DefaultTimer`) van en columna 0, sin indentar respecto de `namespace Config {`.
+Los namespaces internos (`Pin`, `Screen`, `Difficulty`, `Version`, `Credits`, `Legend`, `Diamond`, `Button`, `ScrollerH`, `Scroller`, `ScrollerV`, `MenuStrip`, `DefaultTimer`) van en columna 0, sin indentar respecto de `namespace Config {`.
 
 ### Qué contiene y quién lo usa
 | Namespace | Constantes | Las usan |
@@ -936,8 +956,9 @@ Los namespaces internos (`Pin`, `Screen`, `Difficulty`, `Version`, `Credits`, `L
 | `Config::Button` | `DELAY` (400 ms)/`TICK` (100 ms) | `ButtonRepeat` (§23): mantener `DELAY` ms para repetir y luego un paso cada `TICK` ms; lo usan `Menu` y `MenuDifficulty` a través suyo. **Nuevo**. |
 | `Config::Legend` | `NEXT` (2500 ms)/`PERIOD` (100 ms)/`OFF` (50 %); `HOLD` **comentado** | `Legend` (ciclo de rombos con `_ticker`, parpadeo con `_blink`/`Blink`): `HOLD` pasó de 900 ms a comentado; `NEXT` subió de 2200 a 2500 ms. |
 | `Config::Diamond` | `SIZE` (3 px) | `Menu` (rombo marcador y triángulos: `Menu::SIZE`) y `Legend` (rombos de ACTION: `Legend::SIZE`). |
-| `Config::Scroller` | `MAX_H` (32)/`ANIMATION` (4 ms/px); `TOP` **comentado** | `Scroller` (`STRIP_H = MAX_H`; `ANIM_TICK = ANIMATION`). `TOP` quedó **comentado**. |
+| `Config::ScrollerH` | `MAX_H` (32)/`ANIMATION` (4 ms/px); `TOP` **comentado** | `ScrollerH` (§14: `STRIP_H = MAX_H`; `ANIM_TICK = ANIMATION`). `TOP` quedó **comentado**. (En la prosa de §14 el namespace/clase aparece como `Scroller`.) |
 | `Config::ScrollerV` | `MAX_H` (48 = alto del Body)/`ANIMATION` (12 ms/px) | `ScrollerV` (§14.1: `STRIP_H = MAX_H`, `ANIM_TICK = ANIMATION`). **Nuevo**, se añadió con el roll de créditos sobre `ScrollerV`. |
+| `Config::Scroller` | `ANIMATION_H` (4 ms/px)/`ANIMATION_V` (12 ms/px)/`MAX_LINES` (12) | `Scroller` (§14.2: `ANIM_H`/`ANIM_V` y el array fijo de líneas). **Nuevo**, se añadió con la clase `Scroller` de 4 direcciones (aún sin uso). |
 | `Config::MenuStrip` | `BODY_H` (39)/`BODY_MIDDLE` (34)/`BOX_HEIGHT` (16)/`BOX_TOP` (= `BODY_MIDDLE - BOX_HEIGHT/2` = 26)/`VALUE_TOP` (44)/`VALUE_HEIGHT` (11)/`DIAMOND_Y` (= `VALUE_TOP + VALUE_HEIGHT/2` = 49)/`TRIANGLE_Y` (= `Screen::FOOT_TOP - 3` = 53) | `Menu` (cuadro y marcadores, §7) y `MenuSound` (banda del selector ON/OFF). Geometría **centrada en la mitad del Body** (`B`/`C` auxiliares). |
 | `Config::DefaultTimer` | `PERIOD` (500 ms)/`OFF` (20 %); `HOLD` **comentado** | Parpadeo "de cualquier ventana" sin cronómetro propio: hoy `Boot` (mensaje) y `Menu` (rombo de la opción). `HOLD` comentado (sin fase fija inicial). |
 | `Config::Power` | `IDLE_TIMEOUT_MS` (180000 ms; 3 min) | Reposo (§26): tiempo sin actividad fuera de partida antes del light sleep. Lo usa `SleepManager` (cronómetro `_idle`). |

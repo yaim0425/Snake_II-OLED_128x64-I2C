@@ -174,6 +174,12 @@ constexpr uint8_t MAX_H = 48;    // alto máximo del bloque (alto del Body)
 constexpr uint32_t ANIMATION = 12;  // ms por px de desplazamiento vertical
 }
 
+namespace Scroller {
+constexpr uint8_t ANIMATION_H = 4;   // ms por px de desplazamiento horizontal
+constexpr uint8_t ANIMATION_V = 12;  // ms por px de desplazamiento vertical
+constexpr uint8_t MAX_LINES = 12;      // líneas máximas por bloque (array fijo)
+}
+
 namespace DefaultTimer {
 // constexpr uint32_t HOLD = 500;    // mantener sin navegar para parpadear
 constexpr uint32_t PERIOD = 500;  // período completo del parpadeo (ms)

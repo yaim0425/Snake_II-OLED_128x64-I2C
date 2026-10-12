@@ -1,5 +1,5 @@
-#ifndef SCROLLER_H
-#define SCROLLER_H
+#ifndef SCROLLERH_H
+#define SCROLLERH_H
 
 #include "Config.h"
 #include "Timer.h"
