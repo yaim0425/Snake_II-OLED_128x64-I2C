@@ -2,12 +2,12 @@
 #define ENGINE_H
 
 #include "Boot.h"
-// AISLADO: ventanas desactivadas mientras se trabaja en Menu. Arduino compila
-// igual los .cpp de la carpeta, asi que ademas de sacar estos #include hay que
-// dejar inertes Game.cpp, Food.cpp, MenuCredits.cpp y MenuDifficulty.cpp
-// (ver Engine.cpp). MenuSound ya esta fuera del aislamiento.
-// #include "MenuCredits.h"
+#include "MenuCredits.h"
 #include "MenuDifficulty.h"
+// AISLADO: el unico pendiente del aislamiento es Game (y Food, su comida),
+// que se reactivara al integrar la partida con el Menu. Arduino compila igual
+// los .cpp de la carpeta, asi que ademas de no incluir Game.h aqui, Game.cpp y
+// Food.cpp seguiran inertes (ver Engine.cpp).
 // #include "Game.h"
 #include "MenuSound.h"
 #include "Menu.h"
@@ -21,8 +21,9 @@
 // no anidadas entre sí). Cada una es una clase independiente
 // con el patrón begin()/update()/print()/done() y usa los
 // servicios globales (Display, Buttons, Sound — ver Globals.h)
-// directamente. Durante el aislamiento solo quedan Boot, Legend,
-// Menu y MenuSound (ver el bloque AISLADO más abajo).
+// directamente. Durante el aislamiento quedan fuera Boot, Legend,
+// Menu, MenuSound, MenuDifficulty y MenuCredits (ver el bloque
+// AISLADO más abajo); Game sigue aislado.
 //
 // Solo Engine conoce el estado (State): decide qué ventana se
 // ve (update()/print() despachan a la ventana activa) y, al
@@ -36,14 +37,13 @@
 // begin() los reinicie al entrar).
 //
 // ------------------------------------------------------------
-// AISLADO (temporal): Engine solo posee y despacha Boot, Legend,
-// Menu y MenuSound, para poder iterar sobre el Menu sin arrastrar
-// el Game ni el resto de submenus. El flujo queda Boot -> Legend
-// -> Menu y ahi se detiene: las transiciones del Menu hacia el
-// Game, MenuDifficulty y MenuCredits siguen comentadas en
-// Engine.cpp, y MenuSound (activa en el Engine) aun no se puede
-// abrir porque la entrada desde el Menu (Menu::confirm) esta
-// comentada.
+// AISLADO (temporal): el único pendiente del aislamiento es Game
+// (con Food), que se reactivará al integrar la partida con el
+// Menu. El resto de ventanas (Boot, Legend, Menu, MenuSound,
+// MenuDifficulty, MenuCredits) está activo y Engine las posee y
+// despacha: las transiciones del Menu hacia Game (OPT_NEW y
+// OPT_CONTINUE) siguen comentadas en Engine.cpp, y MenuCredits
+// ya se abre desde el Menu (OPT_CREDITS).
 // Para revertir, descomentar por bloques los estados, los
 // miembros y las funciones comentadas.
 // ------------------------------------------------------------
@@ -89,6 +89,14 @@ public:
   bool isInGame() const;
 
   // ========================================================
+  // ¿El reposo no aplica en este momento? (en partida y mientras
+  // corre el roll de créditos, para que el conteo de inactividad
+  // empiece cuando acaba)
+  // ========================================================
+
+  bool sleepBlocked() const;
+
+  // ========================================================
   // Puntaje máximo (lo conserva el menú entre sesiones)
   // ========================================================
 
@@ -99,8 +107,8 @@ private:
   // ========================================================
   // Estado interno: determina qué se ve y a qué ventana se despacha
   //
-  // AISLADO: quedan BOOT, LEGEND, MENU y MENU_SOUND. Los estados del
-  // Game y de los demás submenus se comentan junto con sus ventanas.
+  // AISLADO: los estados del Game (NEW y CONTINUE) siguen comentados
+  // junto con su ventana.
   // ========================================================
 
   enum class State : uint8_t {
@@ -110,8 +118,8 @@ private:
     MENU_SOUND,
     // NEW,
     // CONTINUE,
-    MENU_DIFFICULTY
-    // MENU_CREDITS
+    MENU_DIFFICULTY,
+    MENU_CREDITS
   };
 
   State _state;
@@ -138,16 +146,15 @@ private:
   // ========================================================
   // Ventanas (miembros propios: las posee Engine, ninguna es global)
   //
-  // AISLADO: quedan Boot, Legend, Menu y MenuSound. El Game y los
-  // demás submenus siguen existiendo como clases (sus .h no se
-  // compilan), pero Engine ya no los posee ni los despacha.
+  // AISLADO: Game sigue fuera (su .h no se incluye y Game.cpp/Food.cpp
+  // están inertes); el resto de ventanas está activo.
   // ========================================================
 
   Boot _boot;
   Legend _legend;
   Menu _menu;
   MenuSound _menuSound;
-  // MenuCredits _menuCredits;
+  MenuCredits _menuCredits;
   MenuDifficulty _menuDifficulty;
   // Game _game;
 };

@@ -106,7 +106,8 @@ constexpr char* RELEASE_DATE = "2026/12/31";
 }
 
 namespace Credits {
-constexpr char* Credits[] = {
+constexpr int8_t COUNT = 29;
+constexpr char* CREDITS[COUNT] = {
   Version::NAME,
   Version::VERSION,
   Version::RELEASE_DATE,

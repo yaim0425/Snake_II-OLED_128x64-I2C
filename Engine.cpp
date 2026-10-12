@@ -42,6 +42,7 @@ void Engine::update() {
       switch (_menu.selected()) {
         case Menu::OPT_SOUND: changeState(State::MENU_SOUND); break;
         case Menu::OPT_DIFFICULTY: changeState(State::MENU_DIFFICULTY); break;
+        case Menu::OPT_CREDITS: changeState(State::MENU_CREDITS); break;
         default: changeState(State::LEGEND); break;
       }
 
@@ -105,16 +106,10 @@ void Engine::update() {
       if (_menuDifficulty.done()) changeState(State::MENU);
       break;
 
-      // case State::MENU_CREDITS:
-      //   {
-      //
-      //     _menuCredits.update();
-      //     if (_menuCredits.done()) {
-      //       sound.play(Sound::SFX_BACK);
-      //       changeState(State::MENU);
-      //     }
-      //     break;
-      //   }
+    case State::MENU_CREDITS:
+      _menuCredits.update();
+      if (_menuCredits.done()) changeState(State::MENU);
+      break;
   }
 }
 
@@ -136,14 +131,14 @@ void Engine::print() {
     case State::MENU_DIFFICULTY:
       _menuDifficulty.print();
       break;
+    case State::MENU_CREDITS: _menuCredits.print(); break;
 
-      // AISLADO: ventanas del Game y de los demás submenus (MenuSound ya esta
-      // activa; ver Engine::update).
+      // AISLADO: solo queda Game (y Food, su comida). Al reactivarlo
+      // hay que volver a sacar del comentario sus estados y su ventana.
       // case State::NEW:
       // case State::CONTINUE:
       //   _game.print();
       //   break;
-      // case State::MENU_CREDITS: _menuCredits.print(); break;
   }
 }
 
@@ -177,6 +172,10 @@ void Engine::repaint() {
       _menu.firstPrint(true);
       _menuDifficulty.firstPrint(true);
       break;
+
+    case State::MENU_CREDITS:
+      _menuCredits.firstPrint(true);
+      break;
   }
 }
 
@@ -189,6 +188,19 @@ void Engine::repaint() {
 
 bool Engine::isInGame() const {
   return false;
+}
+
+// ========================================================
+// ¿El reposo no aplica en este momento?
+//
+// En partida y mientras corre el roll de créditos: el conteo de
+// inactividad se mantiene a cero y solo empieza cuando el roll
+// termina (tarjeta final) o se sale de él.
+// ========================================================
+
+bool Engine::sleepBlocked() const {
+  return isInGame() ||
+         (_state == State::MENU_CREDITS && _menuCredits.rolling());
 }
 
 // ========================================================
@@ -225,9 +237,13 @@ void Engine::changeState(State newState) {
 
     case State::MENU_SOUND: _menuSound.begin(); break;
     case State::MENU_DIFFICULTY: _menuDifficulty.begin(); break;
+    case State::MENU_CREDITS:
+      _menuCredits.begin();   // desde el menú: fromGame = false (las variantes de
+                              // Game se activarán al integrarlo)
+      break;
 
-      // AISLADO: ventanas del Game y de los demás submenus (MenuSound ya esta
-      // activa; ver Engine::update).
+      // AISLADO: solo queda Game (y Food, su comida). Al reactivarlo
+      // hay que volver a sacar del comentario sus estados y su ventana.
       // case State::NEW:
       //   _game.setDifficulty(_menuDifficulty.difficulty());
       //   _game.begin(true);
@@ -236,7 +252,6 @@ void Engine::changeState(State newState) {
       //   _game.setDifficulty(_menuDifficulty.difficulty());
       //   _game.begin(false);
       //   break;
-      // case State::MENU_CREDITS: _menuCredits.begin(); break;
   }
 }
 
