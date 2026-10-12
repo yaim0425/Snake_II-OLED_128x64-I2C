@@ -438,7 +438,7 @@ enum Sfx : uint8_t {
 | `SFX_NEW_BEST` | Festejo de récord (suena en "THE BEST") | 523/100, 659/100, 784/100, 1047/140, 784/100, 1047/140, 1319/420 |
 | `SFX_BOOT` | Fanfarria de arranque (en `Boot`) | 523/120, 659/120, 784/120, 1047/180, 784/120, 1047/180, 1319/360 |
 | `SFX_PIRATES` | Canción "Pirates of the Caribbean" (He's a Pirate), completa | 205 notas `{freq, durMs}` en `Sound.cpp` (`SEQ_PIRATES`); con enlace final (G4-E4) que devuelve el bucle al motivo inicial (E4); sin uso todavía. Fuente: repo de xitanggg (MIT, ver `THIRD_PARTY_NOTICES.md`), salvo el enlace final (propio). |
-| `SFX_DRAGON_BALL` | Tema de apertura de Dragon Ball, en bucle (música del roll de créditos desde el menú) | 181 entradas `{freq, durMs}` en `Sound.cpp` (`SEQ_DRAGON_BALL`): cada nota del sketch original se transcribe con su pausa posterior `{0, durMs}` + respiro final `{0, 1000}`, ~28 s. Transcripción del sketch de Francisco Roco (www2.udec.cl/~franciscoroco/dragonBall.txt), sin licencia explícita en la página (ver `THIRD_PARTY_NOTICES.md`). |
+| `SFX_DRAGON_BALL` | Tema de apertura de Dragon Ball, en bucle (música del roll de créditos desde el menú) | ~90 entradas `{freq, durMs}` en `Sound.cpp` (`SEQ_DRAGON_BALL`): melodía ligada, cada nota mantiene su duración completa (`2*dur`, sin el silencio intermedio del sketch original `tone(dur);delay(dur)`, que sonaba picado) + respiro final `{0, 1000}`, ~28 s. Transcripción del sketch de Francisco Roco (www2.udec.cl/~franciscoroco/dragonBall.txt), sin licencia explícita en la página (ver `THIRD_PARTY_NOTICES.md`). |
 
 Paleta del `GameBuzzer` original (salvo las canciones `SFX_PIRATES` y `SFX_DRAGON_BALL`, cuyo origen se cita en sus filas y en `THIRD_PARTY_NOTICES.md`).
 
