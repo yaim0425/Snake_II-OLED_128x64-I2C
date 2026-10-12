@@ -195,15 +195,18 @@ void SleepManager::showDiag() {
   // int16_t msgW;
 
   msg = "ERROR";
-  display.drawText(msg, (WIDTH - strlen(msg) * 12) / 2, HEADER_TOP + 1, TEXT_12x16, true, false);
+  display.drawText(msg, display.centerX(msg, TEXT_12x16), HEADER_TOP + 1, TEXT_12x16, true, false);
+  // display.drawText(msg, (WIDTH - strlen(msg) * 12) / 2, HEADER_TOP + 1, TEXT_12x16, true, false);
 
   msg = "SLEEP FAIL";
   display.fillRect(0, BOX_TOP - 1, WIDTH, BOX_HEIGHT + 2, true);
-  display.drawText(msg, (WIDTH - strlen(msg) * 12) / 2, BOX_TOP, TEXT_12x16, false, true);
+  display.drawText(msg, display.centerX(msg, TEXT_12x16), BOX_TOP, TEXT_12x16, false, true);
+  // display.drawText(msg, (WIDTH - strlen(msg) * 12) / 2, BOX_TOP, TEXT_12x16, false, true);
 
   msg = "The EPS32 is failing";
   display.fillRect(0, FOOT_TOP - 1, WIDTH, FOOT_H + 2, true);
-  display.drawText(msg, (WIDTH - strlen(msg) * 6) / 2, FOOT_TOP, TEXT_6x8, false, true);
+  display.drawText(msg, display.centerX(msg, TEXT_6x8), FOOT_TOP, TEXT_6x8, false, true);
+  // display.drawText(msg, (WIDTH - strlen(msg) * 6) / 2, FOOT_TOP, TEXT_6x8, false, true);
 
   display.show();
   _diag.start();

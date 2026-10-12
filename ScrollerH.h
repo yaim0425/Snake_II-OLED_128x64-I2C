@@ -5,7 +5,7 @@
 #include "Timer.h"
 
 // ========================================================
-// Scroller — animación "scroller de 1 bit"
+// ScrollerH — animación "scroller de 1 bit"
 //
 // Compone un texto en un array de int8_t (cada byte = 1
 // columna de 8 px: bit 0 = fila 0, bit 7 = fila 7) y lo
@@ -19,13 +19,13 @@
 // franja y el cálculo del límite de caracteres.
 // ========================================================
 
-class Scroller {
+class ScrollerH {
 public:
   // ========================================================
   // Constructor (sin parámetros: usa la Display global)
   // ========================================================
 
-  Scroller();
+  ScrollerH();
 
   // ========================================================
   // Inicialización (al entrar en la ventana)
@@ -111,10 +111,10 @@ private:
   static constexpr uint8_t WIDTH = Config::Screen::WIDTH;
 
   // Alto máximo de la franja (texto 18x24)
-  static constexpr uint8_t STRIP_H = Config::Scroller::MAX_H;
+  static constexpr uint8_t STRIP_H = Config::ScrollerH::MAX_H;
 
   // Avance de 1 px cada ANIM_TICK ms (acumulador por tiempo)
-  static constexpr uint32_t ANIM_TICK = Config::Scroller::ANIMATION;
+  static constexpr uint32_t ANIM_TICK = Config::ScrollerH::ANIMATION;
 
   static constexpr int8_t BODY_H = Config::Screen::BODY_H;
 

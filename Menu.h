@@ -6,7 +6,7 @@
 #include "Blink.h"
 #include "ButtonRepeat.h"
 
-#include "Scroller.h"
+#include "ScrollerH.h"
 
 class Menu {
 public:
@@ -219,7 +219,7 @@ private:
   // bool _diamondsDirty;  // hay que repintar solo la banda de rombos (restoreDiamondBand)
   ButtonRepeat _repeat;  // repetición de los botones de navegación al mantenerlos
 
-  Scroller _scroller;  // scroller de 1 bit del cuadro de selección (1 banda, texto 12x16)
+  ScrollerH _scroller;  // scroller de 1 bit del cuadro de selección (1 banda, texto 12x16)
   int8_t _space;
 
   bool _confirm;

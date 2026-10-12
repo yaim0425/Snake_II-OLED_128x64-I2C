@@ -105,23 +105,24 @@ Directorio: `D:\Documents\ESP32S3\Snake_II-OLED_128x64-I2C`
 | Archivo | Contenido |
 |---------|-----------|
 | `Display.h/.cpp` | Clase `Display`: OLED (`begin`, `clear`/`show`, `power(on)`, `fillRect`, `fillTriangle`, `drawText`, `drawBitmap`). Completa. |
-| `Config.h` | Constantes compartidas (namespace `Config`, §19): pines, geometría/regiones, `Difficulty`, `Version`, `Credits`, `Legend`, `Diamond`, `Button`, `Scroller`, `MenuStrip`, `DefaultTimer`, `Power`. Sin `#define` para valores. |
+| `Config.h` | Constantes compartidas (namespace `Config`, §19): pines, geometría/regiones, `Difficulty`, `Version`, `Credits`, `Legend`, `Diamond`, `Button`, `Scroller`, `ScrollerV`, `MenuStrip`, `DefaultTimer`, `Power`. Sin `#define` para valores. |
 | `Globals.h` | `extern` globales: `display`, `buttons`, `sound`, `storage` (definidos en el `.ino`). No declara `Buzzer` ni ventanas. |
 | `Buttons.h/.cpp` | Clase `Buttons`: debounce; `heldDown`/`pressed`/`released`/`anyHeld`/`anyPhysical`/`ignoreUntilRelease`; `MAX_BUTTONS` = contador del enum `Button`; `isSet` declarado en `.h` y definido en `.cpp`. Completa. |
 | `Boot.h/.cpp` | Clase `Boot`: Header "Press any button / to start" parpadeando (`PERIOD=500`, `OFF=20%`), Body con logo `Sprite::LOGO` (80×48) vía `drawBitmap(...,true,false)`. `begin()` suena `SFX_BOOT`; cualquier botón termina (sonido según botón). Animación de bandas anterior comentada. Completa. |
 | `Legend.h/.cpp` | Clase `Legend`: pad MOVE (4 flechas) + 4 rombos ACTION que parpadean de a uno en ciclo lento (`NEXT=2500ms`, `PERIOD=100ms`/`OFF=50%`) y texto de la función del rombo activo en el pie (`Scroller` propio, entra deslizándose). Cualquier botón cierra con sonido (MOVE=`CLICK`, `ACTION_UP`=`BACK`, `ACTION_RIGHT`=`CONFIRM`). Completa. |
 | `Scroller.h/.cpp` | Clase `Scroller`: scroller de 1 bit, 1 banda de ancho completo; texto `int8_t[]` (byte = 1 columna de 8 px); fondo negro, texto blanco. `setTexto()` compone centrado y trunca al límite; `startSlide()`; `update()` 1 px/4 ms; `print()` con cortina activa. Usada por `Menu` (1) y `Legend` (1). Completa. |
+| `ScrollerV.h/.cpp` | Clase `ScrollerV` (§14.1): scroller de 1 bit **vertical**, 1 banda; compone un **bloque de varias filas** (barra blanca opcional en la primera, letra negra; nombres en blanco) y lo desliza **dentro de la banda** (entra desde abajo/arriba y se centra). `setBloque()`/`startSlide()`/`update()`/`print()`/`done()`; `_strip` por valor (sin memoria dinámica). **Nueva**; la usa `MenuCredits` (el roll, §10.4). |
 | `Menu.h/.cpp` | Clase `Menu`: scroller de 1 bit, rombos/triángulos de posición, navegación con repetición y anti-entrada `_holdButtons`. `begin(showContinue, selected)`, `navigate()`, `action()` (`ACTION_UP`→New/Continue, `ACTION_RIGHT` alterna `_confirm`), `holdButtons()`, `blinkOption()`, `nextOption()`. API anterior (`setOptions`, `setContinueAvailable`, `setBestScore`, `setSelected`, `setTitle`, `setShowFooter`, `confirm()`, `restoreDiamondBand()`) comentada en `Menu.h`. |
 | `MenuDifficulty.h/.cpp` | Clase `MenuDifficulty`: selector nivel 1..10 `< N >` con repetición al mantener. Refactorizada al estilo `MenuSound` (`firstPrint()`/`clear()`/`nextOption()`/`blinkOption()`; `_selected`/`_lastSelected`/`_clear`; `Draw::triangle`; `Blink::changed`/`isVisible`) y activa en el `Engine` (`MENU_DIFFICULTY`); entrada desde `Menu` pendiente. Capa sobre el `Menu` (banda 45..53). `difficulty()` → `Game::setDifficulty`. |
 | `MenuSound.h/.cpp` | Clase `MenuSound`: selector On/Off con una flecha sobre la misma banda. Activa (`MENU_SOUND`); entrada desde `Menu` pendiente. Centra a mano (`Config::Screen::WIDTH`, `strlen*6`). Aplica con `Sound::setEnabled`. |
-| `MenuCredits.h/.cpp` | Clase `MenuCredits` (§10.4): roll vertical automático de todo `Config::Credits::CREDITS` (constante `COUNT`; 8 bloques, estilo cine: títulos con barra blanca de ancho completo + nombres; avanza bloque a bloque, siempre centrado, pausa ~800 ms). Tarjeta final `NAME`/`VERSION`/`RELEASE_DATE` (o `THANKS` si se entra desde `Game`). Música `SFX_PIRATES`/`SFX_CANON` en bucle (`Sound::play(..., loop)`); `ACTION_UP` corta la música, suena `SFX_BACK` y vuelve al `Menu`. El reposo queda bloqueado mientras corre el roll (`Engine::sleepBlocked`). El `.cpp` usa solo los renombres de clase (`CREDITS`/`COUNT`/`TITLE`/`CARD_*`), sin `Config` directo ni `int32_t`. Completa. |
+| `MenuCredits.h/.cpp` | Clase `MenuCredits` (§10.4): roll vertical automático de todo `Config::Credits::CREDITS` (constante `COUNT`; 8 bloques, estilo cine: títulos con barra blanca de ancho completo + nombres; avanza bloque a bloque, siempre centrado, pausa ~800 ms). **Cada bloque se desliza con un `ScrollerV` propio** (§14.1). Tarjeta final `NAME`/`VERSION`/`RELEASE_DATE` (o `THANKS` si se entra desde `Game`), con el Header visible. Música `SFX_PIRATES`/`SFX_DRAGON_BALL` en bucle (`Sound::play(..., loop)`); `ACTION_UP` corta la música, suena `SFX_BACK` y vuelve al `Menu`. El reposo queda bloqueado mientras corre el roll (`Engine::sleepBlocked`). El `.cpp` usa solo los renombres de clase (`CREDITS`/`COUNT`/`TITLE`/`CARD_*`), sin `Config` directo ni `int32_t`. Completa. |
 | `Game.h/.cpp` | Clase `Game`: ventana del juego (estados `NEW`/`CONTINUE`). Coordina dificultad/velocidad, botones (MOVE→`Snake::turn`), `snake.step()`, `Food`, puntaje, sonidos, overlays y volcado del tablero (`Config::Screen::CELL`, `SPRITE_SCALE`). Completa. |
 | `Food.h/.cpp` | Clase `Food`: estado (posición, tipo normal/especial), `spawn` en celdas libres (consulta `Game::occupied`), dibujo del rombo/sprite `SPECIAL_FOOD`, temporizador de la especial. Celda de `Config::Screen::CELL`. Completa. |
 | `Snake.h/.cpp` | Clase `Snake`: lógica pura (buffer circular, dirección + giro pendiente sin reversa, paso con wrap, colisión, comer/crecer, elección de sprites). Sin `Display`/`Sound`/`Food`. Completa. |
 | `Engine.h/.cpp` | Clase `Engine` (antes `App`): despachador; posee las ventanas `_boot`, `_menu`, `_menuDifficulty`, `_menuSound`, `_menuCredits`, `_game`, `_legend`; `changeState()` llama `begin()` de la entrante (parámetro `beginWindow=false` previsto para volver sin repintar); `isInGame()`/`sleepBlocked()` (éste bloquea el reposo en partida y mientras corre el roll de créditos). Completa. |
 | `Snake_II-OLED_128x64-I2C.ino` | Wiring: define servicios globales y `storage`; crea `Engine engine;` y `SleepManager sleepManager(engine);`. `setup()`: `display.begin()`, `buttons.begin()`, `sound.begin()`, `engine.begin()`, `sleepManager.begin()`. `loop()`: `buttons.read()` (única lectura), `if (!sleepManager.update()) return;` (si `false` = durmiendo/aviso, corta el frame), `engine.update()`, `engine.print()`, `sound.update()`, `display.show()`. |
 | `Buzzer.h/.cpp` | Clase `Buzzer`: hardware, 1 tono no bloqueante (LEDC). Propiedad de `Sound` por valor. Completa. |
-| `Sound.h/.cpp` | Clase `Sound`: secuencias de efectos sobre su `Buzzer` interno; `play(effect, loop)` con bucle (música de fondo); canciones `SFX_PIRATES` y `SFX_CANON`; `setEnabled`. Completa. |
+| `Sound.h/.cpp` | Clase `Sound`: secuencias de efectos sobre su `Buzzer` interno; `play(effect, loop)` con bucle (música de fondo); canciones `SFX_PIRATES` y `SFX_DRAGON_BALL`; `setEnabled`. Completa. |
 | `Storage.h/.cpp` | Clase `Storage`: mejor puntaje, sonido, dificultad (defaults de `Config`; clamp en `setDifficulty`). Datos puros, sin `begin`/`update`/hardware. Instancia global `storage` (§22). Completa; **pendiente de integrar**. |
 | `Sprite.h` | Namespace `Sprite`: sprites de la serpiente (4×4) + comida especial (8×4) + logo `LOGO` (80×48). Solo datos (header-only). |
 | `Timer.h/.cpp` | Reloj de 64 bits (`nowMs()`, `Stopwatch`, `Ticker`) sobre `esp_timer_get_time()`. Definiciones en el `.cpp`. |
@@ -416,7 +417,7 @@ enum Sfx : uint8_t {
   SFX_NONE = 0, SFX_CLICK, SFX_CONFIRM, SFX_BACK,
   SFX_EAT, SFX_START, SFX_LEVEL_UP, SFX_GAME_OVER,
   SFX_TICK, SFX_TURN, SFX_PAUSE, SFX_RESUME,
-  SFX_NEW_BEST, SFX_BOOT, SFX_PIRATES, SFX_CANON,
+  SFX_NEW_BEST, SFX_BOOT, SFX_PIRATES, SFX_DRAGON_BALL,
   SFX_COUNT   // SFX_COUNT = tamaño de EFFECTS
 };
 ```
@@ -437,9 +438,9 @@ enum Sfx : uint8_t {
 | `SFX_NEW_BEST` | Festejo de récord (suena en "THE BEST") | 523/100, 659/100, 784/100, 1047/140, 784/100, 1047/140, 1319/420 |
 | `SFX_BOOT` | Fanfarria de arranque (en `Boot`) | 523/120, 659/120, 784/120, 1047/180, 784/120, 1047/180, 1319/360 |
 | `SFX_PIRATES` | Canción "Pirates of the Caribbean" (He's a Pirate), completa | 205 notas `{freq, durMs}` en `Sound.cpp` (`SEQ_PIRATES`); con enlace final (G4-E4) que devuelve el bucle al motivo inicial (E4); sin uso todavía. Fuente: repo de xitanggg (MIT, ver `THIRD_PARTY_NOTICES.md`), salvo el enlace final (propio). |
-| `SFX_CANON` | Canción "Canon en Re mayor" (Pachelbel), parte alegre, pensada para sonar en bucle | 151 notas `{freq, durMs}` en `Sound.cpp` (`SEQ_CANON`), ~25 s; sin uso todavía. Arreglo propio sobre la progresión del cánon (dominio público), cierra en la tónica para repetir limpio. |
+| `SFX_DRAGON_BALL` | Tema de apertura de Dragon Ball, en bucle (música del roll de créditos desde el menú) | 181 entradas `{freq, durMs}` en `Sound.cpp` (`SEQ_DRAGON_BALL`): cada nota del sketch original se transcribe con su pausa posterior `{0, durMs}` + respiro final `{0, 1000}`, ~28 s. Transcripción del sketch de Francisco Roco (www2.udec.cl/~franciscoroco/dragonBall.txt), sin licencia explícita en la página (ver `THIRD_PARTY_NOTICES.md`). |
 
-Paleta del `GameBuzzer` original (salvo `SFX_PIRATES`, tomada de la partitura/enlace citado arriba, y `SFX_CANON`, arreglo propio sobre dominio público).
+Paleta del `GameBuzzer` original (salvo las canciones `SFX_PIRATES` y `SFX_DRAGON_BALL`, cuyo origen se cita en sus filas y en `THIRD_PARTY_NOTICES.md`).
 
 ### Métodos
 | Método | Descripción |
@@ -502,36 +503,36 @@ Geometría y parpadeo de ambas (`WIDTH`, `SIZE`, `PERIOD`/`OFF`, `VALUE_TOP`/`VA
 
 ### `MenuCredits` — roll de créditos
 
-`MenuCredits.h/.cpp` (antes: 3 entradas navegables con 2 `Scroller` sincronizadas; **reescrita** al roll vertical). Ventana de pantalla completa: Header 0..15 con "Credits" 12x16 centrado y Body 16..63 como carril del roll. **No usa `Scroller`**: dibujo directo por frame con `Stopwatch` (velocidad frame-rate independiente).
+`MenuCredits.h/.cpp` (antes: 3 entradas navegables con 2 `Scroller` sincronizadas; **reescrita** al roll vertical). Ventana de pantalla completa: Header 0..15 con el título 12x16 centrado y Body 16..63 como banda del roll. **Cada bloque se desliza dentro del Body con un `ScrollerV`** (§14.1) propio; `MenuCredits` ya no dibuja filas a mano ni lleva reloj de movimiento.
 
-**Contenido** = `Config::Credits::CREDITS` completo (§19), iterado con la constante `COUNT` (29 filas; el `.cpp` solo usa los **renombres** de clase `CREDITS`/`COUNT`, nunca `Config`). Fila en blanco = separador; la primera no vacía tras un separador es un **Título** (barra blanca de ancho completo + letra negra 6x8); el resto son **nombres** (texto normal 6x8, centrado). El bloque inicial (`NAME`/`VERSION`/`RELEASE_DATE`) **no** lleva barra. Los bloques = filas no vacías consecutivas (hoy 8; tope `MAX_BLOCKS=8`, defensa).
+**Contenido** = `Config::Credits::CREDITS` completo (§19), iterado con la constante `COUNT` (29 filas; el `.cpp` solo usa los **renombres** de clase `CREDITS`/`COUNT`, nunca `Config`). Fila en blanco = separador; los bloques = filas no vacías consecutivas (hoy 8; tope `MAX_BLOCKS=8`, defensa). En cada bloque la primera fila es un **Título** (barra blanca de ancho completo + letra negra 6x8) y el resto **nombres** (texto normal 6x8, centrado) — lo compone `ScrollerV::setBloque(..., firstBar)`. El bloque inicial (`NAME`/`VERSION`/`RELEASE_DATE`) **no** lleva barra (`firstBar = _block > 0`).
 
-**Movimiento (estilo cine, bloque a bloque):** cada bloque entra desde abajo del carril (`START_PY = BODY_TOP+BODY_H = 64`), se **centra verticalmente** en el Body (`blockTargetY(b)` = `BODY_CTR(40) − centro del bloque`), pausa **800 ms** y avanza el siguiente. Velocidad **1 px/40 ms** (~25 px/s). Solo se dibujan filas **completas** dentro del carril (`y>=BODY_TOP` y `y+8<=BODY_TOP+BODY_H`): nada asoma a medias por los bordes (evita pintar sobre el Header o el pie).
+**Movimiento (estilo cine, bloque a bloque):** `advance()` compone el bloque actual (array de líneas) con `_scroller.setBloque(lines, n, BODY_TOP, BODY_H, true, 1, _block > 0)` y arranca `startSlide()`. Cada bloque entra **desde abajo** de la banda (`_y = BODY_H` relativo), sube y se **centra** (`targetY = (BODY_H − height)/2`), pausa **`PAUSE_MS` (800 ms)** y avanza el siguiente. Velocidad **`ScrollerV::ANIMATION`** (12 ms/px; `Ticker` frame-rate independiente). `ScrollerV` recorta el bloque si no cabe (`MAX_H` = 48 → hasta 4 filas de `LINE_H`=10). `print()` rellena la banda con negro y vuelca solo los píxeles del bloque que caen dentro del Body (nada asoma a medias por los bordes). Mientras el bloque está parado, `ScrollerV::print()` no repinta (bandera `_done`, igual que `Scroller`).
 
-**Tarjeta final (fase `CARD`):** Body negro + 3 filas 6x8 centradas `NAME`/`VERSION`/`RELEASE_DATE` (y=25/35/45). Con `fromGame=true` una sola línea centrada: `Config::Credits::THANKS`. El Header se apaga también (foco en la tarjeta).
+**Tarjeta final (fase `CARD`):** Body negro + 3 filas 6x8 centradas `NAME`/`VERSION`/`RELEASE_DATE` (y=25/35/45). Con `fromGame=true` una sola línea centrada: `Config::Credits::THANKS`. El **Header permanece visible** (se borra solo el Body).
 
-**Música:** `begin(fromGame)` arranca `sound.play(SFX_PIRATES o SFX_CANON, true)` en bucle (§10.2). `ACTION_UP` en cualquier momento: `sound.stop()` + `SFX_BACK` + `done()` → el `Engine` vuelve al `Menu`.
+**Música:** `begin(fromGame)` arranca `sound.play(SFX_PIRATES o SFX_DRAGON_BALL, true)` en bucle (§10.2). `ACTION_UP` en cualquier momento: `sound.stop()` + `SFX_BACK` + `done()` → el `Engine` vuelve al `Menu`.
 
 **Reposo (§26):** mientras `_phase==ROLL`, `rolling()` devuelve `true` y `Engine::sleepBlocked()` lo reporta; `SleepManager` mantiene `_idle` a cero durante el roll y el conteo de inactividad empieza cuando acaba (fase `CARD` o salida).
 
 | Miembro | Descripción |
 |---------|-------------|
-| `MenuCredits()` | `_done=true`, `_phase=CARD`: inerte hasta `begin()`. |
-| `void begin(bool fromGame=false, bool winner=false)` | `_clear=true`, `_done=false`, `_phase=ROLL`; `computeBlocks()`, `_block=0`, `_py=START_PY`, `startMoveTo(0)`; `sound.stop()` + música en bucle (`SFX_PIRATES` si `fromGame`, si no `SFX_CANON`). |
-| `void update()` | `ACTION_UP` → salir (`sound.stop()` + `SFX_BACK` + `_done=true`). En `ROLL`: moviéndose interpola `_py` sin `int32_t` (proporción `dist*elapsed/_moveMs`, dist<=299 → cabe en `uint32`; `_anim.elapsed()>=_moveMs` → se posa y pausa); en pausa, `_pause.expired(PAUSE_MS)` → bloque siguiente o `_phase=CARD`. |
-| `void print()` | `firstPrint()` + `drawRoll()` (si `ROLL`) o `drawCard()`. |
-| `void firstPrint(bool forceRedraw=false)` | Primer frame (o forzado): `clear()` + "Credits" 12x16 centrado en el Header. |
+| `MenuCredits()` | `_done=true`, `_phase=CARD`, `_paused=false`: inerte hasta `begin()`. |
+| `void begin(bool fromGame=false, bool winner=false)` | `_clear=true`, `_done=false`, `_phase=ROLL`; `computeBlocks()`, `_block=0`, `advance()` (compone el bloque 0 y arranca su slide); `sound.stop()` + música en bucle (`SFX_PIRATES` si `fromGame`, si no `SFX_DRAGON_BALL`). |
+| `void update()` | `ACTION_UP` → salir (`sound.stop()` + `SFX_BACK` + `_done=true`). En `ROLL`: si `_scroller.done()` ancla la pausa (`_pause.start()`, `_paused=true`) y al expirar `PAUSE_MS` → bloque siguiente o `_phase=CARD`; si no, `_scroller.update()` (avanza el slide). |
+| `void print()` | `firstPrint()` + `drawRoll()` (si `ROLL`) o `drawCard()`. `drawRoll()` delega en `_scroller.print()`. |
+| `void firstPrint(bool forceRedraw=false)` | Primer frame (o forzado): `clear()` + título 12x16 centrado en el Header (`CREDITS`/`GAME OVER`/`YOU WIN` según `fromGame`/`winner`). |
 | `bool done()` / `bool rolling()` | Salida pedida / `_phase == Phase::ROLL`. |
-| `computeBlocks()` | Divide el array en bloques no vacíos consecutivos (`{start, count}`). |
-| `blockTargetY(b)` / `startMoveTo(b)` | Centro vertical del bloque / anima `_py` → objetivo (`|dist| * PX_MS`). |
-| `drawRoll()` / `drawCard()` | Dibujan el carril / la tarjeta final. |
-| `_fromGame` | `true` = se llegó desde `Game` (música pirata + `THANKS`). Hoy el `Engine` entra con `false` (desde el `Menu`); Game lo pasará al integrarlo. |
+| `computeBlocks()` / `advance()` | Divide el array en bloques no vacíos consecutivos (`{start, count}`) / compone el bloque actual en el `ScrollerV` y arranca su slide. |
+| `drawRoll()` / `drawCard()` | Slide del bloque actual (delega en `_scroller.print()`) / tarjeta final. |
+| `_fromGame` / `_winner` | `true` = se llegó desde `Game` (música pirata + `THANKS`). Hoy el `Engine` entra con `false` (desde el `Menu`); Game lo pasará al integrarlo. |
 | `_clear` / `_done` / `_phase` | Primer frame tras `begin` / salida pedida / `ROLL` o `CARD`. |
 | `_blocks[]` / `_blockCount` / `_block` | Bloques derivados del array / cuántos hay / el actual. |
-| `_py` / `_from` / `_to` / `_moveMs` | Posición (px) de la fila 0 / segmento del movimiento en curso. |
-| `_anim` / `_pause` / `_moving` | `Stopwatch` del movimiento, `Stopwatch` de la pausa, y bandera "avanzando". |
+| `_scroller` / `_pause` / `_paused` | `ScrollerV` del slide del bloque actual / `Stopwatch` de la pausa / bandera "pausa anclada para este bloque". |
+| `_blockStart` / `_blockH` | Índice de la primera fila del bloque actual / alto del bloque en px (espejo de `_blocks[_block]`). |
+| `_blink` / `_yUp` / `_yMiddle` | Reservados (sin uso hoy) para un futuro aviso de salida parpadeante. |
 
-Constantes de clase: de `Config::Screen` (`WIDTH`, `HEADER_TOP`, `HEADER_H`, `BODY_TOP`, `BODY_H`) más `CHAR_W=6`, `CHAR_H=8`, `LINE_H=10`, `BODY_CTR=40`, `PAUSE_MS=800`, `PX_MS=40`, `START_PY=64`, `MAX_BLOCKS=8`, `COUNT` (`static constexpr`). **Renombres de `Config`** (el `.cpp` no referencia `Config` nunca): `CREDITS` (=`Config::Credits::CREDITS`), `TITLE` ("Credits"), `CARD_THANKS` (=`Config::Credits::THANKS`), `CARD_NAME`/`CARD_VERSION`/`CARD_DATE` (=`Config::Version::NAME`/`VERSION`/`RELEASE_DATE`). Helper `centerX(line, charW)` = x para centrar una fila (`WIDTH − strlen*charW`)/2 (sin casts en el cuerpo).
+Constantes de clase: de `Config::Screen` (`WIDTH`, `HEADER_TOP`, `BODY_TOP`, `BODY_H`) más `CHAR_H=8`, `LINE_H=10`, `PAUSE_MS` (=`Config::Credits::PAUSE_MS`), `MAX_BLOCKS=8`, `COUNT` (`static constexpr`). **Renombres de `Config`** (el `.cpp` no referencia `Config` nunca): `CREDITS` (=`Config::Credits::CREDITS`), `TITLE_CREDITS`/`TITLE_GAME_OVER`/`TITLE_WINNER`, `CARD_THANKS` (=`Config::Credits::THANKS`), `CARD_NAME`/`CARD_VERSION`/`CARD_DATE` (=`Config::Version::NAME`/`VERSION`/`RELEASE_DATE`). El centrado horizontal lo hace `display.centerX()` y el del bloque `ScrollerV::targetY()` (ya no hay helper `centerX` propio).
 
 ## 11. Clase `Engine` — despachador de ventanas
 
@@ -576,7 +577,7 @@ enum class State : uint8_t {
 | `CONTINUE` | `Game` | **Comentado (aislado).** Previsto: reanudar en pausa (`begin(false)`); se retoma con `ACTION_RIGHT` (Btn2) o `ACTION_LEFT`; si no hay partida en curso, arranca nueva. Al `done()`, igual que `NEW`. |
 | `MENU_DIFFICULTY` | `MenuDifficulty` | **Activo.** Selector 1..10 **sobre el `Menu`**: borra/repinta la banda 45..53 con `< N >`. `MOVE_LEFT/RIGHT` editan con repetición (`SFX_CLICK` por paso), `ACTION_RIGHT` aplica, `ACTION_UP` cancela. Al `done()` → `changeState(MENU)`; el nivel queda en `_difficulty`. |
 | `MENU_SOUND` | `MenuSound` | **Activo.** Selector On/Off sobre el `Menu`, misma banda. `MOVE_LEFT` apaga / `MOVE_RIGHT` enciende (`SFX_CLICK`), `ACTION_RIGHT` aplica (`sound.setEnabled()`, `SFX_CONFIRM` solo si queda ON), `ACTION_UP` cancela. Al `done()` → `changeState(MENU, false)` (hoy `begin()` completo por `restoreDiamondBand()` comentada). El valor real vive en `Sound`. |
-| `MENU_CREDITS` | `MenuCredits` | **Activo** (§10.4). Roll vertical automático de los créditos (§19, hoy 8 bloques): bloque a bloque, centrado, pausa 800 ms, tarjeta final `NAME`/`VERSION`/`DATE` (o `THANKS` desde `Game`). Música `SFX_PIRATES`/`SFX_CANON` en bucle. `ACTION_UP` corta música, `SFX_BACK` y `done()` → `MENU`. Reposo bloqueado mientras corre (`rolling()` → `Engine::sleepBlocked()`). |
+| `MENU_CREDITS` | `MenuCredits` | **Activo** (§10.4). Roll vertical automático de los créditos (§19, hoy 8 bloques): bloque a bloque, centrado, pausa 800 ms, tarjeta final `NAME`/`VERSION`/`DATE` (o `THANKS` desde `Game`). Música `SFX_PIRATES`/`SFX_DRAGON_BALL` en bucle. `ACTION_UP` corta música, `SFX_BACK` y `done()` → `MENU`. Reposo bloqueado mientras corre (`rolling()` → `Engine::sleepBlocked()`). |
 
 ### Métodos
 | Método | Descripción |
@@ -666,6 +667,17 @@ Encapsula la animación "scroller de 1 bit": compone un texto en un **array de `
 - **Iteración actual:** la **cortina** está **activa**: `curtain()` (triángulos que tapan la franja por delante) se ancla al **frente** (`front`, helper `timeCurtain()` = `6*_size + 4*_size - 1` px) y se dibuja cada frame. `startSlide()` arranca en `-timeCurtain()` (fuera de pantalla, lado según `toLeft`); mientras `_x < 0`, `print()` solo vuelca la cortina (el texto no entra hasta que la cortina asoma): la cortina **arrastra al texto** y el recorrido total pasa a ser `WIDTH + timeCurtain` px.
 - **Usos:** `Menu` = 1 instancia (16 px, fila `BOX_TOP=26`): **transición activa**; `nextOption()` compone con `setTexto(OPTION[_selected], BOX_TOP, _lastSelected > _selected, TEXT_12x16)` y `startSlide()` al cambiar la selección; mientras `update()` devuelve `true` el resto de `Menu::update()` queda **congelado** y al terminar se reinicia `_timer` (parpadeo). `MenuCredits` ya **no** lo usa (roll directo, §10.4). `Legend` = 1 para el pie (8 px, `_printY = Config::Screen::FOOT_TOP`).
 - **Detalle:** `setTexto()` usa `display.getTextWidth()` (centrado) y `display.getWidth()` (límite). `_strip[STRIP_H/8][WIDTH]` guarda columnas. `Boot` **no** usa `Scroller` (mensaje/logo estáticos con parpadeo propio, §8).
+
+### 14.1 Clase `ScrollerV` — scroller vertical de 1 bit
+
+Versión **vertical** de `Scroller` (§14): compone un **bloque de varias filas** en el mismo formato 1 bit (byte = 1 columna de 8 px; bit 0 = fila 0) y lo desliza **dentro de una banda** de la pantalla hasta centrarlo. Sin memoria dinámica (`_strip` por valor, 768 B). Archivos `ScrollerV.h/.cpp`.
+
+- **Constantes:** `WIDTH = Config::Screen::WIDTH` (128), `STRIP_H = Config::ScrollerV::MAX_H` (48, alto del Body), `ANIM_TICK = Config::ScrollerV::ANIMATION` (12 ms/px), `CHAR_H = Config::Screen::CHAR_H`, `LINE_GAP = 2`.
+- **`setBloque(lineas, n, top, height, fromBelow = true, size = 1, firstBar = true)`** — compone el bloque: `n` filas de `LINE_H = CHAR_H*size + LINE_GAP` px dentro de la banda `top/height`; `fromBelow` fija la dirección del slide; `firstBar` pinta la primera fila como **barra blanca de ancho completo con letra negra** (título); el resto es texto blanco sobre negro. Cada fila se compone centrada en un `GFXcanvas8(WIDTH, LINE_H)` y se extrae a la franja. `n` se **recorta** si el bloque no cabe (`STRIP_H/LINE_H`). Deja `_done` puesta.
+- **`startSlide()`** — arranca **fuera de la banda** (`_y = height` si `fromBelow`, `−_height` si no), baja `_done` y **fuerza el repintado del primer frame** (`_lastY = _y + 1`, así borra el bloque anterior aunque el primer `update()` no mueva).
+- **`update()`** — avanza 1 px por cada `ANIM_TICK` ms (acumulador por tiempo; **no acota**, como `Scroller`). Devuelve `true` mientras el bloque entra, `false` al terminar (y ya no consume el reloj) hasta `setBloque()`/`startSlide()`.
+- **`print()`** — rellena la banda con negro (`fillRect`) y vuelca los píxeles del bloque que caen **dentro** de la banda (recorte: nada asoma a medias por los bordes). Al llegar al centro (`targetY = (height − _height)/2`) pinta el frame final, pone `_done` y ya no repinta; con `_y == _lastY` (sin movimiento) tampoco repinta.
+- **Usos:** `MenuCredits` (1 instancia, banda `BODY_TOP/BODY_H`, §10.4): un slide por bloque del roll.
 
 ## 15. Namespace `Sprite` — API (sprites de la serpiente y comida especial)
 
@@ -911,7 +923,7 @@ namespace Button {          // repetición al mantener un botón (nuevo)
 }
 ```
 
-Los namespaces internos (`Pin`, `Screen`, `Difficulty`, `Version`, `Credits`, `Legend`, `Diamond`, `Button`, `Scroller`, `MenuStrip`, `DefaultTimer`) van en columna 0, sin indentar respecto de `namespace Config {`.
+Los namespaces internos (`Pin`, `Screen`, `Difficulty`, `Version`, `Credits`, `Legend`, `Diamond`, `Button`, `Scroller`, `ScrollerV`, `MenuStrip`, `DefaultTimer`) van en columna 0, sin indentar respecto de `namespace Config {`.
 
 ### Qué contiene y quién lo usa
 | Namespace | Constantes | Las usan |
@@ -920,11 +932,12 @@ Los namespaces internos (`Pin`, `Screen`, `Difficulty`, `Version`, `Credits`, `L
 | `Config::Screen` | `WIDTH`/`HEIGHT`/`CELL`/`ADDRESS` y regiones `HEADER_*`/`BODY_*`/`FOOT_*` | `Display` (defaults y `regionBounds`), `Boot` (bandas TITULO=Header/CUERPO=Body), `Game` (tablero en el Body, celda de sprites y `BODY_TOP`), `Food` (celda: centro del rombo y sprite especial), `MenuCredits` (rol del Body), `Legend` (línea/fila del pie), `Scroller` (`WIDTH`) |
 | `Config::Difficulty` | `MIN_LEVEL`/`MAX_LEVEL`/`DEFAULT_LEVEL` | `MenuDifficulty` y `Game` (`setDifficulty`/velocidad): antes duplicadas. El sufijo `_LEVEL`/`DEFAULT_LEVEL` evita la macro `DEFAULT` del core ESP32. |
 | `Config::Version` | `VERSION`/`RELEASE_DATE` | `Menu` (`version`, texto del pie; antes `"v0.1"` en la firma). `RELEASE_DATE` aún sin uso (queda para créditos o pie). `NAME` ("Snake II") lo dibuja `Boot` como título. |
-| `Config::Credits` | `CREDITS[COUNT]` (`COUNT`=29, `int8_t`)/`THANKS` | `MenuCredits` (§10.4): el roll y la tarjeta final (vía los renombres de clase `CREDITS`/`COUNT`/`CARD_THANKS`). **Nuevo**: el array pasó de `Credits[]` a `CREDITS[COUNT]` con la cantidad como constante (el `.cpp` ya no calcula `sizeof`). |
+| `Config::Credits` | `CREDITS[COUNT]` (`COUNT`=29, `int8_t`), `THANKS`, `PAUSE_MS` (800), `PX_MS` (40) | `MenuCredits` (§10.4): el roll y la tarjeta final (vía los renombres de clase `CREDITS`/`COUNT`/`CARD_THANKS`); `PAUSE_MS` es la pausa con el bloque centrado. `PX_MS` queda **sin uso** (la velocidad del roll ahora la da `ScrollerV::ANIMATION`, §14.1). **Nuevo**: el array pasó de `Credits[]` a `CREDITS[COUNT]` con la cantidad como constante, y `PAUSE_MS`/`PX_MS` viven aquí (antes en `MenuCredits`). |
 | `Config::Button` | `DELAY` (400 ms)/`TICK` (100 ms) | `ButtonRepeat` (§23): mantener `DELAY` ms para repetir y luego un paso cada `TICK` ms; lo usan `Menu` y `MenuDifficulty` a través suyo. **Nuevo**. |
 | `Config::Legend` | `NEXT` (2500 ms)/`PERIOD` (100 ms)/`OFF` (50 %); `HOLD` **comentado** | `Legend` (ciclo de rombos con `_ticker`, parpadeo con `_blink`/`Blink`): `HOLD` pasó de 900 ms a comentado; `NEXT` subió de 2200 a 2500 ms. |
 | `Config::Diamond` | `SIZE` (3 px) | `Menu` (rombo marcador y triángulos: `Menu::SIZE`) y `Legend` (rombos de ACTION: `Legend::SIZE`). |
 | `Config::Scroller` | `MAX_H` (32)/`ANIMATION` (4 ms/px); `TOP` **comentado** | `Scroller` (`STRIP_H = MAX_H`; `ANIM_TICK = ANIMATION`). `TOP` quedó **comentado**. |
+| `Config::ScrollerV` | `MAX_H` (48 = alto del Body)/`ANIMATION` (12 ms/px) | `ScrollerV` (§14.1: `STRIP_H = MAX_H`, `ANIM_TICK = ANIMATION`). **Nuevo**, se añadió con el roll de créditos sobre `ScrollerV`. |
 | `Config::MenuStrip` | `BODY_H` (39)/`BODY_MIDDLE` (34)/`BOX_HEIGHT` (16)/`BOX_TOP` (= `BODY_MIDDLE - BOX_HEIGHT/2` = 26)/`VALUE_TOP` (44)/`VALUE_HEIGHT` (11)/`DIAMOND_Y` (= `VALUE_TOP + VALUE_HEIGHT/2` = 49)/`TRIANGLE_Y` (= `Screen::FOOT_TOP - 3` = 53) | `Menu` (cuadro y marcadores, §7) y `MenuSound` (banda del selector ON/OFF). Geometría **centrada en la mitad del Body** (`B`/`C` auxiliares). |
 | `Config::DefaultTimer` | `PERIOD` (500 ms)/`OFF` (20 %); `HOLD` **comentado** | Parpadeo "de cualquier ventana" sin cronómetro propio: hoy `Boot` (mensaje) y `Menu` (rombo de la opción). `HOLD` comentado (sin fase fija inicial). |
 | `Config::Power` | `IDLE_TIMEOUT_MS` (180000 ms; 3 min) | Reposo (§26): tiempo sin actividad fuera de partida antes del light sleep. Lo usa `SleepManager` (cronómetro `_idle`). |

@@ -579,7 +579,8 @@ void Menu::toggleTriangle(int8_t triangle, bool show) {
 
 void Menu::toggleText(bool show) {
   const char* text = OPTION[_selected];
-  display.drawText(text, (WIDTH - strlen(text) * 12) / 2, BOX_TOP, TEXT_12x16, !show, true);
+  display.drawText(text, display.centerX(text, TEXT_12x16), BOX_TOP, TEXT_12x16, !show, true);
+  // display.drawText(text, (WIDTH - strlen(text) * 12) / 2, BOX_TOP, TEXT_12x16, !show, true);
 }
 
 void Menu::showOptions() {

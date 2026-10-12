@@ -163,12 +163,13 @@ public:
   // true si la pantalla quedó operativa (el OLED respondió en begin());
   // false si la inicialización falló (pantalla ausente por I2C)
   // bool isReady() const;
+  int16_t centerX(const char* text, int8_t size) const;
 
 private:
   Adafruit_SSD1306* _screen;
 
-  static constexpr uint8_t CHAR_W = 6;
-  static constexpr uint8_t CHAR_H = 8;
+  const uint8_t CHAR_W = Config::Screen::CHAR_W;
+  const uint8_t CHAR_H = Config::Screen::CHAR_H;
 
   const int16_t WIDTH = Config::Screen::WIDTH;
   const int16_t HEIGHT = Config::Screen::HEIGHT;

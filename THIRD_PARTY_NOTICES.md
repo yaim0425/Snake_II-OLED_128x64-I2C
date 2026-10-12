@@ -12,7 +12,8 @@ Este repositorio contiene **código original** y **un contenido de terceros
 atribuido** (la secuencia de notas de una canción; ver más abajo):
 
 - Todo el código fuente (`.h`, `.cpp`, `.ino`) es original de este proyecto,
-  salvo la tabla de notas `Sound::SEQ_PIRATES` (`Sound.cpp`).
+  salvo las tablas de notas `Sound::SEQ_PIRATES` y `Sound::SEQ_DRAGON_BALL`
+  (`Sound.cpp`).
 - Los sprites de la serpiente son tablas de bits generadas a mano en
   `Sprite.h` (namespace `Sprite`), no imágenes importadas.
 - No se incluye ninguna fuente de Adafruit ni de Espressif Systems: las
@@ -51,6 +52,15 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+- **Tema de apertura de Dragon Ball** — la secuencia de notas de
+  `Sound::SEQ_DRAGON_BALL` (`Sound.cpp`) es una transcripción del sketch de
+  Arduino de **Francisco Roco**, publicado en
+  <https://www2.udec.cl/~franciscoroco/dragonBall.txt>. Esa página no incluye
+  una licencia explícita; se incorpora aquí como una tabla de frecuencias,
+  duraciones y pausas (`{freq, durMs}`) reformateada al estilo de este proyecto
+  y usada como música de fondo no comercial (el proyecto se licencia bajo
+  PolyForm Noncommercial 1.0.0).
 ```
 
 ## Dependencias (no vendorizadas)

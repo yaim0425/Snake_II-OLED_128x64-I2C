@@ -42,7 +42,7 @@ public:
     SFX_NEW_BEST,   // festejo de nuevo récord (suena en el letrero "THE BEST")
     SFX_BOOT,       // fanfarria de arranque del programa (suena en Boot al encender)
     SFX_PIRATES,    // canción "Pirates of the Caribbean" (He's a Pirate), completa
-    SFX_CANON,      // canción "Canon en Re mayor" de Pachelbel (parte alegre), en bucle
+    SFX_DRAGON_BALL, // tema de apertura de Dragon Ball (transcripción de Francisco Roco), en bucle
     SFX_COUNT       // cantidad de efectos (tamaño de EFFECTS, tabla indexada por Sfx)
   };
 
@@ -131,11 +131,11 @@ private:
   static const Note SEQ_NEW_BEST[];
   static const Note SEQ_BOOT[];
   static const Note SEQ_PIRATES[];
-  static const Note SEQ_CANON[];
+  static const Note SEQ_DRAGON_BALL[];
 
   // ========================================================
   // Tabla de efectos indexada por Sfx (definida en Sound.cpp):
-  // EFFECTS[SFX_NONE]..EFFECTS[SFX_CANON], en el mismo orden
+  // EFFECTS[SFX_NONE]..EFFECTS[SFX_DRAGON_BALL], en el mismo orden
   // del enum. Reemplaza a las constantes LEN_*: el largo de
   // cada secuencia se deriva con sizeof dentro de la tabla.
   // ========================================================

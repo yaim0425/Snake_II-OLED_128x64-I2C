@@ -328,6 +328,10 @@ void Display::drawBitmap(
 //   return _screen != nullptr;
 // }
 
+int16_t Display::centerX(const char* text, int8_t size) const {
+  return (WIDTH - strlen(text) * CHAR_W * size) / 2;
+}
+
 // ====================================================================================
 // Fin
 // ====================================================================================

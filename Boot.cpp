@@ -171,7 +171,7 @@ void Boot::firstPrint(bool forceRedraw) {
 
   // ------------------------------------------------------
 
-  // int16_t top = Config::Scroller::TOP;
+  // int16_t top = Config::ScrollerH::TOP;
   // int16_t h = Config::Screen::HEADER_H;
   // display.fillRect(0, top, w, h, false);
   // display.fillRect(0, 0, w, h, false);
@@ -242,10 +242,11 @@ void Boot::blinkMessage() {
 }
 
 void Boot::drawMessage(bool show) {
-  for (int8_t line = 0; line < MESSAGE_LINES; line++) {
-    const char* message = MESSAGE[line];
-    const int16_t x = (WIDTH - strlen(message) * 6) / 2;
-    const int16_t y = HEADER_TOP + line * 9;
+  for (int8_t i = 0; i < MESSAGE_LINES; i++) {
+    const char* message = MESSAGE[i];
+    // const int16_t x = (WIDTH - strlen(message) * 6) / 2;
+    const int16_t x = display.centerX(message, TEXT_6x8);
+    const int16_t y = HEADER_TOP + i * 9;
     display.drawText(message, x, y, TEXT_6x8, show);
   }
   display.fillRect(0, BODY_TOP, WIDTH, 1, true);

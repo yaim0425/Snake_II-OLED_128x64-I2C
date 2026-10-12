@@ -6,7 +6,7 @@
 // Config — constantes compartidas por varias clases o propias
 // del hardware/placa. Solo lo que es verdaderamente compartido;
 // el resto vive como `static constexpr` dentro de su clase
-// (p. ej. ANIM_TICK en Scroller, NEW_BEST_SIGN_MS en Game).
+// (p. ej. ANIM_TICK en ScrollerH, NEW_BEST_SIGN_MS en Game).
 //
 //   - Pin       : pines de la placa (botones, buzzer, I2C).
 //   - Screen    : geometría del OLED y sus regiones.
@@ -84,6 +84,9 @@ constexpr uint8_t FOOT_TOP = HEIGHT - FOOT_H;  // Punto Y del texto del pie
 
 constexpr uint8_t OPTION_TOP = 16;
 constexpr uint8_t OPTION_H = 48;
+
+constexpr uint8_t CHAR_W = 6;
+constexpr uint8_t CHAR_H = 8;
 }
 
 // ========================================================
@@ -102,11 +105,11 @@ constexpr uint8_t DEFAULT_LEVEL = 5;
 namespace Version {
 constexpr char* NAME = "Snake II";
 constexpr char* VERSION = "v1.0.0";
-constexpr char* RELEASE_DATE = "2026/12/31";
+constexpr char* RELEASE_DATE = "2026 12 31";
 }
 
 namespace Credits {
-constexpr int8_t COUNT = 29;
+constexpr int8_t COUNT = 31;
 constexpr char* CREDITS[COUNT] = {
   Version::NAME,
   Version::VERSION,
@@ -135,10 +138,14 @@ constexpr char* CREDITS[COUNT] = {
   "OpenCode.AI",
   "",
   "License",
-  "Polyform Noncommercial 1.0.0",
-  "Copyright (c) 2026 yaim0425"
+  "Polyform",
+  "Noncommercial 1.0.0",
+  "Copyright (c)",
+  "2026 yaim0425"
 };
 constexpr char* THANKS = "Thanks for playing!";
+constexpr uint32_t PAUSE_MS = 1500;  // pausa con el bloque centrado
+constexpr uint32_t PX_MS = 1500;      // ms por px de desplazamiento (~25 px/s)
 }
 
 namespace Legend {
@@ -157,10 +164,15 @@ constexpr uint32_t DELAY = 400;  // mantener para empezar a repetir (ms)
 constexpr uint32_t TICK = 100;   // intervalo de repetición mientras se mantiene (ms)
 }
 
-namespace Scroller {
+namespace ScrollerH {
 constexpr int8_t MAX_H = 32;
 // constexpr int16_t TOP = 28;        // fila superior de la franja de texto (banda del menú)
 constexpr uint32_t ANIMATION = 4;  // ms por px de desplazamiento lateral
+}
+
+namespace ScrollerV {
+constexpr uint8_t MAX_H = 48;    // alto máximo del bloque (alto del Body)
+constexpr uint32_t ANIMATION = 12;  // ms por px de desplazamiento vertical
 }
 
 namespace DefaultTimer {

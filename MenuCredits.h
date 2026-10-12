@@ -5,6 +5,8 @@
 
 #include "Config.h"
 #include "Timer.h"
+#include "Blink.h"
+#include "ScrollerV.h"
 
 // ========================================================
 // MenuCredits — roll de créditos (ventana del Engine)
@@ -12,22 +14,24 @@
 // Muestra todo Config::Credits::CREDITS como un roll vertical
 // automático, estilo cine, que avanza bloque a bloque:
 //
-//   - Header fijo 0..15 con "Credits" en 12x16 centrado.
-//   - Body 16..63 = carril del roll (alto de fila 10 px).
+//   - Header fijo 0..15 con el título (CREDITS / GAME OVER /
+//     YOU WIN) en 12x16 centrado.
+//   - Body 16..63 = banda del roll (alto de fila 10 px).
 //   - El texto se clasifica por el patrón del array: la primera
-//     fila no vacía tras un separador es un Título (barra blanca
-//     de ancho completo con letra negra); el resto son nombres
-//     (texto normal). El bloque inicial (Snake II / versión /
-//     fecha) no lleva barra.
-//   - Cada bloque entra desde abajo, se centra verticalmente en
-//     el Body, pausa ~PAUSE_MS y el siguiente avanza (~25 px/s).
+//     fila de cada bloque (tras un separador) es un Título
+//     (barra blanca de ancho completo con letra negra); el resto
+//     son nombres (texto normal). El bloque inicial (Snake II /
+//     versión / fecha) no lleva barra.
+//   - Cada bloque entra desde abajo (ScrollerV), se centra en el
+//     Body, pausa ~PAUSE_MS y el siguiente sube.
 //   - Al terminar el último bloque aparece la tarjeta final: las
 //     tres filas NAME / VERSION / RELEASE_DATE centradas, o el
 //     mensaje THANKS si se llegó desde Game (fromGame = true).
+//     El Header permanece visible durante la tarjeta.
 //   - Salida: ACTION_UP en cualquier momento corta la música
 //     (sound.stop()), suena SFX_BACK y se vuelve al Menu.
 //     Mientras el roll corre suena de fondo SFX_PIRATES (desde
-//     Game) o SFX_CANON (desde el menú), ambas en bucle.
+//     Game) o SFX_DRAGON_BALL (desde el menú), ambas en bucle.
 //
 // El reposo no aplica mientras el roll corre: Engine pregunta
 // rolling() (SleepManager solo cuenta la inactividad cuando el
@@ -55,7 +59,7 @@ public:
   //                     tarjeta final THANKS). El Engine lo pasará
   //                     al integrar Game; hoy (entrada por el menú)
   //                     siempre es false.
-  // fromGame = false -> desde el menú: música Canon y tarjeta
+  // fromGame = false -> desde el menú: música Dragon Ball y tarjeta
   //                     NAME/VERSION/RELEASE_DATE.
   // ========================================================
 
@@ -89,20 +93,14 @@ private:
 
   static constexpr int16_t WIDTH = Config::Screen::WIDTH;
   static constexpr int16_t HEADER_TOP = Config::Screen::HEADER_TOP;
-  static constexpr int16_t HEADER_H = Config::Screen::HEADER_H;
   static constexpr int16_t BODY_TOP = Config::Screen::BODY_TOP;
   static constexpr int16_t BODY_H = Config::Screen::BODY_H;
-
-  static constexpr int16_t CHAR_W = 6;
-  static constexpr int16_t CHAR_H = 8;
+  static constexpr int16_t CHAR_H = Config::Screen::CHAR_H;
   static constexpr int16_t LINE_H = CHAR_H + 2;    // alto de fila (8 px de letra + 2 de aire)
-  static constexpr int16_t BODY_CTR = BODY_TOP + BODY_H / 2;  // 40: centro del carril
 
-  static constexpr uint32_t PAUSE_MS = 800;  // pausa con el bloque centrado
-  static constexpr uint32_t PX_MS = 40;      // ms por px de desplazamiento (~25 px/s)
-  static constexpr int16_t START_PY = BODY_TOP + BODY_H;  // el roll arranca bajo el carril
+  static constexpr uint32_t PAUSE_MS = Config::Credits::PAUSE_MS;  // pausa con el bloque centrado
 
-  static constexpr uint8_t COUNT = Config::Credits::COUNT;
+  static constexpr uint8_t COUNT = (uint8_t)Config::Credits::COUNT;
   static constexpr uint8_t MAX_BLOCKS = 8;
 
   // ========================================================
@@ -115,7 +113,9 @@ private:
   // ========================================================
 
   static constexpr auto& CREDITS = Config::Credits::CREDITS;
-  static constexpr char TITLE[] = "Credits";
+  static constexpr char* TITLE_CREDITS = "CREDITS";
+  static constexpr char* TITLE_GAME_OVER = "GAME OVER";
+  static constexpr char* TITLE_WINNER = "YOU WIN";
   static constexpr const char* CARD_THANKS = Config::Credits::THANKS;
   static constexpr const char* CARD_NAME = Config::Version::NAME;
   static constexpr const char* CARD_VERSION = Config::Version::VERSION;
@@ -135,14 +135,10 @@ private:
   // Métodos internos
   // ========================================================
 
-  int16_t blockTargetY(uint8_t block) const;  // py para centrar el bloque en el Body
-  void computeBlocks();                        // deriva los bloques de CREDITS
-  void startMoveTo(uint8_t block);             // anima _py hasta el centro del bloque
+  void computeBlocks();  // deriva los bloques de CREDITS
+  void advance();        // compone el bloque actual en el ScrollerV y arranca su slide
   void drawRoll();
   void drawCard();
-
-  // x para centrar una fila de texto (ancho de letra charW, 12 en 12x16)
-  static int16_t centerX(const char* line, uint16_t charW = CHAR_W);
 
   // ========================================================
   // Estado
@@ -153,21 +149,26 @@ private:
   bool _clear;     // primer frame tras begin(): clear() completo + header
   bool _done;      // salir: el Engine vuelve al Menu
 
-  Phase _phase;    // ROLL (corre el roll) o CARD (tarjeta final)
+  Blink _blink;
+  int16_t _yUp;
+  int16_t _yMiddle;
+
+  int16_t _blockStart;  // índice de la primera fila del bloque actual
+  int16_t _blockH;      // alto del bloque actual en px
+
+  Phase _phase;       // ROLL (corre el roll) o CARD (tarjeta final)
 
   Block _blocks[MAX_BLOCKS];
   uint8_t _blockCount;
-  uint8_t _block;   // bloque actual (0.._blockCount-1)
+  uint8_t _block;     // bloque actual (0.._blockCount-1)
 
-  int16_t _py;     // posición en px de la fila 0 dentro del Body
-  int16_t _from;   // py de arranque del movimiento en curso
-  int16_t _to;     // py objetivo del movimiento en curso
-  uint32_t _moveMs;  // duración del movimiento (px * PX_MS)
+  ScrollerV _scroller;   // slide vertical del bloque actual
 
-  Stopwatch _anim;   // reloj del movimiento entre bloques
-  Stopwatch _pause;  // reloj de la pausa con el bloque centrado
-  bool _moving;      // false = en pausa con el bloque centrado
+  Stopwatch _pause;      // pausa con el bloque centrado
+  bool _paused;          // true: la pausa del bloque actual ya está anclada
 };
+
+
 
 #endif
 

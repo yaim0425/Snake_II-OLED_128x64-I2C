@@ -250,7 +250,7 @@ void Legend::firstPrint(bool forceRedraw) {
 
   const char* pieText = BTN_FUNC[_btn];
   display.fillRect(0, FOOT_TOP - 1, WIDTH, FOOT_H + 1, true);
-  display.drawText(pieText, (WIDTH - strlen(pieText) * 6) / 2, FOOT_TOP, TEXT_6x8, false, true);
+  display.drawText(pieText, display.centerX(pieText, TEXT_6x8), FOOT_TOP, TEXT_6x8, false, true);
 }
 
 void Legend::blinkDiamond() {

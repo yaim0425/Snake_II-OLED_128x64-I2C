@@ -18,18 +18,18 @@ MenuCredits::MenuCredits()
     _winner(false),
     _clear(true),
     _done(true),
+    _blink(),
+    _yUp(0),
+    _yMiddle(0),
+    _blockStart(0),
+    _blockH(0),
     _phase(Phase::CARD),
     _blockCount(0),
     _block(0),
-    _py(START_PY),
-    _from(0),
-    _to(0),
-    _moveMs(0),
-    _anim(),
+    _scroller(),
     _pause(),
-    _moving(false)
-{
-}
+    _paused(false)
+{}
 
 // ====================================================================================
 // Inicialización: arranca el roll y la música de fondo en bucle
@@ -49,13 +49,12 @@ void MenuCredits::begin(bool fromGame, bool winner) {
 
   computeBlocks();
   _block = 0;
-  _py = START_PY;            // el roll entra desde abajo del carril
 
-  startMoveTo(0);            // primer movimiento hacia el centro del bloque 0
+  advance();  // compone el bloque 0 y arranca su slide
 
   // Música: la introducción saluda, el bucle de fondo acompaña el roll
   sound.stop();
-  sound.play(fromGame && winner ? Sound::SFX_PIRATES : Sound::SFX_CANON, true);
+  sound.play(fromGame && winner ? Sound::SFX_PIRATES : Sound::SFX_DRAGON_BALL, true);
 }
 
 // ====================================================================================
@@ -76,25 +75,24 @@ void MenuCredits::update() {
   // La tarjeta final es estática: no hay animación que actualizar
   if (_phase != Phase::ROLL) return;
 
-  if (_moving) {
-    // Avanzando hacia el centro del bloque
-    uint32_t elapsed = (uint32_t)_anim.elapsed();
-    if (elapsed >= _moveMs) {
-      _py = _to;                      // llegó: se posa en el centro exacto
-      _moving = false;
-      _pause.start();                 // y comienza la pausa con el bloque centrado
-    } else {
-      // Interpolación lineal: px por ms (frame-rate independiente).
-      // dist <= 299 y elapsed <= ~12 s -> dist*elapsed <= ~3,6e6 (cabe en uint32).
-      uint16_t dist = _to > _from ? _to - _from : _from - _to;
-      int16_t off = (int16_t)(dist * elapsed / _moveMs);
-      _py = _to > _from ? _from + off : _from - off;
+  if (_scroller.done()) {
+    if (!_paused) {
+      _pause.start();  // el bloque terminó de entrar: ancla la pausa
+      _paused = true;
     }
-  } else if (_pause.expired(PAUSE_MS)) {
+    if (!_pause.expired(PAUSE_MS)) return;
+
     _block++;
-    if (_block >= _blockCount) _phase = Phase::CARD;          // el último bloque ya se mostró: tarjeta final
-    else startMoveTo(_block);  // a centrar el bloque siguiente
+    if (_block >= _blockCount) {
+      _phase = Phase::CARD;  // el último bloque ya se mostró: tarjeta final
+      return;
+    }
+    advance();
   }
+
+  // El slide del bloque entra en curso: avanza y devuelve (print()
+  // repinta el bloque en el mismo frame)
+  _scroller.update();
 }
 
 // ====================================================================================
@@ -113,8 +111,17 @@ void MenuCredits::firstPrint(bool forceRedraw) {
   display.clear();
   _clear = false;
 
-  // Header fijo: "Credits" 12x16 centrado
-  display.drawText(TITLE, centerX(TITLE, CHAR_W * 2), HEADER_TOP + 1, TEXT_12x16, true, false);
+  // Header fijo: el título 12x16 centrado
+  char* title;
+  if (!_fromGame) title = TITLE_CREDITS;
+  else if (_winner) title = TITLE_WINNER;
+  else title = TITLE_GAME_OVER;
+
+  display.drawText(title,
+    display.centerX(title, TEXT_12x16), HEADER_TOP + 1,
+    TEXT_12x16, true, false);
+
+  _blink.start();
 }
 
 // ====================================================================================
@@ -133,14 +140,6 @@ bool MenuCredits::rolling() const {
 // Bloques
 // ====================================================================================
 
-// py (de la fila 0) para que el bloque quede centrado en el Body:
-//    Bloque = filas start..start+count-1; su centro en contenido = start*LINE_H + count*LINE_H/2.
-//    py = BODY_CTR - centro.
-int16_t MenuCredits::blockTargetY(uint8_t block) const {
-  int16_t center = _blocks[block].start * LINE_H + _blocks[block].count * LINE_H / 2;
-  return BODY_CTR - center;
-}
-
 // Deriva los bloques: filas no vacías consecutivas (el vacío es separador)
 void MenuCredits::computeBlocks() {
   _blockCount = 0;
@@ -156,15 +155,24 @@ void MenuCredits::computeBlocks() {
   }
 }
 
-// Arranca el movimiento _py -> centro del bloque (a PX_MS por px)
-void MenuCredits::startMoveTo(uint8_t block) {
-  _from = _py;
-  _to = blockTargetY(block);
-  // dist <= 299 px -> también sin int32
-  int16_t dist = _to > _from ? _to - _from : _from - _to;
-  _moveMs = (uint32_t)((uint16_t)dist * PX_MS);
-  _anim.start();
-  _moving = true;
+// ====================================================================================
+// Avance al bloque actual: compone sus líneas en el ScrollerV y arranca el slide
+// ====================================================================================
+
+void MenuCredits::advance() {
+  _blockStart = _blocks[_block].start;
+  _blockH = _blocks[_block].count * LINE_H;
+  _paused = false;
+
+  // Compone las filas del bloque (máx. MAX_BLOCKS, defensa contra overrun)
+  const char* lines[MAX_BLOCKS];
+  uint8_t n = 0;
+  for (uint8_t i = 0; i < (uint8_t)_blocks[_block].count && n < MAX_BLOCKS; i++)
+    lines[n++] = CREDITS[_blockStart + i];
+
+  // Sube desde abajo; la primera fila es barra blanca (título) salvo en el bloque 0
+  _scroller.setBloque(lines, n, BODY_TOP, BODY_H, true, 1, _block > 0);
+  _scroller.startSlide();
 }
 
 // ====================================================================================
@@ -172,32 +180,7 @@ void MenuCredits::startMoveTo(uint8_t block) {
 // ====================================================================================
 
 void MenuCredits::drawRoll() {
-  // Borra el carril (Body)
-  display.fillRect(0, BODY_TOP, WIDTH, BODY_H, false);
-
-  int16_t bodyBottom = (int16_t)(BODY_TOP + BODY_H);
-
-  for (uint8_t i = 0; i < COUNT; i++) {
-    const char* text = CREDITS[i];
-    if (text[0] == '\0') continue;             // separador: fila en blanco
-
-    int16_t y = _py + (int16_t)(i * LINE_H);
-
-    // Solo se dibuja la fila completa dentro del carril (no asoma a medias
-    // por los bordes, que pintaría sobre el Header o el pie de pantalla)
-    if (y < BODY_TOP || y + CHAR_H > bodyBottom) continue;
-
-    // Título = primera fila no vacía tras un separador (la fila 0 del
-    // array no lleva barra porque inicia el roll)
-    bool title = (i > 0) && (CREDITS[i - 1][0] == '\0');
-
-    if (title) {
-      display.fillRect(0, y, WIDTH, LINE_H, true);   // barra blanca de ancho completo
-      display.drawText(text, centerX(text), y + 1, TEXT_6x8, false, true);   // letra negra sobre la barra
-    } else {
-      display.drawText(text, centerX(text), y, TEXT_6x8, true, false);   // nombre normal
-    }
-  }
+  _scroller.print();
 }
 
 // ====================================================================================
@@ -205,14 +188,13 @@ void MenuCredits::drawRoll() {
 // ====================================================================================
 
 void MenuCredits::drawCard() {
-  // Borra el carril (Body) y apaga también el Header: el foco es la tarjeta
+  // Borra la banda del roll (Body); el Header permanece visible
   display.fillRect(0, BODY_TOP, WIDTH, BODY_H, false);
-  display.fillRect(0, HEADER_TOP, WIDTH, HEADER_H, false);
 
   if (_fromGame) {
     // Desde Game: el mensaje de agradecimiento centrado en el Body
     int16_t y = BODY_TOP + (BODY_H - CHAR_H) / 2;
-    display.drawText(CARD_THANKS, centerX(CARD_THANKS), y, TEXT_6x8, true, false);
+    display.drawText(CARD_THANKS, display.centerX(CARD_THANKS, TEXT_6x8), y, TEXT_6x8, true, false);
   } else {
     // Desde el menú: NAME / VERSION / RELEASE_DATE centradas (3 filas)
     const char* lines[3] = { CARD_NAME, CARD_VERSION, CARD_DATE };
@@ -220,17 +202,9 @@ void MenuCredits::drawCard() {
     int16_t top = BODY_TOP + (BODY_H - 3 * LINE_H) / 2;
     for (uint8_t i = 0; i < 3; i++) {
       int16_t y = top + (int16_t)(i * LINE_H);
-      display.drawText(lines[i], centerX(lines[i]), y, TEXT_6x8, true, false);
+      display.drawText(lines[i], display.centerX(lines[i], TEXT_6x8), y, TEXT_6x8, true, false);
     }
   }
-}
-
-// ====================================================================================
-// Helper de centrado horizontal
-// ====================================================================================
-
-int16_t MenuCredits::centerX(const char* line, uint16_t charW) {
-  return (int16_t)((WIDTH - (int16_t)strlen(line) * (int16_t)charW) / 2);
 }
 
 // ====================================================================================

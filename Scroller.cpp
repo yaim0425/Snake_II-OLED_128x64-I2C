@@ -1,4 +1,4 @@
-#include "Scroller.h"
+#include "ScrollerH.h"
 #include "Globals.h"
 
 #include <string.h>
@@ -7,7 +7,7 @@
 // Constructor (usa la Display global)
 // ========================================================
 
-Scroller::Scroller()
+ScrollerH::ScrollerH()
   : _height(16),
     _size(2),
     _y(0),
@@ -26,7 +26,7 @@ Scroller::Scroller()
 // vuelque en el primer frame.
 // ========================================================
 
-void Scroller::begin() {
+void ScrollerH::begin() {
   _height = 16;
   _size = 2;
   _y = 0;
@@ -46,7 +46,7 @@ void Scroller::begin() {
 // canvas auxiliar y luego se extraen las columnas.
 // ========================================================
 
-void Scroller::setTexto(const char* text, int16_t y, bool toLeft, uint8_t size) {
+void ScrollerH::setTexto(const char* text, int16_t y, bool toLeft, uint8_t size) {
   if (size < 1) size = 1;
   if (size > 3) size = 3;
 
@@ -63,7 +63,8 @@ void Scroller::setTexto(const char* text, int16_t y, bool toLeft, uint8_t size) 
   buffer[maxChars] = '\0';
 
   GFXcanvas8 canvas(WIDTH, _height);
-  int16_t textX = (WIDTH - strlen(buffer) * 6 * size) / 2;
+  int16_t textX = display.centerX(buffer, size);
+  // int16_t textX = (WIDTH - strlen(buffer) * 6 * size) / 2;
   // if (_toLeft) textX += CURTAIN_W;
 
   canvas.fillScreen(SSD1306_WHITE);
@@ -94,7 +95,7 @@ void Scroller::setTexto(const char* text, int16_t y, bool toLeft, uint8_t size) 
 // indicado (derecha si rightToLeft, izquierda si no)
 // ========================================================
 
-void Scroller::startSlide() {
+void ScrollerH::startSlide() {
   _x = -timeCurtain();
 
   _lastX = _x;
@@ -123,7 +124,7 @@ void Scroller::startSlide() {
 // reinicien.
 // ========================================================
 
-bool Scroller::update() {
+bool ScrollerH::update() {
   if (_done) return false;
   _x += _timer.consume();
   return true;
@@ -157,7 +158,7 @@ bool Scroller::update() {
 // terminó y el frame final ya está pintado.
 // ========================================================
 
-bool Scroller::print() {
+bool ScrollerH::print() {
   if (_done) return false;
   if (_lastX == _x) return false;
 
@@ -222,7 +223,7 @@ bool Scroller::print() {
 // Acceso a la franja (_strip)
 // ========================================================
 
-bool Scroller::getStripPixel(uint16_t x, uint8_t y) const {
+bool ScrollerH::getStripPixel(uint16_t x, uint8_t y) const {
   if (x >= WIDTH) return false;
   if (y >= STRIP_H) return false;
   uint8_t rowBytes = y / 8;
@@ -230,7 +231,7 @@ bool Scroller::getStripPixel(uint16_t x, uint8_t y) const {
   return (_strip[rowBytes][x] & (1 << bit)) != 0;
 }
 
-void Scroller::setStripPixel(uint16_t x, uint8_t y, bool color) {
+void ScrollerH::setStripPixel(uint16_t x, uint8_t y, bool color) {
   if (x >= WIDTH) return;
   if (y >= STRIP_H) return;
   uint8_t rowBytes = y / 8;
@@ -241,10 +242,10 @@ void Scroller::setStripPixel(uint16_t x, uint8_t y, bool color) {
     _strip[rowBytes][x] &= (int8_t) ~(1 << bit);
   }
 }
-int16_t Scroller::timeCurtain() const {
+int16_t ScrollerH::timeCurtain() const {
   return 6 * _size + 4 * _size - 1;
 }
-void Scroller::curtain() {
+void ScrollerH::curtain() {
   int16_t front = _toLeft ? WIDTH - _x : _x;
   int8_t dir = _toLeft ? -1 : 1;
 
@@ -311,7 +312,7 @@ void Scroller::curtain() {
   );
 }
 
-bool Scroller::done() const {
+bool ScrollerH::done() const {
   return _done;
 }
 
