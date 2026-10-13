@@ -22,29 +22,53 @@
 // fila 7). `_strip` cubre toda la pantalla ([HEIGHT/8][WIDTH]) y el
 // bloque vive en su esquina superior izquierda.
 //
+// Dos usos (los únicos del firmware):
+//
+//   1. Horizontal (Menu / Legend): el texto entra con su cortina,
+//      se desliza y se DETIENE con el texto completo en pantalla
+//      (la cortina ya oculta). Modo EndMode::STAY.
+//   2. Vertical (MenuCredits): el bloque sube desde fuera de la
+//      banda y se detiene en el reposo (STAY); tras la pausa
+//      externa del caller se lanza un segundo vuelo EndMode::EXIT
+//      que continúa desde el reposo hasta el límite de salida,
+//      donde desaparece. El dibujo vertical se recorta a la banda
+//      del Body ([BODY_TOP, HEIGHT)): el bloque nunca pisa el
+//      Header.
+//
+// No hay pausas internas: la detención en STAY llega hasta
+// `_to` y pone `_done`; el timing lo programa el caller.
+//
 // Flujo de uso:
-//   begin(dir);                         // fija orientación, reinicia
-//   addText("Hola", TEXT_6x8, true, false);    // apila líneas (hasta MAX_LINES)
+//   begin(dir);                              // fija orientación y modo
+//   addText("Hola", TEXT_6x8, true, false);  // apila líneas (hasta MAX_LINES)
 //   addText("Mundo", TEXT_6x8, false, true);
-//   setHorizontal(0, WIDTH, y);         // o setVertical(up, down)
-//   pause(-1, PAUSE_MS);                // opcional (solo vertical)
-//   startSlide();                       // rasteriza a _strip y arranca
+//   setRow(y);                               // horizontal: fila del bloque
+//   // o setVertical(to, from);               // vertical: destino y origen
+//   startSlide();                            // rasteriza a _strip y arranca
 //   ...
-//   if (update()) print();              // anima
+//   if (update()) print();                   // anima
 //   ...
-//   if (done()) ...                     // terminó de deslizar
+//   if (done()) ...                          // llegó a _to (reposo o salida)
 //
 // Las líneas pasan a `_strip` en `startSlide()`, que después las
 // "libera" (resetea `_lineCount`): addText guarda punteros, no copia
 // el texto, así que las cadenas deben seguir vivas hasta startSlide().
-//
-// El reposo (centro de la banda) es la parada por defecto de pause();
-// sin pausa configurada el bloque entra, cruza y desaparece en el
-// límite opuesto, y ahí done() pasa a true.
 // ========================================================
 
 class Scroller {
 public:
+  // ========================================================
+  // Comportamiento al llegar a `_to`
+  //
+  // STAY: el bloque se detiene en `_to` y queda quieto (`_done`).
+  // EXIT: el bloque sale por `_to` (en vertical, desaparece al
+  //       cruzar la banda; `_to = BODY_TOP - alto del bloque`).
+  //
+  // EXIT solo aplica a vertical; en horizontal se fuerza STAY.
+  // ========================================================
+
+  enum class EndMode : uint8_t { STAY, EXIT };
+
   // ========================================================
   // Constructor (usa la Display global — Globals.h, en el .cpp)
   // ========================================================
@@ -56,9 +80,12 @@ public:
   //
   // `dir` es un valor de Draw::Direction: fija la orientación y
   // reinicia todo el estado (sin bloque, sin animación, _done = true).
+  // `end` decide si al llegar al destino el bloque reposa (STAY) o
+  // desaparece (EXIT). Si `EXIT` se combina con horizontal, se
+  // fuerza STAY (la horizontal solo reposa).
   // ========================================================
 
-  void begin(int8_t dir);
+  void begin(int8_t dir, EndMode end = EndMode::STAY);
 
   // ========================================================
   // Componer el bloque pendiente (una llamada por línea)
@@ -78,79 +105,62 @@ public:
     bool tColor, bool bgColor);
 
   // ========================================================
-  // Geometría para el modo horizontal (DIR_LEFT / DIR_RIGHT)
+  // Geometría (horizontal: DIR_LEFT / DIR_RIGHT)
   //
-  // `y` es la fila de pantalla a la que se muestra el bloque.
-  // `leftLimit`/`rightLimit` son las columnas donde aparece y
-  // desaparece (coordenadas de pantalla, pueden quedar fuera).
-  // El reposo queda centrado entre ambos límites.
+  // `y` es la fila de pantalla a la que se muestra el bloque. El
+  // Scroller fija los límites: aparece desde el borde con la cortina
+  // fuera (`WIDTH ± telón`) y reposa en `_to = 0`, donde el texto
+  // queda completo en pantalla y la cortina oculta.
   // ========================================================
 
-  void setHorizontal(int16_t leftLimit, int16_t rightLimit, int16_t y);
+  void setRow(int16_t y);
 
   // ========================================================
-  // Geometría para el modo vertical (DIR_UP / DIR_DOWN)
+  // Geometría (vertical: DIR_UP / DIR_DOWN)
   //
-  // `upLimit`/`downLimit` son las filas donde aparece y desaparece
-  // (coordenadas de pantalla, pueden quedar fuera). En vertical el
-  // bloque se centra horizontalmente en la pantalla y el reposo
-  // queda centrado entre ambos límites.
+  // `toLimit` es el destino del bloque (el reposo en STAY, o el
+  // límite de salida en EXIT); `fromLimit` el origen donde aparece.
+  // Ambos son coordenadas de pantalla del borde superior del bloque
+  // (deben poder quedar fuera: int16_t). Sin setVertical el vuelo
+  // por defecto es la travesía completa (desde HEIGHT hasta -alto).
   // ========================================================
 
-  void setVertical(int16_t upLimit, int16_t downLimit);
+  void setVertical(int16_t toLimit, int16_t fromLimit);
 
   // ========================================================
   // Arranque del slide
   //
   // Calcula las dimensiones del bloque, lo rasteriza a `_strip`,
-  // resuelve la posición de reposo/parada, fija la posición inicial
-  // (el límite de aparición) y arranca el reloj. Después "libera"
-  // las líneas pendientes (_lineCount = 0).
+  // resuelve los límites (los explícitos o los por defecto de la
+  // dirección), fija la posición inicial (`_from`) y arranca el
+  // reloj. Después "libera" las líneas pendientes (_lineCount = 0).
   // ========================================================
 
   void startSlide();
 
   // ========================================================
-  // Pausa de la animación (solo vertical)
-  //
-  // Detiene el bloque al llegar a la fila absoluta `y` de pantalla.
-  // Con `y < 0` (por defecto) la parada es con el bloque centrado
-  // entre los límites.
-  //
-  // `pause != 0`: reanuda sola a los `pause` ms.
-  // `pause == 0`: queda detenida hasta resume().
-  // ========================================================
-
-  void pause(uint16_t pause = 0, int16_t y = -1);
-
-  // ========================================================
-  // Reanudar tras una parada con pause == 0 (solo vertical)
-  // ========================================================
-
-  void resume();
-
-  // ========================================================
   // Actualizar (avanza el bloque 1 px por ANIM_TICK ms)
   //
   // true mientras la animación sigue; false si ya terminó (la
-  // llamada no consume reloj).
+  // llamada no consume reloj). El bloque se mueve desde `_from`
+  // hasta `_to` y se detiene ahí (STAY reposa, EXIT desaparece).
   // ========================================================
 
   bool update();
 
   // ========================================================
-  // Dibujar (borra el rectángulo barrido por el bloque y lo vuelca
-  // en su posición actual; en horizontal, además, la cortina)
+  // Dibujar el bloque en su posición actual
   //
   // Solo repinta mientras la posición cambie. Devuelve true si el
   // bloque sigue animándose y false si ya terminó (done) o si no
-  // hubo cambio de posición.
+  // hubo cambio de posición. En vertical recorta las filas a la
+  // banda del Body ([BODY_TOP, HEIGHT)): el Header queda intacto.
   // ========================================================
 
   bool print();
 
   // ========================================================
-  // Estado: true si el bloque llegó al límite de desaparición
+  // Estado: true cuando el bloque llegó a `_to`
   // ========================================================
 
   bool done() const;
@@ -179,9 +189,6 @@ private:
   void clearStrip();                             // borra _strip entero
   void compose();                                // rasteriza _lines a _strip
 
-  int16_t centerY() const;                     // origen del bloque centrado en la banda
-  int16_t startPos() const;                      // origen en el límite de aparición
-  int16_t endPos() const;                        // origen en el límite de desaparición
   int16_t blockX() const;                        // x de pantalla del bloque (según _pos)
   int16_t blockY() const;                        // y de pantalla del bloque (según _pos)
 
@@ -195,6 +202,7 @@ private:
   static constexpr uint8_t HEIGHT = Config::Screen::HEIGHT;
   static constexpr uint8_t CHAR_W = Config::Screen::CHAR_W;
   static constexpr uint8_t CHAR_H = Config::Screen::CHAR_H;
+  static constexpr uint8_t BODY_TOP = Config::Screen::BODY_TOP;  // banda del roll (clip vertical)
 
   static constexpr uint8_t ROW_BYTES = HEIGHT / 8;  // filas de 8 px en _strip
   static constexpr uint8_t MAX_LINES = Config::Scroller::MAX_LINES;
@@ -213,30 +221,23 @@ private:
 
   int8_t _dir;                       // Draw::Direction
   bool _horizontal;                  // true: DIR_LEFT / DIR_RIGHT
+  EndMode _endMode;                  // STAY (reposa en _to) / EXIT (desaparece en _to)
 
-  int16_t _limitA;                   // leftLimit / upLimit
-  int16_t _limitB;                   // rightLimit / downLimit
-  int16_t _y;                        // fila del bloque (solo horizontal)
+  int16_t _rowY;                     // fila del bloque (solo horizontal)
+  int16_t _from;                     // origen del bloque al arrancar
+  int16_t _to;                       // destino: límite de reposo (STAY) o de salida (EXIT)
+  bool _geomSet;                     // setRow/setVertical fijó la geometría explícita
 
-  int16_t _width;                    // ancho del bloque en px
+  int16_t _width;                    // ancho del bloque en px (siempre WIDTH)
   int16_t _height;                   // alto del bloque en px
   uint8_t _size;                     // size de la primera línea (cortina)
 
   int16_t _pos;                      // origen actual (x si horizontal, y si vertical)
-  int16_t _end;                      // origen en el límite de desaparición
   int8_t _step;                      // +1 / -1 según el sentido del slide
-  int16_t _lastPosX;                   // x del bloque en el frame anterior
-  int16_t _lastPosY;                   // y del bloque en el frame anterior
+  int16_t _lastPosX;                 // x del bloque en el frame anterior
+  int16_t _lastPosY;                 // y del bloque en el frame anterior
 
-  bool _pauseSet;                    // hay una parada programada
-  bool _pauseDefault;                // la parada usa el centro de la banda
-  int16_t _pauseY;                   // fila (origen) donde parar
-  uint16_t _pauseMs;                 // duración de la parada (0 = hasta resume())
-  bool _waiting;                     // detenido en la parada
-  bool _pauseDone;                   // la parada de este slide ya ocurrió
-  Stopwatch _pauseSw;                // cronómetro de la parada
-
-  bool _done;                        // true: llegó al límite de desaparición
+  bool _done;                        // true: llegó a _to
 
   Ticker _timerH;                    // avance horizontal (1 px / ANIM_H ms)
   Ticker _timerV;                    // avance vertical (1 px / ANIM_V ms)

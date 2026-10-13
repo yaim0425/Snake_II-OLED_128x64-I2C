@@ -24,12 +24,14 @@ MenuCredits::MenuCredits()
     _yMiddle(0),
     _blockStart(0),
     _blockH(0),
+    _rest(0),
     _phase(Phase::CARD),
     _blockCount(0),
     _block(0),
     _scroller(),
     _pause(),
-    _paused(false)
+    _paused(false),
+    _exiting(false)
 {}
 
 // ====================================================================================
@@ -55,7 +57,7 @@ void MenuCredits::begin(bool fromGame, bool winner) {
 
   // Música: la introducción saluda, el bucle de fondo acompaña el roll
   sound.stop();
-  sound.play(fromGame && winner ? Sound::SFX_PIRATES : Sound::SFX_DRAGON_BALL, true);
+  sound.play(fromGame && winner ? Sound::SFX_DRAGON_BALL : Sound::SFX_PIRATES, true);
 }
 
 // ====================================================================================
@@ -76,22 +78,34 @@ void MenuCredits::update() {
   // La tarjeta final es estática: no hay animación que actualizar
   if (_phase != Phase::ROLL) return;
 
-  if (_scroller.done()) {
-    if (!_paused) {
-      _pause.start();  // el bloque terminó de entrar: ancla la pausa
-      _paused = true;
-    }
-    if (!_pause.expired(PAUSE_MS)) return;
+  if (!_exiting) {
+    // 1er vuelo (STAY): entra y reposa centrado; tras la pausa externa
+    // se lanza el 2º vuelo de salida
+    if (_scroller.done()) {
+      if (!_paused) {
+        _pause.start();  // el bloque terminó de entrar: ancla la pausa
+        _paused = true;
+      }
+      if (!_pause.expired(PAUSE_MS)) return;
 
-    _block++;
-    if (_block >= _blockCount) {
-      _phase = Phase::CARD;  // el último bloque ya se mostró: tarjeta final
+      startExit();
       return;
     }
-    advance();
+  } else {
+    // 2º vuelo (EXIT): desaparece por el límite superior del Body; al
+    // terminar pasa al bloque siguiente (o a la tarjeta final)
+    if (_scroller.done()) {
+      _block++;
+      if (_block >= _blockCount) {
+        _phase = Phase::CARD;  // el último bloque ya se mostró: tarjeta final
+        return;
+      }
+      advance();
+      return;
+    }
   }
 
-  // El slide del bloque entra en curso: avanza y devuelve (print()
+  // El slide del bloque está en curso: avanza y devuelve (print()
   // repinta el bloque en el mismo frame)
   _scroller.update();
 }
@@ -146,9 +160,9 @@ void MenuCredits::computeBlocks() {
   _blockCount = 0;
   for (uint8_t i = 0; i < COUNT; ) {
     const char* t = CREDITS[i];
-    if (t[0] == '\0') { i++; continue; }
+    if (!t || t[0] == '\0') { i++; continue; }
     uint8_t start = i;
-    while (i < COUNT && CREDITS[i][0] != '\0') i++;
+    while (i < COUNT && CREDITS[i] && CREDITS[i][0] != '\0') i++;
     if (_blockCount >= MAX_BLOCKS) break;   // defensa: ya no caben más bloques
     _blocks[_blockCount].start = start;
     _blocks[_blockCount].count = (int16_t)(i - start);
@@ -167,18 +181,46 @@ void MenuCredits::advance() {
   if (n > MAX_BLOCKS) n = MAX_BLOCKS;
   _blockH = (int16_t)(n * LINE_H);
   _paused = false;
+  _exiting = false;
 
-  // Sube desde abajo; la primera fila es barra blanca (título) salvo en el bloque 0
-  _scroller.begin(Draw::DIR_UP);
+  // 1er vuelo: sube desde abajo y reposa centrado (STAY)
+  _scroller.begin(Draw::DIR_UP, Scroller::EndMode::STAY);
+  addBlockLines();
+
+  // El bloque se detiene centrado en la banda del Body
+  _rest = (int16_t)(BODY_TOP + (BODY_H - _blockH) / 2);
+  _scroller.setVertical(_rest, (int16_t)(BODY_TOP + BODY_H));
+  _scroller.startSlide();
+}
+
+// ====================================================================================
+// Salida del bloque actual: 2º vuelo desde el reposo hasta fuera de la banda
+// ====================================================================================
+
+void MenuCredits::startExit() {
+  _exiting = true;
+
+  // Continúa desde el reposo (misma posición: sin salto visual) hasta
+  // quedar completo por encima del Body (lo recorta el Scroller)
+  _scroller.begin(Draw::DIR_UP, Scroller::EndMode::EXIT);
+  addBlockLines();
+  _scroller.setVertical((int16_t)(BODY_TOP - _blockH), _rest);
+  _scroller.startSlide();
+}
+
+// ====================================================================================
+// Líneas del bloque actual (mismos colores en los dos vuelos)
+// ====================================================================================
+
+void MenuCredits::addBlockLines() {
+  uint8_t n = (uint8_t)_blocks[_block].count;
+  if (n > MAX_BLOCKS) n = MAX_BLOCKS;
+
+  // La primera fila es barra blanca (título) salvo en el bloque 0
   for (uint8_t i = 0; i < n; i++) {
     bool bar = (_block > 0) && (i == 0);
     _scroller.addText(CREDITS[_blockStart + i], TEXT_6x8, !bar, bar);
   }
-
-  // El bloque se detiene centrado en la banda del Body
-  int16_t rest = (int16_t)(BODY_TOP + (BODY_H - _blockH) / 2);
-  _scroller.setVertical(rest, (int16_t)(BODY_TOP + BODY_H));
-  _scroller.startSlide();
 }
 
 // ====================================================================================

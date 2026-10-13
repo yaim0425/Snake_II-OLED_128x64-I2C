@@ -518,11 +518,6 @@ void Menu::blinkOption() {
   } else if (!_scroller.done()) return;
   else if (_lastSelected != _selected) return;
   else if (!_blink.changed(PERIOD, OFF)) return;
-  
-  if (!_scroller.done()) {
-    display.fillRect(0, BOX_TOP - 1, WIDTH, BOX_HEIGHT + 2, true);
-    _scroller.begin(Draw::DIR_LEFT);
-  }
 
   const bool visible = _done || _blink.isVisible(PERIOD, OFF);
   toggleText(visible);
@@ -545,9 +540,9 @@ void Menu::nextOption() {
   // display.drawText(text, (WIDTH - strlen(text) * 12) / 2, BOX_TOP, TEXT_12x16, SSD1306_BLACK, SSD1306_WHITE);
 
   bool toLeft = _lastSelected > _selected;
-  _scroller.begin(toLeft ? Draw::DIR_LEFT : Draw::DIR_RIGHT);
+  _scroller.begin(toLeft ? Draw::DIR_LEFT : Draw::DIR_RIGHT, Scroller::EndMode::STAY);
   _scroller.addText(OPTION[_selected], TEXT_12x16, false, true);
-  _scroller.setHorizontal(toLeft ? 0 : -WIDTH, toLeft ? WIDTH : 0, BOX_TOP - 1);
+  _scroller.setRow(BOX_TOP - 1);
   _scroller.startSlide();
   _lastScroll = true;
 

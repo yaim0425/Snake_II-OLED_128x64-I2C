@@ -22,8 +22,10 @@
 //     (barra blanca de ancho completo con letra negra); el resto
 //     son nombres (texto normal). El bloque inicial (Snake II /
 //     versión / fecha) no lleva barra.
-//   - Cada bloque entra desde abajo (Scroller), se centra en el
-//     Body, pausa ~PAUSE_MS y el siguiente sube.
+//   - Cada bloque se desliza con el Scroller en DOS VUELOS: entra
+//     desde abajo y reposa centrado (STAY); tras la pausa externa
+//     ~PAUSE_MS sale hacia arriba (EXIT) y desaparece por el
+//     límite superior del Body antes de que suba el siguiente.
 //   - Al terminar el último bloque aparece la tarjeta final: las
 //     tres filas NAME / VERSION / RELEASE_DATE centradas, o el
 //     mensaje THANKS si se llegó desde Game (fromGame = true).
@@ -135,8 +137,10 @@ private:
   // Métodos internos
   // ========================================================
 
-  void computeBlocks();  // deriva los bloques de CREDITS
-  void advance();        // compone el bloque actual en el Scroller y arranca su slide
+  void computeBlocks();    // deriva los bloques de CREDITS
+  void advance();          // compone el bloque actual en el Scroller y arranca su entrada
+  void startExit();        // 2º vuelo del bloque actual: desde el reposo hacia fuera
+  void addBlockLines();    // apila las líneas del bloque actual (comunes a los dos vuelos)
   void drawRoll();
   void drawCard();
 
@@ -155,6 +159,7 @@ private:
 
   int16_t _blockStart;  // índice de la primera fila del bloque actual
   int16_t _blockH;      // alto del bloque actual en px
+  int16_t _rest;        // fila de reposo del bloque actual (centro del Body)
 
   Phase _phase;       // ROLL (corre el roll) o CARD (tarjeta final)
 
@@ -166,6 +171,7 @@ private:
 
   Stopwatch _pause;      // pausa con el bloque centrado
   bool _paused;          // true: la pausa del bloque actual ya está anclada
+  bool _exiting;         // true: el bloque actual está en el vuelo de salida
 };
 
 

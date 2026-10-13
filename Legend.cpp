@@ -358,9 +358,9 @@ void Legend::toggleDiamond(int8_t diamond, bool show) {
 void Legend::nextBtn() {
   if (_lastBtn == _btn) return;
 
-  _scroller.begin(Draw::DIR_LEFT);
+  _scroller.begin(Draw::DIR_LEFT, Scroller::EndMode::STAY);
   _scroller.addText(BTN_FUNC[_btn], TEXT_6x8, false, true);
-  _scroller.setHorizontal(0, WIDTH, FOOT_TOP - 1);
+  _scroller.setRow(FOOT_TOP - 1);
   _scroller.startSlide();
   _lastScroll = true;
 
