@@ -26,8 +26,8 @@ Scroller::Scroller()
     _pos(0),
     _end(0),
     _step(0),
-    _lastOX(0),
-    _lastOY(0),
+    _lastPosX(0),
+    _lastPosY(0),
     _pauseSet(false),
     _pauseDefault(true),
     _pauseY(0),
@@ -62,8 +62,8 @@ void Scroller::begin(int8_t dir) {
   _pos = 0;
   _end = 0;
   _step = 0;
-  _lastOX = 0;
-  _lastOY = 0;
+  _lastPosX = 0;
+  _lastPosY = 0;
 
   _pauseSet = false;
   _pauseDefault = true;
@@ -115,16 +115,16 @@ void Scroller::startSlide() {
   // Dimensiones del bloque: alto = suma de (size*CHAR_H + 2) por línea;
   // ancho = mayor ancho de línea (líneas centradas entre sí).
   _height = 0;
-  _width = 0;
   for (uint8_t i = 0; i < _lineCount; i++) {
     uint8_t size = _lines[i].size;
-    int16_t lineH = size * CHAR_H + 2;
-    int16_t lineW = strlen(_lines[i].text) * CHAR_W * size;
-    _height += lineH;
-    if (lineW > _width) _width = lineW;
+    _height += size * CHAR_H + 2;
   }
   if (_height > HEIGHT) _height = HEIGHT;
-  if (_width > WIDTH) _width = WIDTH;
+
+  // El bloque ocupa el ancho completo de la pantalla (cada línea se
+  // compone con su fondo a todo lo ancho y el texto centrado).
+  _width = WIDTH;
+
   _size = _lineCount ? _lines[0].size : 1;
 
   compose();
@@ -141,8 +141,8 @@ void Scroller::startSlide() {
   _waiting = false;
   _pauseDone = false;
 
-  _lastOX = blockX();
-  _lastOY = blockY();
+  _lastPosX = blockX();
+  _lastPosY = blockY();
 
   ticker().start();
   _pauseSw.start();
@@ -217,39 +217,44 @@ bool Scroller::update() {
 bool Scroller::print() {
   if (_done) return false;
 
-  int16_t ox = blockX();
-  int16_t oy = blockY();
+  int16_t posX = blockX();
+  int16_t posY = blockY();
 
-  if (ox == _lastOX && oy == _lastOY) return false;
+  if (posX == _lastPosX && posY == _lastPosY) return false;
 
   // Borra la unión del rectángulo anterior y el actual (así la franja
   // que avanza va borrando la vieja). En horizontal se ensancha para
   // cubrir también la huella de la cortina, que se dibuja fuera del
   // bloque.
-  if (_horizontal) {
-    int16_t cw = (int16_t)(timeCurtain() + 1);
-    int16_t ux0 = ((ox < _lastOX) ? ox : _lastOX) - cw;
-    int16_t ux1 = ((ox + _width > _lastOX + _width) ? (int16_t)(ox + _width) : (int16_t)(_lastOX + _width)) + cw;
-    int16_t eh = (int16_t)(8 * _size);
-    if (eh < _height) eh = _height;
-    display.fillRect(ux0, oy, (uint16_t)(ux1 - ux0), (uint16_t)eh, false);
-  } else {
-    int16_t ux0 = (ox < _lastOX) ? ox : _lastOX;
-    int16_t uy0 = (oy < _lastOY) ? oy : _lastOY;
-    int16_t ux1 = (ox + _width > _lastOX + _width) ? (int16_t)(ox + _width) : (int16_t)(_lastOX + _width);
-    int16_t uy1 = (oy + _height > _lastOY + _height) ? (int16_t)(oy + _height) : (int16_t)(_lastOY + _height);
-    display.fillRect(ux0, uy0, (uint16_t)(ux1 - ux0), (uint16_t)(uy1 - uy0), false);
-  }
+  // if (_horizontal) {
+  //   // int16_t cw = (int16_t)(timeCurtain() + 1);
+  //   // int16_t ux0 = ((ox < _lastOX) ? ox : _lastOX) - cw;
+  //   // int16_t ux1 = ((ox + _width > _lastOX + _width) ? (int16_t)(ox + _width) : (int16_t)(_lastOX + _width)) + cw;
+  //   // int16_t eh = (int16_t)(8 * _size);
+  //   // if (eh < _height) eh = _height;
+  //   // display.fillRect(ux0, oy, (uint16_t)(ux1 - ux0), (uint16_t)eh, false);
+  // } else {
+  //   // int16_t ux0 = (ox < _lastOX) ? ox : _lastOX;
+  //   // int16_t uy0 = (oy < _lastOY) ? oy : _lastOY;
+  //   // int16_t ux1 = (ox + _width > _lastOX + _width) ? (int16_t)(ox + _width) : (int16_t)(_lastOX + _width);
+  //   // int16_t uy1 = (oy + _height > _lastOY + _height) ? (int16_t)(oy + _height) : (int16_t)(_lastOY + _height);
+  //   // display.fillRect(ux0, uy0, (uint16_t)(ux1 - ux0), (uint16_t)(uy1 - uy0), false);
+  // }
 
-  // Vuelca el bloque actual (solo los píxeles encendidos)
-  for (uint16_t bx = 0; bx < _width; bx++)
-    for (uint16_t by = 0; by < _height; by++)
-      display.drawPixel(ox + bx, oy + by, true);
+  // Vuelca el bloque actual (solo los píxeles encendidos; el resto
+  // queda como lo dejó el borrado de arriba)
+  for (uint16_t x = 0; x < _width; x++)
+    for (uint16_t y = 0; y < _height; y++)
+      if(
+        (posX + x >= 0 || posX + x < WIDTH) &&
+        (posY + y >= 0 || posY + y < HEIGHT)
+      )
+      display.drawPixel(posX + x, posY + y, getStripPixel(x, y));
 
   if (_horizontal) curtain();
 
-  _lastOX = ox;
-  _lastOY = oy;
+  _lastPosX = posX;
+  _lastPosY = posY;
 
   if (_pos == _end) _done = true;
 
@@ -281,56 +286,36 @@ void Scroller::compose() {
   for (uint8_t i = 0; i < _lineCount; i++) {
     const char* text = _lines[i].text;
     uint8_t size = _lines[i].size;
-    int16_t textW = strlen(text) * CHAR_W * size;
-    if (textW == 0) continue;
-
     uint8_t textH = size * CHAR_H;
+    int16_t lineH = (int16_t)textH + 2;  // 1 px de fondo arriba y abajo
+
     bool tColor = _lines[i].tColor ? SSD1306_WHITE : SSD1306_BLACK;
     bool bgColor = _lines[i].bgColor ? SSD1306_WHITE : SSD1306_BLACK;
-    int16_t xStart = display.centerX(text, size);
-    xStart = xStart < 0 ? 0 : xStart;
 
-    // int16_t lx = (_width - textW) / 2;  // línea centrada en el bloque
+    // Fondo de la línea a todo lo ancho (incluye los 1 px de arriba y abajo)
+    for (int16_t y = 0; y < lineH; y++)
+      for (uint16_t x = 0; x < WIDTH; x++)
+        setStripPixel(x, (uint8_t)(yStart + y), _lines[i].bgColor);
 
-    // if (lx < 0) lx = 0;
+    // Texto centrado en la pantalla (canvas auxiliar -> _strip)
+    int16_t textW = strlen(text) * CHAR_W * size;
+    if (textW > 0) {
+      int16_t xStart = display.centerX(text, size);
+      if (xStart < 0) xStart = 0;
 
-    // // 1 px de fondo arriba
-    // for (int16_t x = 0; x < textW; x++)
-    //   setStripPixel((uint16_t)(lx + x), (uint8_t)y0, _lines[i].bgColor);
+      GFXcanvas8 canvas(textW, textH);
+      canvas.fillScreen(bgColor);
+      canvas.setTextSize(size);
+      canvas.setTextColor(tColor, bgColor);
+      canvas.setCursor(0, 0);
+      canvas.print(text);
 
-    // Texto (canvas auxiliar -> _strip)
-    // if (textW > 0) {
-    GFXcanvas8 canvas(textW, textH);
-    canvas.fillScreen(bgColor);
-    canvas.setTextSize(size);
-    canvas.setTextColor(tColor, bgColor);
-    canvas.setCursor(0, 0);
-    canvas.print(text);
+      for (int16_t y = 0; y < textH; y++)
+        for (int16_t x = 0; x < textW; x++)
+          setStripPixel((uint16_t)(xStart + x), (uint8_t)(yStart + 1 + y), canvas.getPixel(x, y));
+    }
 
-    for (int16_t y = 0; y < textH; y++)
-      for (int16_t x = 0; x < textW; x++)
-        setStripPixel(xStart + x, yStart + y + 1, canvas.getPixel(x, y));
-
-    // 1 px de fondo arriba
-    for (int16_t x = 0; x < WIDTH; x++)
-      setStripPixel(x, yStart, bgColor);
-
-    // 1 px de fondo abajo
-    for (int16_t x = 0; x < WIDTH; x++)
-      setStripPixel(x, yStart + textH + 1, bgColor);
-
-
-      // // 1 px de fondo arriba
-    // canvas.writeFillRect(0, 0, WIDTH, 1, bgColor);
-
-    // // 1 px de fondo abajo
-    // canvas.writeFillRect(0, textH + 2, WIDTH, 1, bgColor);
-
-    yStart += textH + 2;
-    // }
-
-    // // 1 px de fondo abajo
-    // for (int16_t x = 0; x < textW; x++) setStripPixel((uint16_t)(lx + x), (uint8_t)(y0 + 1 + textH), _lines[i].bgColor);
+    yStart += lineH;
   }
 }
 
@@ -370,8 +355,8 @@ int16_t Scroller::centerY() const {
 // Origen en el límite de aparición (bloque entrando, fuera de la banda)
 int16_t Scroller::startPos() const {
   switch (_dir) {
-    case Draw::DIR_LEFT: return _limitB;   // entra desde la derecha
-    case Draw::DIR_RIGHT: return _limitA;  // entra desde la izquierda
+    case Draw::DIR_LEFT: return _limitB + timeCurtain();   // entra desde la derecha
+    case Draw::DIR_RIGHT: return _limitA - timeCurtain();  // entra desde la izquierda
     case Draw::DIR_UP: return _limitB;     // entra desde abajo
     case Draw::DIR_DOWN: return _limitA;   // entra desde arriba
   }
@@ -390,7 +375,7 @@ int16_t Scroller::endPos() const {
 }
 
 int16_t Scroller::blockX() const {
-  return _horizontal ? _pos : (int16_t)((WIDTH - _width) / 2);
+  return _horizontal ? _pos : (WIDTH - _width) / 2;
 }
 
 int16_t Scroller::blockY() const {
@@ -402,59 +387,60 @@ int16_t Scroller::blockY() const {
 // ====================================================================================
 
 int16_t Scroller::timeCurtain() const {
-  return 10 * _size - 1;
+  return (CHAR_H / 2 * _size) + (CHAR_W * _size);
 }
 
 void Scroller::curtain() {
   int8_t dir = _dir == Draw::DIR_LEFT ? -1 : 1;
-  int16_t front = _dir == Draw::DIR_LEFT ? blockX() : blockX() + _width;
+  int16_t xBack = _dir == Draw::DIR_LEFT ? blockX() : blockX() + _width;
 
   int16_t centerX;
   int16_t centerY;
-  int16_t size;
-  int16_t y = _y;
+  // int16_t size;
+  // int16_t _y = _y;
 
-  size = 4 * _size - 1;
+  const int16_t size = (CHAR_H / 2) * _size;
+  const int16_t height = _y + (CHAR_H / 2) * _size;
+  const int16_t xFront = xBack + dir * CHAR_W * _size;
 
-  centerX = front + dir * (6 * _size - 1);
-  centerY = y + 4 * _size;
+  // display.fillRect(0, _y, WIDTH, _height, true);
+  // for(int8_t x = 0; x < WIDTH; x++)
+  //   display.drawPixel(x, Config::Screen::FOOT_TOP - 1,x % 2);
+
+  centerX = xFront;
+  centerY = height;
   display.fillTriangle(
     centerX + dir * size, centerY,
     centerX, centerY,
     centerX, centerY - size,
     false);
 
-  centerX = front + dir * (6 * _size - 1);
-  centerY = y + 4 * _size;
+  centerX = xFront;
+  centerY = height + 1;
   display.fillTriangle(
     centerX + dir * size, centerY,
     centerX, centerY,
     centerX, centerY + size,
     false);
 
-  int16_t width = 6 * _size - 1;
-  int16_t height = 8 * _size;
-
-  centerX = front;
-  if (dir == -1) centerX -= width;
-  centerY = y;
+  centerX = xBack;
+  if (dir == -1) centerX -= CHAR_W * _size;
+  centerY = _y;
   display.fillRect(
     centerX, centerY,
-    width, height,
+    CHAR_W * _size, CHAR_H * _size + 2,
     false);
 
-  size = 4 * _size - 2;
-
-  centerX = front;
-  centerY = y + 4 * _size - 1;
+  centerX = xBack;
+  centerY = height;
   display.fillTriangle(
     centerX + dir * size, centerY,
     centerX, centerY,
     centerX, centerY - size,
     true);
 
-  centerX = front;
-  centerY = y + 4 * _size;
+  centerX = xBack;
+  centerY = height + 1;
   display.fillTriangle(
     centerX + dir * size, centerY,
     centerX, centerY,

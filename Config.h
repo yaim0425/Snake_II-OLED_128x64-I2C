@@ -6,7 +6,7 @@
 // Config — constantes compartidas por varias clases o propias
 // del hardware/placa. Solo lo que es verdaderamente compartido;
 // el resto vive como `static constexpr` dentro de su clase
-// (p. ej. ANIM_TICK en ScrollerH, NEW_BEST_SIGN_MS en Game).
+// (p. ej. ANIM_H en Scroller, NEW_BEST_SIGN_MS en Game).
 //
 //   - Pin       : pines de la placa (botones, buzzer, I2C).
 //   - Screen    : geometría del OLED y sus regiones.
@@ -161,17 +161,6 @@ constexpr uint8_t SIZE = 3;  // px de un lado del rombo
 namespace Button {
 constexpr uint32_t DELAY = 400;  // mantener para empezar a repetir (ms)
 constexpr uint32_t TICK = 100;   // intervalo de repetición mientras se mantiene (ms)
-}
-
-namespace ScrollerH {
-constexpr int8_t MAX_H = 32;
-// constexpr int16_t TOP = 28;        // fila superior de la franja de texto (banda del menú)
-constexpr uint32_t ANIMATION = 4;  // ms por px de desplazamiento lateral
-}
-
-namespace ScrollerV {
-constexpr uint8_t MAX_H = 48;    // alto máximo del bloque (alto del Body)
-constexpr uint32_t ANIMATION = 12;  // ms por px de desplazamiento vertical
 }
 
 namespace Scroller {

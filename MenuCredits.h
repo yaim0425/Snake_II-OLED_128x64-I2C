@@ -6,7 +6,7 @@
 #include "Config.h"
 #include "Timer.h"
 #include "Blink.h"
-#include "ScrollerV.h"
+#include "Scroller.h"
 
 // ========================================================
 // MenuCredits — roll de créditos (ventana del Engine)
@@ -22,7 +22,7 @@
 //     (barra blanca de ancho completo con letra negra); el resto
 //     son nombres (texto normal). El bloque inicial (Snake II /
 //     versión / fecha) no lleva barra.
-//   - Cada bloque entra desde abajo (ScrollerV), se centra en el
+//   - Cada bloque entra desde abajo (Scroller), se centra en el
 //     Body, pausa ~PAUSE_MS y el siguiente sube.
 //   - Al terminar el último bloque aparece la tarjeta final: las
 //     tres filas NAME / VERSION / RELEASE_DATE centradas, o el
@@ -136,7 +136,7 @@ private:
   // ========================================================
 
   void computeBlocks();  // deriva los bloques de CREDITS
-  void advance();        // compone el bloque actual en el ScrollerV y arranca su slide
+  void advance();        // compone el bloque actual en el Scroller y arranca su slide
   void drawRoll();
   void drawCard();
 
@@ -162,7 +162,7 @@ private:
   uint8_t _blockCount;
   uint8_t _block;     // bloque actual (0.._blockCount-1)
 
-  ScrollerV _scroller;   // slide vertical del bloque actual
+  Scroller _scroller;   // slide vertical del bloque actual
 
   Stopwatch _pause;      // pausa con el bloque centrado
   bool _paused;          // true: la pausa del bloque actual ya está anclada

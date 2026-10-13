@@ -208,9 +208,10 @@ void SleepManager::showDiag() {
   display.drawText(msg, display.centerX(msg, TEXT_6x8), FOOT_TOP, TEXT_6x8, false, true);
   // display.drawText(msg, (WIDTH - strlen(msg) * 6) / 2, FOOT_TOP, TEXT_6x8, false, true);
 
-  display.show();
   _diag.start();
+  display.show();
   _state = State::DIAG;
+  sound.play(Sound::SFX_BACK);
 }
 
 // ====================================================================================

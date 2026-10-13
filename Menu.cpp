@@ -521,7 +521,7 @@ void Menu::blinkOption() {
   
   if (!_scroller.done()) {
     display.fillRect(0, BOX_TOP - 1, WIDTH, BOX_HEIGHT + 2, true);
-    _scroller.begin();
+    _scroller.begin(Draw::DIR_LEFT);
   }
 
   const bool visible = _done || _blink.isVisible(PERIOD, OFF);
@@ -544,7 +544,10 @@ void Menu::nextOption() {
   // display.fillRect(0, BOX_TOP - 2, WIDTH, BOX_HEIGHT + 2, SSD1306_WHITE);
   // display.drawText(text, (WIDTH - strlen(text) * 12) / 2, BOX_TOP, TEXT_12x16, SSD1306_BLACK, SSD1306_WHITE);
 
-  _scroller.setTexto(OPTION[_selected], BOX_TOP, _lastSelected > _selected, TEXT_12x16);
+  bool toLeft = _lastSelected > _selected;
+  _scroller.begin(toLeft ? Draw::DIR_LEFT : Draw::DIR_RIGHT);
+  _scroller.addText(OPTION[_selected], TEXT_12x16, false, true);
+  _scroller.setHorizontal(toLeft ? 0 : -WIDTH, toLeft ? WIDTH : 0, BOX_TOP - 1);
   _scroller.startSlide();
   _lastScroll = true;
 

@@ -5,7 +5,7 @@
 #include "Timer.h"
 #include "Blink.h"
 #include "Config.h"
-#include "ScrollerH.h"
+#include "Scroller.h"
 
 // ========================================================
 // Legend — panel de botones (leyenda)
@@ -21,7 +21,7 @@
 //       Btn2 (→ = ACTION_RIGHT): "Select / Pause"
 //       Btn3 (↓ = ACTION_DOWN):  "None"
 //       Btn4 (← = ACTION_LEFT):  "None"
-//     Ese texto no aparece de golpe: lo compone un ScrollerH
+//     Ese texto no aparece de golpe: lo compone un Scroller
 //     que lo desliza lateralmente en el sentido del cambio de
 //     rombo (avanzar → entra por la derecha; retroceder → por
 //     la izquierda).
@@ -135,7 +135,7 @@ private:
 
   // Franja del pie (función del rombo activo): al cambiar de rombo el
   // texto entra deslizándose en lugar de aparecer de golpe.
-  ScrollerH _scroller;
+  Scroller _scroller;
 
   Ticker _ticker;  // avance de 1 px cada ANIM_TICK ms (acumulador por tiempo)
   Blink _blink;    // parpadeo del rombo activo (ancla + fase + flanco)

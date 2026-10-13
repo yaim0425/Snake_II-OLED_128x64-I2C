@@ -66,7 +66,8 @@ public:
   // Guarda la línea (texto, colores y factor de escala) hasta
   // startSlide(). `tColor` es el color de letra y `bgColor` el de
   // fondo; cada línea lleva además 1 px de fondo arriba y abajo, así
-  // el alto de la línea es size*CHAR_H + 2.
+  // el alto de la línea es size*CHAR_H + 2. El fondo se compone a
+  // todo lo ancho de la pantalla y el texto va centrado en ella.
   //
   // `size` (1..3) se recorta silenciosamente. Si el bloque ya tiene
   // MAX_LINES líneas, la nueva se ignora.
@@ -224,8 +225,8 @@ private:
   int16_t _pos;                      // origen actual (x si horizontal, y si vertical)
   int16_t _end;                      // origen en el límite de desaparición
   int8_t _step;                      // +1 / -1 según el sentido del slide
-  int16_t _lastOX;                   // x del bloque en el frame anterior
-  int16_t _lastOY;                   // y del bloque en el frame anterior
+  int16_t _lastPosX;                   // x del bloque en el frame anterior
+  int16_t _lastPosY;                   // y del bloque en el frame anterior
 
   bool _pauseSet;                    // hay una parada programada
   bool _pauseDefault;                // la parada usa el centro de la banda

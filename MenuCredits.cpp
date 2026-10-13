@@ -4,6 +4,7 @@
 #include "MenuCredits.h"
 
 #include "Globals.h"
+#include "Draw.h"
 
 // ====================================================================================
 // MenuCredits — roll vertical de créditos (ver el .h)
@@ -156,22 +157,27 @@ void MenuCredits::computeBlocks() {
 }
 
 // ====================================================================================
-// Avance al bloque actual: compone sus líneas en el ScrollerV y arranca el slide
+// Avance al bloque actual: compone sus líneas en el Scroller y arranca el slide
 // ====================================================================================
 
 void MenuCredits::advance() {
   _blockStart = _blocks[_block].start;
-  _blockH = _blocks[_block].count * LINE_H;
+
+  uint8_t n = (uint8_t)_blocks[_block].count;
+  if (n > MAX_BLOCKS) n = MAX_BLOCKS;
+  _blockH = (int16_t)(n * LINE_H);
   _paused = false;
 
-  // Compone las filas del bloque (máx. MAX_BLOCKS, defensa contra overrun)
-  const char* lines[MAX_BLOCKS];
-  uint8_t n = 0;
-  for (uint8_t i = 0; i < (uint8_t)_blocks[_block].count && n < MAX_BLOCKS; i++)
-    lines[n++] = CREDITS[_blockStart + i];
-
   // Sube desde abajo; la primera fila es barra blanca (título) salvo en el bloque 0
-  _scroller.setBloque(lines, n, BODY_TOP, BODY_H, true, 1, _block > 0);
+  _scroller.begin(Draw::DIR_UP);
+  for (uint8_t i = 0; i < n; i++) {
+    bool bar = (_block > 0) && (i == 0);
+    _scroller.addText(CREDITS[_blockStart + i], TEXT_6x8, !bar, bar);
+  }
+
+  // El bloque se detiene centrado en la banda del Body
+  int16_t rest = (int16_t)(BODY_TOP + (BODY_H - _blockH) / 2);
+  _scroller.setVertical(rest, (int16_t)(BODY_TOP + BODY_H));
   _scroller.startSlide();
 }
 
