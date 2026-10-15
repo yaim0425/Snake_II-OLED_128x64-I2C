@@ -19,7 +19,7 @@ MenuCredits::MenuCredits()
     _winner(false),
     _clear(true),
     _done(true),
-    // _blink(), 
+    // _blink(),
     _stay(true),
     // _yUp(0),
     // _yMiddle(0),
@@ -49,6 +49,7 @@ void MenuCredits::begin(bool fromGame, bool winner) {
 
   _done = false;
   _stay = true;
+  _line = 0;
   // _phase = Phase::ROLL;
 
   // computeBlocks();
@@ -136,15 +137,23 @@ void MenuCredits::update() {
 
   if (_isScrolling) {
     if (_scroller.update()) return;
-    _isScrolling = false;
-  };
+    if (_stay) {
+      _isScrolling = false;
+      _pause.start();
+    } else {
+      _stay = true;
+      startStay();
+      return;
+    }
+  }
 
-  if (_stay)  {
+  if (_stay) {
     if (!_pause.expired(PAUSE_MS)) return;
     _isScrolling = true;
     _stay = false;
     startExit();
-  } else startStay();
+  } 
+  
 }
 
 // ====================================================================================
@@ -171,7 +180,8 @@ void MenuCredits::firstPrint(bool forceRedraw) {
   else if (_winner) title = TITLE_WINNER;
   else title = TITLE_GAME_OVER;
 
-  display.drawText(title,
+  display.drawText(
+    title,
     display.centerX(title, TEXT_12x16), HEADER_TOP + 1,
     TEXT_12x16, true, false);
 
@@ -186,9 +196,9 @@ bool MenuCredits::done() const {
   return _done;
 }
 
-bool MenuCredits::rolling() const {
-  // return _phase == Phase::ROLL;
-}
+// bool MenuCredits::rolling() const {
+//   // return _phase == Phase::ROLL;
+// }
 
 // ====================================================================================
 // Bloques
@@ -227,19 +237,19 @@ void MenuCredits::startStay() {
   _scroller.begin(Draw::DIR_UP, Scroller::EndMode::STAY);
 
   int8_t i;
-  _blockH = 0;
-  for (i = _line; i < COUNT; i++) {
-    if(CREDITS[i] == "") break;
-    _scroller.addText(CREDITS[_line], TEXT_6x8, i != _line, i == _line);
-    _blockH = CHAR_H * TEXT_6x8 + 2;
+  for (i = 0; _line + i < COUNT; i++) {
+    const char* text = CREDITS[_line + i];
+    if (text[0] == '\0') break;
+    _scroller.addText(text, TEXT_6x8, i != 0, i == 0);
   }
   _line += i + 1;
+  _blockH = i * (CHAR_H + 2) * TEXT_6x8;
 
   // El bloque se detiene centrado en la banda del Body
   _rest = BODY_TOP + (BODY_H - _blockH) / 2;
   _scroller.setVertical(HEIGHT - 1, _rest);
   _scroller.startSlide();
-  
+
   _isScrolling = true;
   _stay = true;
 }
@@ -255,7 +265,8 @@ void MenuCredits::startExit() {
   // quedar completo por encima del Body (lo recorta el Scroller)
   _scroller.setDir(Scroller::EndMode::EXIT);
   // addBlockLines();
-  _scroller.setVertical(_rest, BODY_TOP);
+  _scroller.setVertical(_rest, BODY_TOP - _blockH);
+  // _scroller.setVertical(_rest, BODY_TOP);
   _scroller.startSlide();
 }
 

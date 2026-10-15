@@ -85,7 +85,7 @@ public:
   // ========================================================
 
   bool done() const;     // salir con ACTION_UP: el Engine vuelve al Menu
-  bool rolling() const;  // true mientras el roll corre (el reposo no aplica)
+  // bool rolling() const;  // true mientras el roll corre (el reposo no aplica)
 
 private:
 
@@ -142,8 +142,8 @@ private:
   // ========================================================
 
   // void computeBlocks();    // deriva los bloques de CREDITS
-  void startStay();          // compone el bloque actual en el Scroller y arranca su entrada
-  void startExit();        // 2º vuelo del bloque actual: desde el reposo hacia fuera
+  void startStay();  // compone el bloque actual en el Scroller y arranca su entrada
+  void startExit();  // 2º vuelo del bloque actual: desde el reposo hacia fuera
   // void addBlockLines();    // apila las líneas del bloque actual (comunes a los dos vuelos)
   void drawRoll();
   void drawCard();
@@ -154,16 +154,16 @@ private:
 
   bool _fromGame;  // llegó desde Game (música pirata + THANKS)
   bool _winner;
-  bool _clear;     // primer frame tras begin(): clear() completo + header
-  bool _done;      // salir: el Engine vuelve al Menu
+  bool _clear;  // primer frame tras begin(): clear() completo + header
+  bool _done;   // salir: el Engine vuelve al Menu
 
   // Blink _blink;
   // int16_t _yUp;
   // int16_t _yMiddle;
 
   // int16_t _blockStart;  // índice de la primera fila del bloque actual
-  int16_t _blockH;      // alto del bloque actual en px
-  int16_t _rest;        // fila de reposo del bloque actual (centro del Body)
+  int16_t _blockH;  // alto del bloque actual en px
+  int16_t _rest;    // fila de reposo del bloque actual (centro del Body)
 
   // Phase _phase;       // ROLL (corre el roll) o CARD (tarjeta final)
   bool _stay;
@@ -173,12 +173,12 @@ private:
   // uint8_t _blockCount;
   // uint8_t _block;     // bloque actual (0.._blockCount-1)
 
-  Scroller _scroller;   // slide vertical del bloque actual
+  Scroller _scroller;  // slide vertical del bloque actual
   bool _isScrolling;
 
-  Stopwatch _pause;      // pausa con el bloque centrado
-  bool _paused;          // true: la pausa del bloque actual ya está anclada
-  bool _exiting;         // true: el bloque actual está en el vuelo de salida
+  Stopwatch _pause;  // pausa con el bloque centrado
+  bool _paused;      // true: la pausa del bloque actual ya está anclada
+  bool _exiting;     // true: el bloque actual está en el vuelo de salida
 };
 
 

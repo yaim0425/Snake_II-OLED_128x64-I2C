@@ -19,21 +19,21 @@ Scroller::Scroller()
     // _horizontal(true),
     // _endMode(EndMode::STAY),
     // _rowY(0),
-    // _from(-1),
-    // _to(-1),
+    _from(-1),
+    _to(-1),
     // _geomSet(false),
     // _width(0),
     // _height(0),
     // _size(TEXT_6x8),
-    // _pos(0),
+    _pos(0),
     // _step(0),
     // _lastPosX(0),
     // _lastPosY(0),
     _done(true),
     _timerH(ANIM_H),
     _timerV(ANIM_V)
-  // clearStrip();
-  {}
+// clearStrip();
+{}
 
 // ====================================================================================
 // Inicialización: fija la orientación y el modo, y reinicia todo el estado
@@ -53,7 +53,7 @@ void Scroller::begin(int8_t dir, EndMode end) {
   // _rowY = 0;
   // _from = -1;
   // _to = -1;
-  // _geomSet = false;
+  _setLimit = false;
 
   // _width = 0;
   // _height = 0;
@@ -96,7 +96,7 @@ void Scroller::setRow(int16_t y) {
   // Fila de pantalla del bloque (horizontal). Los límites del vuelo los
   // fija startSlide() según la dirección (borde + cortina -> x = 0).
   _rowY = y;
-  // _geomSet = true;
+  _setLimit = true;
 }
 
 void Scroller::setVertical(int16_t fromLimit, int16_t toLimit) {
@@ -104,7 +104,7 @@ void Scroller::setVertical(int16_t fromLimit, int16_t toLimit) {
   // borde superior del bloque; int16_t: pueden quedar fuera).
   _to = toLimit;
   _from = fromLimit;
-  // _geomSet = true;
+  _setLimit = true;
 }
 
 // ====================================================================================
@@ -112,11 +112,11 @@ void Scroller::setVertical(int16_t fromLimit, int16_t toLimit) {
 // ====================================================================================
 
 void Scroller::startSlide() {
-  if (_from == _to) return;
 
   // Dimensiones del bloque: alto = suma de (size*CHAR_H + 2) por línea;
   // ancho = ancho completo de la pantalla (líneas de fondo a todo lo
   // ancho con el texto centrado).
+  if(_lineCount) {
   _height = 0;
   for (uint8_t i = 0; i < _lineCount; i++) {
     uint8_t size = _lines[i].size;
@@ -126,38 +126,39 @@ void Scroller::startSlide() {
 
   // _width = WIDTH;
 
-  _size = _lineCount ? _lines[0].size : 1;
+  _size = _lines[0].size;
+  }
 
   setStrip();
 
   // Límites: los explícitos (setRow/setVertical) o los por defecto de
   // la dirección, resueltos ahora que hay dimensiones.
   if (_horizontal) {
-  //   if (!_geomSet) _rowY = 0;
+      if (!_setLimit) _rowY = OPTION_TOP;
 
-  //   // Aparece desde el borde con la cortina fuera (WIDTH ± telón) y
-  //   // reposa en x = 0: el texto completo en pantalla y la cortina ya
-  //   // oculta. El telón se cuenta una sola vez (en `_from`).
+    //   // Aparece desde el borde con la cortina fuera (WIDTH ± telón) y
+    //   // reposa en x = 0: el texto completo en pantalla y la cortina ya
+    //   // oculta. El telón se cuenta una sola vez (en `_from`).
     const int16_t curtainW = (CHAR_H / 2 * _size) + (CHAR_W * _size);
     if (_dir == Draw::DIR_LEFT) {
       _from = WIDTH + curtainW;
       _to = 0;
-    }    else                        {
+    } else {
       _from = -WIDTH - curtainW;
       _to = 0;
     }
-  } else {
-  // if (!_geomSet) {
+  } else if (!_setLimit) {
     // Vertical sin límites: travesía completa de la pantalla.
     _from = HEIGHT;
     _to = -_height;
   }
-  // _geomSet = false;
+  _setLimit = false;
 
   _pos = _from;
   _step = _to > _from ? 1 : -1;
+  if (_from == _to) return;
 
-  // _done = _pos == _to;
+  _done = false;
 
   _lastPosX = blockX();
   _lastPosY = blockY();
@@ -191,21 +192,37 @@ bool Scroller::update() {
 // Dibujar: vuelca el bloque actual (sin borrar el rectángulo barrido)
 // ====================================================================================
 
-bool Scroller::print() {
-  if (_done) return false;
+void Scroller::print() {
+  if (_done) return;
 
   int16_t posX = blockX();
   int16_t posY = blockY();
 
-  if (posX == _lastPosX && posY == _lastPosY) return false;
+  if (posX == _lastPosX && posY == _lastPosY) return;
 
-  // No hace falta borrar el rectángulo barrido: sin pausas internas
-  // cada paso del bloque cubre el anterior, y la única fila que queda
-  // al descubierto es el aire de la última línea (fondo en negro en
-  // los créditos). El recorte de abajo evita pintar fuera de la
-  // pantalla y, en vertical, fija la banda del Body
-  // ([BODY_TOP, HEIGHT)): el Header queda intacto y el bloque
+  // Borra la franja que el bloque deja al descubierto al desplazarse.
+  // Con pasos de 1 px la tapa la propia línea de aire (fondo negro),
+  // pero si el ticker acumula varios pasos el bloque salta y esos
+  // píxeles quedarían como rastro. El recorte de abajo evita pintar
+  // fuera de la pantalla y, en vertical, limita el borrado a la banda
+  // del Body ([BODY_TOP, HEIGHT)): el Header queda intacto y el bloque
   // desaparece al cruzar su límite superior.
+  if (posY != _lastPosY) {
+    int16_t bandTop, bandBot;
+    if (posY < _lastPosY) {  // sube: se libera por abajo
+      bandTop = posY + _height;
+      bandBot = _lastPosY + _height;
+    } else {                 // baja: se libera por arriba
+      bandTop = _lastPosY;
+      bandBot = posY;
+    }
+    if (bandTop < 0) bandTop = 0;
+    if (bandBot > HEIGHT) bandBot = HEIGHT;
+    if (!_horizontal && bandTop < BODY_TOP) bandTop = BODY_TOP;
+    if (bandBot > bandTop)
+      display.fillRect(0, bandTop, WIDTH, (uint16_t)(bandBot - bandTop), false);
+  }
+
   for (uint16_t x = 0; x < WIDTH; x++) {
     int16_t screenX = posX + x;
     if (screenX < 0 || screenX >= WIDTH) continue;
@@ -226,7 +243,7 @@ bool Scroller::print() {
 
   _done = _pos == _to;
 
-  return true;
+  return;
 }
 
 // ====================================================================================
@@ -248,7 +265,7 @@ bool Scroller::done() const {
 // }
 
 void Scroller::setStrip() {
-  if (_endMode == EndMode::STAY) return;
+  if (_endMode == EndMode::EXIT) return;
 
   for (uint8_t y = 0; y < ROW_BYTES; y++)
     for (uint16_t x = 0; x < WIDTH; x++)

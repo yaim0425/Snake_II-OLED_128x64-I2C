@@ -158,7 +158,7 @@ public:
   // banda del Body ([BODY_TOP, HEIGHT)): el Header queda intacto.
   // ========================================================
 
-  bool print();
+  void print();
 
   // ========================================================
   // Estado: true cuando el bloque llegó a `_to`
@@ -182,18 +182,20 @@ private:
   // Métodos internos
   // ========================================================
 
-  void curtain();                                // adorno de entrada (solo horizontal)
+  void curtain();  // adorno de entrada (solo horizontal)
   // int16_t timeCurtain() const;                   // ancho del adorno (solo horizontal)
   bool getStripPixel(uint16_t x, uint8_t y) const;
   void setStripPixel(uint16_t x, uint8_t y, bool color);
 
   // void clearStrip();                             // borra _strip entero
-  void setStrip();                                // rasteriza _lines a _strip
+  void setStrip();  // rasteriza _lines a _strip
 
-  int16_t blockX() const;                        // x de pantalla del bloque (según _pos)
-  int16_t blockY() const;                        // y de pantalla del bloque (según _pos)
+  int16_t blockX() const;  // x de pantalla del bloque (según _pos)
+  int16_t blockY() const;  // y de pantalla del bloque (según _pos)
 
-  Ticker& ticker() { return _horizontal ? _timerH : _timerV; }
+  Ticker& ticker() {
+    return _horizontal ? _timerH : _timerV;
+  }
 
   // ========================================================
   // Geometría y tiempos
@@ -204,6 +206,7 @@ private:
   static constexpr uint8_t CHAR_W = Config::Screen::CHAR_W;
   static constexpr uint8_t CHAR_H = Config::Screen::CHAR_H;
   static constexpr uint8_t BODY_TOP = Config::Screen::BODY_TOP;  // banda del roll (clip vertical)
+  static constexpr uint8_t OPTION_TOP = Config::Screen::OPTION_TOP;  // banda del roll (clip vertical)
 
   static constexpr uint8_t ROW_BYTES = HEIGHT / 8;  // filas de 8 px en _strip
   static constexpr uint8_t MAX_LINES = Config::Scroller::MAX_LINES;
@@ -217,31 +220,31 @@ private:
 
   uint8_t _strip[ROW_BYTES][WIDTH];  // franja: cada byte = 1 columna de 8 px
 
-  Line _lines[MAX_LINES];            // líneas pendientes (hasta startSlide)
+  Line _lines[MAX_LINES];  // líneas pendientes (hasta startSlide)
   uint8_t _lineCount;
 
-  int8_t _dir;                       // Draw::Direction
-  bool _horizontal;                  // true: DIR_LEFT / DIR_RIGHT
-  EndMode _endMode;                  // STAY (reposa en _to) / EXIT (desaparece en _to)
+  int8_t _dir;       // Draw::Direction
+  bool _horizontal;  // true: DIR_LEFT / DIR_RIGHT
+  EndMode _endMode;  // STAY (reposa en _to) / EXIT (desaparece en _to)
 
-  int16_t _rowY;                     // fila del bloque (solo horizontal)
-  int16_t _from;                     // origen del bloque al arrancar
-  int16_t _to;                       // destino: límite de reposo (STAY) o de salida (EXIT)
-  // bool _geomSet;                     // setRow/setVertical fijó la geometría explícita
+  int16_t _rowY;  // fila del bloque (solo horizontal)
+  int16_t _from;  // origen del bloque al arrancar
+  int16_t _to;    // destino: límite de reposo (STAY) o de salida (EXIT)
+  bool _setLimit;                     // setRow/setVertical fijó la geometría explícita
 
   // int16_t _width;                    // ancho del bloque en px (siempre WIDTH)
-  int16_t _height;                   // alto del bloque en px
-  uint8_t _size;                     // size de la primera línea (cortina)
+  int16_t _height;  // alto del bloque en px
+  uint8_t _size;    // size de la primera línea (cortina)
 
-  int16_t _pos;                      // origen actual (x si horizontal, y si vertical)
-  int8_t _step;                      // +1 / -1 según el sentido del slide
-  int16_t _lastPosX;                 // x del bloque en el frame anterior
-  int16_t _lastPosY;                 // y del bloque en el frame anterior
+  int16_t _pos;       // origen actual (x si horizontal, y si vertical)
+  int8_t _step;       // +1 / -1 según el sentido del slide
+  int16_t _lastPosX;  // x del bloque en el frame anterior
+  int16_t _lastPosY;  // y del bloque en el frame anterior
 
-  bool _done;                        // true: llegó a _to
+  bool _done;  // true: llegó a _to
 
-  Ticker _timerH;                    // avance horizontal (1 px / ANIM_H ms)
-  Ticker _timerV;                    // avance vertical (1 px / ANIM_V ms)
+  Ticker _timerH;  // avance horizontal (1 px / ANIM_H ms)
+  Ticker _timerV;  // avance vertical (1 px / ANIM_V ms)
 };
 
 #endif

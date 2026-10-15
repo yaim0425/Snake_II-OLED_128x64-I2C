@@ -96,7 +96,6 @@ constexpr uint8_t CHAR_H = 8;
 
 
 namespace Difficulty {
-
 constexpr uint8_t MIN_LEVEL = 1;
 constexpr uint8_t MAX_LEVEL = 10;
 constexpr uint8_t DEFAULT_LEVEL = 5;
@@ -143,7 +142,7 @@ constexpr char* CREDITS[] = {
 };
 constexpr uint8_t COUNT = sizeof(CREDITS) / sizeof(CREDITS[0]);  // derivado: la lista nunca se desalinea
 constexpr char* THANKS = "Thanks for playing!";
-constexpr uint32_t PAUSE_MS = 1.5 * 1000;  // pausa con el bloque centrado
+constexpr uint32_t PAUSE_MS = 4 * 1000;  // pausa con el bloque centrado
 constexpr uint32_t PX_MS = 1.5 * 1000;      // ms por px de desplazamiento (~25 px/s)
 }
 

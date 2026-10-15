@@ -200,7 +200,7 @@ bool Engine::isInGame() const {
 
 bool Engine::sleepBlocked() const {
   return isInGame() ||
-         (_state == State::MENU_CREDITS && _menuCredits.rolling());
+  (_state == State::MENU_CREDITS && !_menuCredits.done());
 }
 
 // ========================================================

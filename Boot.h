@@ -94,7 +94,7 @@ private:
   static constexpr uint8_t BODY_H = Config::Screen::BODY_H;
   static constexpr uint8_t BODY_TOP = Config::Screen::BODY_TOP;
 
-  static constexpr const uint8_t* LOGO = Sprite::LOGO;
+  static constexpr auto& LOGO = Sprite::LOGO;
   static constexpr uint8_t LOGO_W = Sprite::LOGO_W;
   static constexpr uint8_t LOGO_H = Sprite::LOGO_H;
 
