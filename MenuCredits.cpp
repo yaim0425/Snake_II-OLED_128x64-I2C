@@ -19,20 +19,20 @@ MenuCredits::MenuCredits()
     _winner(false),
     _clear(true),
     _done(true),
-    _blink(), 
-    _yUp(0),
-    _yMiddle(0),
-    _blockStart(0),
-    _blockH(0),
-    _rest(0),
-    _phase(Phase::CARD),
-    _blockCount(0),
-    _block(0),
-    _scroller(),
-    _pause(),
+    // _blink(), 
+    _stay(true),
+    // _yUp(0),
+    // _yMiddle(0),
+    // _blockStart(0),
+    // _blockH(0),
+    // _rest(0),
+    // _phase(Phase::CARD),
+    // _blockCount(0),
+    // _block(0),
+    // _scroller(),
+    // _pause(),
     _paused(false),
-    _exiting(false)
-{}
+    _exiting(false) {}
 
 // ====================================================================================
 // Inicialización: arranca el roll y la música de fondo en bucle
@@ -48,12 +48,13 @@ void MenuCredits::begin(bool fromGame, bool winner) {
   _clear = true;
 
   _done = false;
-  _phase = Phase::ROLL;
+  _stay = true;
+  // _phase = Phase::ROLL;
 
-  computeBlocks();
-  _block = 0;
+  // computeBlocks();
+  // _block = 0;
 
-  advance();  // compone el bloque 0 y arranca su slide
+  startStay();  // compone el bloque 0 y arranca su slide
 
   // Música: la introducción saluda, el bucle de fondo acompaña el roll
   sound.stop();
@@ -68,46 +69,82 @@ void MenuCredits::update() {
   if (_done) return;
 
   // Salida: corta la música de fondo, suena el rechazo y se vuelve al menú
-  if (buttons.pressed(Buttons::ACTION_UP)) {
+  bool exit = false;
+
+  if (buttons.anyHeld())
     sound.stop();
+
+  if (buttons.pressed(Buttons::MOVE_UP) || buttons.pressed(Buttons::MOVE_RIGHT) || buttons.pressed(Buttons::MOVE_DOWN) || buttons.pressed(Buttons::MOVE_LEFT)) {
+    sound.play(Sound::SFX_CLICK);
+    exit = true;
+  } else if (buttons.pressed(Buttons::ACTION_UP)) {
     sound.play(Sound::SFX_BACK);
+    exit = true;
+  } else if (buttons.pressed(Buttons::ACTION_RIGHT)) {
+    sound.play(Sound::SFX_CONFIRM);
+    exit = true;
+  } else if (buttons.pressed(Buttons::ACTION_DOWN) || buttons.pressed(Buttons::ACTION_LEFT)) {
+    sound.play(Sound::SFX_CLICK);
+    exit = true;
+  }
+
+  if (exit) {
     _done = true;
     return;
   }
 
-  // La tarjeta final es estática: no hay animación que actualizar
-  if (_phase != Phase::ROLL) return;
+  // if (buttons.pressed(Buttons::ACTION_UP) || buttons.pressed(Buttons::ACTION_RIGHT)) {
+  //   sound.stop();
+  //   sound.play(Sound::SFX_BACK);
+  //   _done = true;
+  //   return;
+  // }
 
-  if (!_exiting) {
-    // 1er vuelo (STAY): entra y reposa centrado; tras la pausa externa
-    // se lanza el 2º vuelo de salida
-    if (_scroller.done()) {
-      if (!_paused) {
-        _pause.start();  // el bloque terminó de entrar: ancla la pausa
-        _paused = true;
-      }
-      if (!_pause.expired(PAUSE_MS)) return;
+  // // La tarjeta final es estática: no hay animación que actualizar
+  // if (_phase != Phase::ROLL) return;
 
-      startExit();
-      return;
-    }
-  } else {
-    // 2º vuelo (EXIT): desaparece por el límite superior del Body; al
-    // terminar pasa al bloque siguiente (o a la tarjeta final)
-    if (_scroller.done()) {
-      _block++;
-      if (_block >= _blockCount) {
-        _phase = Phase::CARD;  // el último bloque ya se mostró: tarjeta final
-        return;
-      }
-      advance();
-      return;
-    }
-  }
+  // if (!_exiting) {
+  //   // 1er vuelo (STAY): entra y reposa centrado; tras la pausa externa
+  //   // se lanza el 2º vuelo de salida
+  //   if (_scroller.done()) {
+  //     if (!_paused) {
+  //       _pause.start();  // el bloque terminó de entrar: ancla la pausa
+  //       _paused = true;
+  //     }
+  //     if (!_pause.expired(PAUSE_MS)) return;
 
-  // El slide del bloque está en curso: avanza y devuelve (print()
-  // repinta el bloque en el mismo frame)
-  _scroller.update();
+  //     startExit();
+  //     return;
+  //   }
+  // } else {
+  //   // 2º vuelo (EXIT): desaparece por el límite superior del Body; al
+  //   // terminar pasa al bloque siguiente (o a la tarjeta final)
+  //   if (_scroller.done()) {
+  //     _block++;
+  //     if (_block >= _blockCount) {
+  //       _phase = Phase::CARD;  // el último bloque ya se mostró: tarjeta final
+  //       return;
+  //     }
+  //     advance();
+  //     return;
+  //   }
+  // }
+
+  // // El slide del bloque está en curso: avanza y devuelve (print()
+  // // repinta el bloque en el mismo frame)
+  // _scroller.update();
+
+  if (_isScrolling) {
+    if (_scroller.update()) return;
+    _isScrolling = false;
+  };
+
+  if (_stay)  {
+    if (!_pause.expired(PAUSE_MS)) return;
+    _isScrolling = true;
+    _stay = false;
+    startExit();
+  } else startStay();
 }
 
 // ====================================================================================
@@ -116,8 +153,10 @@ void MenuCredits::update() {
 
 void MenuCredits::print() {
   firstPrint();
-  if (_phase == Phase::ROLL) drawRoll();
-  else drawCard();
+  _scroller.print();
+
+  // if (_phase == Phase::ROLL) drawRoll();
+  // else drawCard();
 }
 
 void MenuCredits::firstPrint(bool forceRedraw) {
@@ -136,7 +175,7 @@ void MenuCredits::firstPrint(bool forceRedraw) {
     display.centerX(title, TEXT_12x16), HEADER_TOP + 1,
     TEXT_12x16, true, false);
 
-  _blink.start();
+  // _blink.start();
 }
 
 // ====================================================================================
@@ -148,7 +187,7 @@ bool MenuCredits::done() const {
 }
 
 bool MenuCredits::rolling() const {
-  return _phase == Phase::ROLL;
+  // return _phase == Phase::ROLL;
 }
 
 // ====================================================================================
@@ -156,41 +195,53 @@ bool MenuCredits::rolling() const {
 // ====================================================================================
 
 // Deriva los bloques: filas no vacías consecutivas (el vacío es separador)
-void MenuCredits::computeBlocks() {
-  _blockCount = 0;
-  for (uint8_t i = 0; i < COUNT; ) {
-    const char* t = CREDITS[i];
-    if (!t || t[0] == '\0') { i++; continue; }
-    uint8_t start = i;
-    while (i < COUNT && CREDITS[i] && CREDITS[i][0] != '\0') i++;
-    if (_blockCount >= MAX_BLOCKS) break;   // defensa: ya no caben más bloques
-    _blocks[_blockCount].start = start;
-    _blocks[_blockCount].count = (int16_t)(i - start);
-    _blockCount++;
-  }
-}
+// void MenuCredits::computeBlocks() {
+//   // _blockCount = 0;
+//   // for (uint8_t i = 0; i < COUNT; ) {
+//   //   const char* t = CREDITS[i];
+//   //   if (!t || t[0] == '\0') { i++; continue; }
+//   //   uint8_t start = i;
+//   //   while (i < COUNT && CREDITS[i] && CREDITS[i][0] != '\0') i++;
+//   //   if (_blockCount >= MAX_BLOCKS) break;   // defensa: ya no caben más bloques
+//   //   _blocks[_blockCount].start = start;
+//   //   _blocks[_blockCount].count = (int16_t)(i - start);
+//   //   _blockCount++;
+//   // }
+// }
 
 // ====================================================================================
 // Avance al bloque actual: compone sus líneas en el Scroller y arranca el slide
 // ====================================================================================
 
-void MenuCredits::advance() {
-  _blockStart = _blocks[_block].start;
+void MenuCredits::startStay() {
+  if (_line >= COUNT) return;
+  // _blockStart = _blocks[_block].start;
 
-  uint8_t n = (uint8_t)_blocks[_block].count;
-  if (n > MAX_BLOCKS) n = MAX_BLOCKS;
-  _blockH = (int16_t)(n * LINE_H);
-  _paused = false;
-  _exiting = false;
+  // uint8_t n = (uint8_t)_blocks[_block].count;
+  // if (n > MAX_BLOCKS) n = MAX_BLOCKS;
+  // _blockH = (int16_t)(n * LINE_H);
+  // _paused = false;
+  // _exiting = false;
 
-  // 1er vuelo: sube desde abajo y reposa centrado (STAY)
+  // // 1er vuelo: sube desde abajo y reposa centrado (STAY)
   _scroller.begin(Draw::DIR_UP, Scroller::EndMode::STAY);
-  addBlockLines();
+
+  int8_t i;
+  _blockH = 0;
+  for (i = _line; i < COUNT; i++) {
+    if(CREDITS[i] == "") break;
+    _scroller.addText(CREDITS[_line], TEXT_6x8, i != _line, i == _line);
+    _blockH = CHAR_H * TEXT_6x8 + 2;
+  }
+  _line += i + 1;
 
   // El bloque se detiene centrado en la banda del Body
-  _rest = (int16_t)(BODY_TOP + (BODY_H - _blockH) / 2);
-  _scroller.setVertical(_rest, (int16_t)(BODY_TOP + BODY_H));
+  _rest = BODY_TOP + (BODY_H - _blockH) / 2;
+  _scroller.setVertical(HEIGHT - 1, _rest);
   _scroller.startSlide();
+  
+  _isScrolling = true;
+  _stay = true;
 }
 
 // ====================================================================================
@@ -198,13 +249,13 @@ void MenuCredits::advance() {
 // ====================================================================================
 
 void MenuCredits::startExit() {
-  _exiting = true;
+  // _exiting = true;
 
   // Continúa desde el reposo (misma posición: sin salto visual) hasta
   // quedar completo por encima del Body (lo recorta el Scroller)
-  _scroller.begin(Draw::DIR_UP, Scroller::EndMode::EXIT);
-  addBlockLines();
-  _scroller.setVertical((int16_t)(BODY_TOP - _blockH), _rest);
+  _scroller.setDir(Scroller::EndMode::EXIT);
+  // addBlockLines();
+  _scroller.setVertical(_rest, BODY_TOP);
   _scroller.startSlide();
 }
 
@@ -212,16 +263,25 @@ void MenuCredits::startExit() {
 // Líneas del bloque actual (mismos colores en los dos vuelos)
 // ====================================================================================
 
-void MenuCredits::addBlockLines() {
-  uint8_t n = (uint8_t)_blocks[_block].count;
-  if (n > MAX_BLOCKS) n = MAX_BLOCKS;
+// void MenuCredits::addBlockLines() {
+//   bool first = true;
+//   _blockH = 0;
+//   for (_line = 0; _line < COUNT; _line++) {
+//     if(CREDITS[_line] == "") return;
+//     _scroller.addText(CREDITS[_line], TEXT_6x8, first, !first);
+//     _blockH = CHAR_H * TEXT_6x8;
+//     first = !first;
+//   }
 
-  // La primera fila es barra blanca (título) salvo en el bloque 0
-  for (uint8_t i = 0; i < n; i++) {
-    bool bar = (_block > 0) && (i == 0);
-    _scroller.addText(CREDITS[_blockStart + i], TEXT_6x8, !bar, bar);
-  }
-}
+//   // uint8_t n = (uint8_t)_blocks[_block].count;
+//   // if (n > MAX_BLOCKS) n = MAX_BLOCKS;
+
+//   // // La primera fila es barra blanca (título) salvo en el bloque 0
+//   // for (uint8_t i = 0; i < n; i++) {
+//   //   bool bar = (_block > 0) && (i == 0);
+//   //   _scroller.addText(CREDITS[_blockStart + i], TEXT_6x8, !bar, bar);
+//   // }
+// }
 
 // ====================================================================================
 // Dibujo del roll
@@ -236,23 +296,23 @@ void MenuCredits::drawRoll() {
 // ====================================================================================
 
 void MenuCredits::drawCard() {
-  // Borra la banda del roll (Body); el Header permanece visible
-  display.fillRect(0, BODY_TOP, WIDTH, BODY_H, false);
+  // // Borra la banda del roll (Body); el Header permanece visible
+  // display.fillRect(0, BODY_TOP, WIDTH, BODY_H, false);
 
-  if (_fromGame) {
-    // Desde Game: el mensaje de agradecimiento centrado en el Body
-    int16_t y = BODY_TOP + (BODY_H - CHAR_H) / 2;
-    display.drawText(CARD_THANKS, display.centerX(CARD_THANKS, TEXT_6x8), y, TEXT_6x8, true, false);
-  } else {
-    // Desde el menú: NAME / VERSION / RELEASE_DATE centradas (3 filas)
-    const char* lines[3] = { CARD_NAME, CARD_VERSION, CARD_DATE };
+  // if (_fromGame) {
+  //   // Desde Game: el mensaje de agradecimiento centrado en el Body
+  //   int16_t y = BODY_TOP + (BODY_H - CHAR_H) / 2;
+  //   display.drawText(CARD_THANKS, display.centerX(CARD_THANKS, TEXT_6x8), y, TEXT_6x8, true, false);
+  // } else {
+  //   // Desde el menú: NAME / VERSION / RELEASE_DATE centradas (3 filas)
+  //   const char* lines[3] = { CARD_NAME, CARD_VERSION, CARD_DATE };
 
-    int16_t top = BODY_TOP + (BODY_H - 3 * LINE_H) / 2;
-    for (uint8_t i = 0; i < 3; i++) {
-      int16_t y = top + (int16_t)(i * LINE_H);
-      display.drawText(lines[i], display.centerX(lines[i], TEXT_6x8), y, TEXT_6x8, true, false);
-    }
-  }
+  //   int16_t top = BODY_TOP + (BODY_H - 3 * LINE_H) / 2;
+  //   for (uint8_t i = 0; i < 3; i++) {
+  //     int16_t y = top + (int16_t)(i * LINE_H);
+  //     display.drawText(lines[i], display.centerX(lines[i], TEXT_6x8), y, TEXT_6x8, true, false);
+  //   }
+  // }
 }
 
 // ====================================================================================

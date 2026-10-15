@@ -15,25 +15,25 @@
 
 Scroller::Scroller()
   : _lineCount(0),
-    _dir(Draw::DIR_LEFT),
-    _horizontal(true),
-    _endMode(EndMode::STAY),
-    _rowY(0),
-    _from(0),
-    _to(0),
-    _geomSet(false),
-    _width(0),
-    _height(0),
-    _size(TEXT_6x8),
-    _pos(0),
-    _step(0),
-    _lastPosX(0),
-    _lastPosY(0),
+    // _dir(Draw::DIR_LEFT),
+    // _horizontal(true),
+    // _endMode(EndMode::STAY),
+    // _rowY(0),
+    // _from(-1),
+    // _to(-1),
+    // _geomSet(false),
+    // _width(0),
+    // _height(0),
+    // _size(TEXT_6x8),
+    // _pos(0),
+    // _step(0),
+    // _lastPosX(0),
+    // _lastPosY(0),
     _done(true),
     _timerH(ANIM_H),
-    _timerV(ANIM_V) {
-  clearStrip();
-}
+    _timerV(ANIM_V)
+  // clearStrip();
+  {}
 
 // ====================================================================================
 // Inicialización: fija la orientación y el modo, y reinicia todo el estado
@@ -46,41 +46,40 @@ void Scroller::begin(int8_t dir, EndMode end) {
   // EXIT es un modo de salida: solo tiene sentido en vertical (la
   // horizontal reposa con el texto completo en pantalla y la cortina
   // oculta). En horizontal se fuerza STAY.
-  _endMode = end == EndMode::EXIT && _horizontal ? EndMode::STAY : end;
+  setDir(end);
 
   _lineCount = 0;
 
-  _rowY = 0;
-  _from = 0;
-  _to = 0;
-  _geomSet = false;
+  // _rowY = 0;
+  // _from = -1;
+  // _to = -1;
+  // _geomSet = false;
 
-  _width = 0;
-  _height = 0;
-  _size = TEXT_6x8;
+  // _width = 0;
+  // _height = 0;
+  // _size = TEXT_6x8;
 
-  _pos = 0;
-  _step = 0;
-  _lastPosX = 0;
-  _lastPosY = 0;
+  // _pos = 0;
+  // _step = 0;
+  // _lastPosX = 0;
+  // _lastPosY = 0;
 
   _done = true;
+}
+
+void Scroller::setDir(EndMode end) {
+  _endMode = end == EndMode::EXIT && _horizontal ? EndMode::STAY : end;
 }
 
 // ====================================================================================
 // addText: apila una línea pendiente (no dibuja; eso lo hace startSlide)
 // ====================================================================================
 
-void Scroller::addText(
-  const char* text, uint8_t size,
-  bool tColor, bool bgColor) {
+void Scroller::addText(const char* text, uint8_t size, bool tColor, bool bgColor) {
   if (_lineCount >= MAX_LINES) return;
 
   if (size < 1) size = 1;
   if (size > 3) size = 3;
-
-  if (_height + size + 2 >= HEIGHT) return;
-  _height += size + 2;
 
   _lines[_lineCount].text = text;
   _lines[_lineCount].size = size;
@@ -97,15 +96,15 @@ void Scroller::setRow(int16_t y) {
   // Fila de pantalla del bloque (horizontal). Los límites del vuelo los
   // fija startSlide() según la dirección (borde + cortina -> x = 0).
   _rowY = y;
-  _geomSet = true;
+  // _geomSet = true;
 }
 
-void Scroller::setVertical(int16_t toLimit, int16_t fromLimit) {
+void Scroller::setVertical(int16_t fromLimit, int16_t toLimit) {
   // Origen y destino del bloque vertical (coordenadas de pantalla del
   // borde superior del bloque; int16_t: pueden quedar fuera).
   _to = toLimit;
   _from = fromLimit;
-  _geomSet = true;
+  // _geomSet = true;
 }
 
 // ====================================================================================
@@ -113,6 +112,8 @@ void Scroller::setVertical(int16_t toLimit, int16_t fromLimit) {
 // ====================================================================================
 
 void Scroller::startSlide() {
+  if (_from == _to) return;
+
   // Dimensiones del bloque: alto = suma de (size*CHAR_H + 2) por línea;
   // ancho = ancho completo de la pantalla (líneas de fondo a todo lo
   // ancho con el texto centrado).
@@ -123,39 +124,40 @@ void Scroller::startSlide() {
   }
   if (_height > HEIGHT) _height = HEIGHT;
 
-  _width = WIDTH;
+  // _width = WIDTH;
 
   _size = _lineCount ? _lines[0].size : 1;
 
-  compose();
+  setStrip();
 
   // Límites: los explícitos (setRow/setVertical) o los por defecto de
   // la dirección, resueltos ahora que hay dimensiones.
   if (_horizontal) {
-    if (!_geomSet) _rowY = 0;
+  //   if (!_geomSet) _rowY = 0;
 
-    // Aparece desde el borde con la cortina fuera (WIDTH ± telón) y
-    // reposa en x = 0: el texto completo en pantalla y la cortina ya
-    // oculta. El telón se cuenta una sola vez (en `_from`).
-    const int16_t curtain = timeCurtain();
+  //   // Aparece desde el borde con la cortina fuera (WIDTH ± telón) y
+  //   // reposa en x = 0: el texto completo en pantalla y la cortina ya
+  //   // oculta. El telón se cuenta una sola vez (en `_from`).
+    const int16_t curtainW = (CHAR_H / 2 * _size) + (CHAR_W * _size);
     if (_dir == Draw::DIR_LEFT) {
-      _from = WIDTH + curtain;
+      _from = WIDTH + curtainW;
       _to = 0;
     }    else                        {
-      _from = -WIDTH - curtain;
+      _from = -WIDTH - curtainW;
       _to = 0;
     }
-  } else if (!_geomSet) {
+  } else {
+  // if (!_geomSet) {
     // Vertical sin límites: travesía completa de la pantalla.
     _from = HEIGHT;
     _to = -_height;
   }
-  _geomSet = false;
+  // _geomSet = false;
 
   _pos = _from;
-  _step = _to > _from ? 1 : (_to < _from ? -1 : 0);
+  _step = _to > _from ? 1 : -1;
 
-  _done = _pos == _to;
+  // _done = _pos == _to;
 
   _lastPosX = blockX();
   _lastPosY = blockY();
@@ -204,25 +206,25 @@ bool Scroller::print() {
   // pantalla y, en vertical, fija la banda del Body
   // ([BODY_TOP, HEIGHT)): el Header queda intacto y el bloque
   // desaparece al cruzar su límite superior.
-  for (uint16_t x = 0; x < _width; x++) {
-    int16_t sx = (int16_t)(posX + (int16_t)x);
-    if (sx < 0 || sx >= WIDTH) continue;
+  for (uint16_t x = 0; x < WIDTH; x++) {
+    int16_t screenX = posX + x;
+    if (screenX < 0 || screenX >= WIDTH) continue;
 
     for (uint16_t y = 0; y < _height; y++) {
-      int16_t sy = (int16_t)(posY + (int16_t)y);
-      if (sy < 0 || sy >= HEIGHT) continue;
-      if (!_horizontal && sy < BODY_TOP) continue;
+      int16_t screenY = posY + y;
+      if (screenY < 0 || screenY >= HEIGHT) continue;
+      if (!_horizontal && screenY < BODY_TOP) continue;
 
-      display.drawPixel(sx, sy, getStripPixel(x, y));
+      display.drawPixel(screenX, screenY, getStripPixel(x, y));
     }
   }
 
-  if (_horizontal) curtain();
+  curtain();
 
   _lastPosX = posX;
   _lastPosY = posY;
 
-  if (_pos == _to) _done = true;
+  _done = _pos == _to;
 
   return true;
 }
@@ -239,21 +241,25 @@ bool Scroller::done() const {
 // Rasterizado del bloque (addText -> _strip)
 // ====================================================================================
 
-void Scroller::clearStrip() {
+// void Scroller::clearStrip() {
+//   // for (uint8_t y = 0; y < ROW_BYTES; y++)
+//   //   for (uint16_t x = 0; x < WIDTH; x++)
+//   //     _strip[y][x] = 0;
+// }
+
+void Scroller::setStrip() {
+  if (_endMode == EndMode::STAY) return;
+
   for (uint8_t y = 0; y < ROW_BYTES; y++)
     for (uint16_t x = 0; x < WIDTH; x++)
       _strip[y][x] = 0;
-}
-
-void Scroller::compose() {
-  clearStrip();
 
   int16_t yStart = 0;
   for (uint8_t i = 0; i < _lineCount; i++) {
     const char* text = _lines[i].text;
     uint8_t size = _lines[i].size;
     uint8_t textH = size * CHAR_H;
-    int16_t lineH = (int16_t)textH + 2;  // 1 px de fondo arriba y abajo
+    int16_t lineH = textH + 2;  // 1 px de fondo arriba y abajo
 
     bool tColor = _lines[i].tColor ? SSD1306_WHITE : SSD1306_BLACK;
     bool bgColor = _lines[i].bgColor ? SSD1306_WHITE : SSD1306_BLACK;
@@ -265,21 +271,19 @@ void Scroller::compose() {
 
     // Texto centrado en la pantalla (canvas auxiliar -> _strip)
     int16_t textW = strlen(text) * CHAR_W * size;
-    if (textW > 0) {
-      int16_t xStart = display.centerX(text, size);
-      if (xStart < 0) xStart = 0;
+    int16_t xStart = display.centerX(text, size);
+    if (xStart < 0) xStart = 0;
 
-      GFXcanvas8 canvas(textW, textH);
-      canvas.fillScreen(bgColor);
-      canvas.setTextSize(size);
-      canvas.setTextColor(tColor, bgColor);
-      canvas.setCursor(0, 0);
-      canvas.print(text);
+    GFXcanvas8 canvas(textW, textH);
+    canvas.fillScreen(bgColor);
+    canvas.setTextSize(size);
+    canvas.setTextColor(tColor, bgColor);
+    canvas.setCursor(0, 0);
+    canvas.print(text);
 
-      for (int16_t y = 0; y < textH; y++)
-        for (int16_t x = 0; x < textW; x++)
-          setStripPixel((uint16_t)(xStart + x), (uint8_t)(yStart + 1 + y), canvas.getPixel(x, y));
-    }
+    for (int16_t y = 0; y < textH; y++)
+      for (int16_t x = 0; x < textW; x++)
+        setStripPixel(xStart + x, (uint8_t)(yStart + 1 + y), canvas.getPixel(x, y));
 
     yStart += lineH;
   }
@@ -292,21 +296,22 @@ void Scroller::compose() {
 bool Scroller::getStripPixel(uint16_t x, uint8_t y) const {
   if (x >= WIDTH) return false;
   if (y >= HEIGHT) return false;
+
   uint8_t rowBytes = y / 8;
   uint8_t bit = y % 8;
+
   return (_strip[rowBytes][x] & (1 << bit)) != 0;
 }
 
 void Scroller::setStripPixel(uint16_t x, uint8_t y, bool color) {
   if (x >= WIDTH) return;
   if (y >= HEIGHT) return;
+
   uint8_t rowBytes = y / 8;
   uint8_t bit = y % 8;
-  if (color) {
-    _strip[rowBytes][x] |= (uint8_t)(1 << bit);
-  } else {
-    _strip[rowBytes][x] &= (uint8_t) ~(1 << bit);
-  }
+
+  if (color) _strip[rowBytes][x] |= (uint8_t)(1 << bit);
+  else _strip[rowBytes][x] &= (uint8_t) ~(1 << bit);
 }
 
 // ====================================================================================
@@ -314,7 +319,7 @@ void Scroller::setStripPixel(uint16_t x, uint8_t y, bool color) {
 // ====================================================================================
 
 int16_t Scroller::blockX() const {
-  return _horizontal ? _pos : (WIDTH - _width) / 2;  // _width == WIDTH -> 0
+  return _horizontal ? _pos : 0;
 }
 
 int16_t Scroller::blockY() const {
@@ -325,13 +330,15 @@ int16_t Scroller::blockY() const {
 // Cortina (adorno de entrada, solo horizontal; portado de ScrollerH)
 // ====================================================================================
 
-int16_t Scroller::timeCurtain() const {
-  return (CHAR_H / 2 * _size) + (CHAR_W * _size);
-}
+// int16_t Scroller::timeCurtain() const {
+//   return (CHAR_H / 2 * _size) + (CHAR_W * _size);
+// }
 
 void Scroller::curtain() {
+  if (!_horizontal) return;
+
   int8_t dir = _dir == Draw::DIR_LEFT ? -1 : 1;
-  int16_t xBack = _dir == Draw::DIR_LEFT ? blockX() : blockX() + _width;
+  int16_t xBack = _dir == Draw::DIR_LEFT ? blockX() : blockX() + WIDTH;
 
   int16_t centerX;
   int16_t centerY;

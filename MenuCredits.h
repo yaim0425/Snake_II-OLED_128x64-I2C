@@ -93,17 +93,17 @@ private:
   // Geometría del roll
   // ========================================================
 
-  static constexpr int16_t WIDTH = Config::Screen::WIDTH;
+  static constexpr int16_t HEIGHT = Config::Screen::HEIGHT;
+  // static constexpr int16_t WIDTH = Config::Screen::WIDTH;
   static constexpr int16_t HEADER_TOP = Config::Screen::HEADER_TOP;
   static constexpr int16_t BODY_TOP = Config::Screen::BODY_TOP;
   static constexpr int16_t BODY_H = Config::Screen::BODY_H;
   static constexpr int16_t CHAR_H = Config::Screen::CHAR_H;
-  static constexpr int16_t LINE_H = CHAR_H + 2;    // alto de fila (8 px de letra + 2 de aire)
+  // static constexpr int16_t LINE_H = CHAR_H + 2;    // alto de fila (8 px de letra + 2 de aire)
 
   static constexpr uint32_t PAUSE_MS = Config::Credits::PAUSE_MS;  // pausa con el bloque centrado
 
-  static constexpr uint8_t COUNT = (uint8_t)Config::Credits::COUNT;
-  static constexpr uint8_t MAX_BLOCKS = 8;
+  // static constexpr uint8_t MAX_BLOCKS = 8;
 
   // ========================================================
   // Renombres de Config (el .cpp no referencia Config nunca):
@@ -115,32 +115,36 @@ private:
   // ========================================================
 
   static constexpr auto& CREDITS = Config::Credits::CREDITS;
+  static constexpr uint8_t COUNT = Config::Credits::COUNT;
+
   static constexpr char* TITLE_CREDITS = "CREDITS";
   static constexpr char* TITLE_GAME_OVER = "GAME OVER";
   static constexpr char* TITLE_WINNER = "YOU WIN";
-  static constexpr const char* CARD_THANKS = Config::Credits::THANKS;
-  static constexpr const char* CARD_NAME = Config::Version::NAME;
-  static constexpr const char* CARD_VERSION = Config::Version::VERSION;
-  static constexpr const char* CARD_DATE = Config::Version::RELEASE_DATE;
+
+  // static constexpr const char* CARD_THANKS = Config::Credits::THANKS;
+
+  // static constexpr const char* CARD_NAME = Config::Version::NAME;
+  // static constexpr const char* CARD_VERSION = Config::Version::VERSION;
+  // static constexpr const char* CARD_DATE = Config::Version::RELEASE_DATE;
 
   // ========================================================
   // Fases del roll
   // ========================================================
 
-  enum class Phase : uint8_t { ROLL, CARD };
+  // enum class Phase : uint8_t { ROLL, CARD };
 
-  // Un bloque = filas no vacías consecutivas del array (start =
-  // índice de la primera fila del bloque, count = cantidad).
-  struct Block { int16_t start; int16_t count; };
+  // // Un bloque = filas no vacías consecutivas del array (start =
+  // // índice de la primera fila del bloque, count = cantidad).
+  // struct Block { int16_t start; int16_t count; };
 
   // ========================================================
   // Métodos internos
   // ========================================================
 
-  void computeBlocks();    // deriva los bloques de CREDITS
-  void advance();          // compone el bloque actual en el Scroller y arranca su entrada
+  // void computeBlocks();    // deriva los bloques de CREDITS
+  void startStay();          // compone el bloque actual en el Scroller y arranca su entrada
   void startExit();        // 2º vuelo del bloque actual: desde el reposo hacia fuera
-  void addBlockLines();    // apila las líneas del bloque actual (comunes a los dos vuelos)
+  // void addBlockLines();    // apila las líneas del bloque actual (comunes a los dos vuelos)
   void drawRoll();
   void drawCard();
 
@@ -153,21 +157,24 @@ private:
   bool _clear;     // primer frame tras begin(): clear() completo + header
   bool _done;      // salir: el Engine vuelve al Menu
 
-  Blink _blink;
-  int16_t _yUp;
-  int16_t _yMiddle;
+  // Blink _blink;
+  // int16_t _yUp;
+  // int16_t _yMiddle;
 
-  int16_t _blockStart;  // índice de la primera fila del bloque actual
+  // int16_t _blockStart;  // índice de la primera fila del bloque actual
   int16_t _blockH;      // alto del bloque actual en px
   int16_t _rest;        // fila de reposo del bloque actual (centro del Body)
 
-  Phase _phase;       // ROLL (corre el roll) o CARD (tarjeta final)
+  // Phase _phase;       // ROLL (corre el roll) o CARD (tarjeta final)
+  bool _stay;
+  int8_t _line;
 
-  Block _blocks[MAX_BLOCKS];
-  uint8_t _blockCount;
-  uint8_t _block;     // bloque actual (0.._blockCount-1)
+  // Block _blocks[MAX_BLOCKS];
+  // uint8_t _blockCount;
+  // uint8_t _block;     // bloque actual (0.._blockCount-1)
 
   Scroller _scroller;   // slide vertical del bloque actual
+  bool _isScrolling;
 
   Stopwatch _pause;      // pausa con el bloque centrado
   bool _paused;          // true: la pausa del bloque actual ya está anclada

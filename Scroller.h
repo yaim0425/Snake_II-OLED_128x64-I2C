@@ -125,7 +125,8 @@ public:
   // por defecto es la travesía completa (desde HEIGHT hasta -alto).
   // ========================================================
 
-  void setVertical(int16_t toLimit, int16_t fromLimit);
+  void setVertical(int16_t fromLimit, int16_t toLimit);
+  void setDir(EndMode end);
 
   // ========================================================
   // Arranque del slide
@@ -182,12 +183,12 @@ private:
   // ========================================================
 
   void curtain();                                // adorno de entrada (solo horizontal)
-  int16_t timeCurtain() const;                   // ancho del adorno (solo horizontal)
+  // int16_t timeCurtain() const;                   // ancho del adorno (solo horizontal)
   bool getStripPixel(uint16_t x, uint8_t y) const;
   void setStripPixel(uint16_t x, uint8_t y, bool color);
 
-  void clearStrip();                             // borra _strip entero
-  void compose();                                // rasteriza _lines a _strip
+  // void clearStrip();                             // borra _strip entero
+  void setStrip();                                // rasteriza _lines a _strip
 
   int16_t blockX() const;                        // x de pantalla del bloque (según _pos)
   int16_t blockY() const;                        // y de pantalla del bloque (según _pos)
@@ -207,8 +208,8 @@ private:
   static constexpr uint8_t ROW_BYTES = HEIGHT / 8;  // filas de 8 px en _strip
   static constexpr uint8_t MAX_LINES = Config::Scroller::MAX_LINES;
 
-  static constexpr uint32_t ANIM_H = Config::Scroller::ANIMATION_H;
-  static constexpr uint32_t ANIM_V = Config::Scroller::ANIMATION_V;
+  static constexpr uint8_t ANIM_H = Config::Scroller::ANIMATION_H;
+  static constexpr uint8_t ANIM_V = Config::Scroller::ANIMATION_V;
 
   // ========================================================
   // Estado interno
@@ -226,9 +227,9 @@ private:
   int16_t _rowY;                     // fila del bloque (solo horizontal)
   int16_t _from;                     // origen del bloque al arrancar
   int16_t _to;                       // destino: límite de reposo (STAY) o de salida (EXIT)
-  bool _geomSet;                     // setRow/setVertical fijó la geometría explícita
+  // bool _geomSet;                     // setRow/setVertical fijó la geometría explícita
 
-  int16_t _width;                    // ancho del bloque en px (siempre WIDTH)
+  // int16_t _width;                    // ancho del bloque en px (siempre WIDTH)
   int16_t _height;                   // alto del bloque en px
   uint8_t _size;                     // size de la primera línea (cortina)
 
