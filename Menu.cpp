@@ -252,7 +252,6 @@ void Menu::update() {
     _blink.start();
   }
 
-
   // navigate();
   // if (true) return;  // IGNORE: no se actualiza el menú en esta versión
 
@@ -535,9 +534,11 @@ void Menu::nextOption() {
 
   // int8_t op = _selected;
   // if (!_visibleContinue && op >= OPT_CONTINUE) op++;
-  // const char* text = OPTION_TEXT[op];
   // display.fillRect(0, BOX_TOP - 2, WIDTH, BOX_HEIGHT + 2, SSD1306_WHITE);
-  // display.drawText(text, (WIDTH - strlen(text) * 12) / 2, BOX_TOP, TEXT_12x16, SSD1306_BLACK, SSD1306_WHITE);
+  if (_scroller.done() && !_blink.isVisible(PERIOD, OFF)) {
+    const char* text = OPTION[_lastSelected];
+    display.drawText(text, display.centerX(text, TEXT_12x16), BOX_TOP, TEXT_12x16, false, true);
+  }
 
   bool toLeft = _lastSelected > _selected;
   _scroller.begin(toLeft ? Draw::DIR_LEFT : Draw::DIR_RIGHT, Scroller::EndMode::STAY);

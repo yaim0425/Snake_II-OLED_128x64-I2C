@@ -99,11 +99,18 @@ private:
   static constexpr int16_t VALUE_HEIGHT = Config::MenuStrip::VALUE_HEIGHT;
   static constexpr int16_t VALUE_TOP = Config::MenuStrip::VALUE_TOP;
 
-  static constexpr int16_t TRIANGLE_L = (WIDTH - 6 * 3) / 2 - 4;
-  static constexpr int16_t TRIANGLE_R = (WIDTH - 6 * 3) / 2 + (6 * 3) +  2;
-  static constexpr int16_t LABEL_X = TRIANGLE_L + 4;
+  // static constexpr int16_t TRIANGLE_L = (WIDTH - 6 * 3) / 2 - 4;
+  // static constexpr int16_t TRIANGLE_R = (WIDTH - 6 * 3) / 2 + (6 * 3) +  2;
+  // static constexpr int16_t LABEL_X = TRIANGLE_L + 4;
   
   static constexpr int16_t DIAMOND_Y = Config::MenuStrip::DIAMOND_Y;
+  static constexpr int16_t PAD_LEFT_X = Config::Screen::WIDTH * 0.25;  // centro del pad MOVE
+  static constexpr int16_t PAD_RIGHT_X = Config::Screen::WIDTH * 0.75;  // centro del pad de rombos
+  static constexpr uint8_t CHAR_W = Config::Screen::CHAR_W;
+  // static constexpr uint8_t CHAR_H = Config::Screen::CHAR_H;
+
+  // static constexpr char* ON = "ON";
+  // static constexpr char* OFF = "OFF";
 
   // ========================================================
   // Métodos internos
@@ -124,6 +131,14 @@ private:
 
   Blink _blink;  // parpadeo de la flecha (fase cruda)
   bool _clear;
+
+  int16_t _onStartX;
+  int16_t _onEndX;
+  // int8_t _onWidth;
+
+  int16_t _offStartX;
+  int16_t _offEndX;
+  // int8_t _offWidth;
 };
 
 #endif

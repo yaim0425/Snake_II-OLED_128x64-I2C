@@ -13,6 +13,10 @@ MenuSound::MenuSound()
     _done(false),
     _selected(true),
     _lastSelected(true),
+    _onStartX(0),
+    _onEndX(0),
+    _offStartX(0),
+    _offEndX(0),
     _blink() {}
 
 // ========================================================
@@ -30,6 +34,20 @@ void MenuSound::begin() {
   _done = false;
   _selected = sound.enabled();
   _lastSelected = _selected;
+
+  char* text;
+  int16_t width;
+
+  text = "ON";
+  width = strlen(text) * CHAR_W * TEXT_6x8;
+  _onStartX = PAD_RIGHT_X - width / 2;
+  _onEndX = _onStartX + width;
+
+  text = "OFF";
+  width = strlen(text) * CHAR_W * TEXT_6x8;
+  _offStartX = PAD_LEFT_X - width / 2;
+  _offEndX = _offStartX + width;
+
   _blink.start();
 }
 
@@ -135,22 +153,32 @@ void MenuSound::blinkOption() {
 
   // display.drawText(label, labelX, DIAMOND_Y - 3, TEXT_6x8);
 
+  bool visible = _blink.isVisible(PERIOD, OFF);
+
+  if (_selected) {
+    Draw::triangle(Draw::DIR_RIGHT, _onStartX - (SIZE + 3), DIAMOND_Y, visible);
+    Draw::triangle(Draw::DIR_LEFT, _onEndX + (SIZE + 1), DIAMOND_Y, visible);
+  } else {
+    Draw::triangle(Draw::DIR_RIGHT, _offStartX - (SIZE + 3), DIAMOND_Y, visible);
+    Draw::triangle(Draw::DIR_LEFT, _offEndX + (SIZE + 0), DIAMOND_Y, visible);
+  }
+
   // Parpadeo de la flecha: visible el 75% del período, oculta el
   // primer 25% (anclado al begin: sin salto de fase con el reloj
   // de 64 bits)
   // if (_blink.isVisible(PERIOD, OFF))
   // if (_selected) Draw::triangle(Draw::DIR_LEFT, labelX - 4, DIAMOND_Y, visible);
-  if (_selected) Draw::triangle(Draw::DIR_LEFT, TRIANGLE_L, DIAMOND_Y, _blink.isVisible(PERIOD, OFF));
-    // ON: flecha a la izquierda, punta hacia la izquierda ("< ON")
-    // int16_t base = labelX - ARROW_GAP;  // lado plano, pegado a la palabra
-    // int16_t centerX = labelX;
-    // display.fillTriangle(
-    //   centerX, centerY - SIZE,
-    //   centerX - SIZE, centerY,
-    //   centerX, centerY + SIZE,
-    //   SSD1306_WHITE);
-    else Draw::triangle(Draw::DIR_RIGHT, TRIANGLE_R, DIAMOND_Y, _blink.isVisible(PERIOD, OFF));
-    // else Draw::triangle(Draw::DIR_RIGHT, labelX + labelW + 2, DIAMOND_Y, visible);
+  // -- if (_selected) Draw::triangle(Draw::DIR_LEFT, TRIANGLE_L, DIAMOND_Y, _blink.isVisible(PERIOD, OFF));
+  // ON: flecha a la izquierda, punta hacia la izquierda ("< ON")
+  // int16_t base = labelX - ARROW_GAP;  // lado plano, pegado a la palabra
+  // int16_t centerX = labelX;
+  // display.fillTriangle(
+  //   centerX, centerY - SIZE,
+  //   centerX - SIZE, centerY,
+  //   centerX, centerY + SIZE,
+  //   SSD1306_WHITE);
+  // -- else Draw::triangle(Draw::DIR_RIGHT, TRIANGLE_R, DIAMOND_Y, _blink.isVisible(PERIOD, OFF));
+  // else Draw::triangle(Draw::DIR_RIGHT, labelX + labelW + 2, DIAMOND_Y, visible);
   // OFF: flecha a la derecha, punta hacia la derecha ("OFF >")
   // int16_t base = labelX + labelW + ARROW_GAP;  // lado plano, pegado a la palabra
   // int16_t centerX = labelX + labelW;
@@ -164,15 +192,21 @@ void MenuSound::blinkOption() {
 void MenuSound::nextOption(bool show) {
   if (_lastSelected == _selected && !show) return;
 
-  display.drawText(_selected ? "ON " : "OFF", LABEL_X, DIAMOND_Y - 3, TEXT_6x8);
+  // display.drawText(_selected ? "ON " : "OFF", LABEL_X, DIAMOND_Y - 3, TEXT_6x8);
 
-  if (_selected) {
-    Draw::triangle(Draw::DIR_RIGHT, TRIANGLE_R, DIAMOND_Y, false);
-    Draw::triangle(Draw::DIR_LEFT, TRIANGLE_L, DIAMOND_Y, true);
-  } else {
-    Draw::triangle(Draw::DIR_RIGHT, TRIANGLE_R, DIAMOND_Y, true);
-    Draw::triangle(Draw::DIR_LEFT, TRIANGLE_L, DIAMOND_Y, false);
-  }
+  // if (_selected) {
+  //   Draw::triangle(Draw::DIR_RIGHT, TRIANGLE_R, DIAMOND_Y, false);
+  //   Draw::triangle(Draw::DIR_LEFT, TRIANGLE_L, DIAMOND_Y, true);
+  // } else {
+  //   Draw::triangle(Draw::DIR_RIGHT, TRIANGLE_R, DIAMOND_Y, true);
+  //   Draw::triangle(Draw::DIR_LEFT, TRIANGLE_L, DIAMOND_Y, false);
+  // }
+
+  Draw::triangle(Draw::DIR_RIGHT, _onStartX - (SIZE + 3), DIAMOND_Y, _selected);
+  Draw::triangle(Draw::DIR_LEFT, _onEndX + (SIZE + 1), DIAMOND_Y, _selected);
+
+  Draw::triangle(Draw::DIR_RIGHT, _offStartX - (SIZE + 3), DIAMOND_Y, !_selected);
+  Draw::triangle(Draw::DIR_LEFT, _offEndX + (SIZE + 0), DIAMOND_Y, !_selected);
 
   _lastSelected = _selected;
   _blink.start();
@@ -182,7 +216,10 @@ void MenuSound::firstPrint(bool forceRedraw) {
   if (!_clear && !forceRedraw) return;
   clear();
   _clear = false;
-  
+
+  display.drawText("ON", _onStartX, DIAMOND_Y - 3, TEXT_6x8);
+  display.drawText("OFF", _offStartX, DIAMOND_Y - 3, TEXT_6x8);
+
   nextOption(true);
 }
 // ========================================================

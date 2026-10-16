@@ -263,10 +263,10 @@ void MenuCredits::startExit() {
 
   // Continúa desde el reposo (misma posición: sin salto visual) hasta
   // quedar completo por encima del Body (lo recorta el Scroller)
-  _scroller.setDir(Scroller::EndMode::EXIT);
+  _scroller.setEndMode(Scroller::EndMode::EXIT);
   // addBlockLines();
-  _scroller.setVertical(_rest, BODY_TOP - _blockH);
-  // _scroller.setVertical(_rest, BODY_TOP);
+  // _scroller.setVertical(_rest, BODY_TOP - _blockH);
+  _scroller.setVertical(_rest, BODY_TOP);
   _scroller.startSlide();
 }
 

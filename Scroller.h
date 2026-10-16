@@ -125,8 +125,8 @@ public:
   // por defecto es la travesía completa (desde HEIGHT hasta -alto).
   // ========================================================
 
-  void setVertical(int16_t fromLimit, int16_t toLimit);
-  void setDir(EndMode end);
+  void setVertical(int16_t fromLimit, int16_t toLimit = -1);
+  void setEndMode(EndMode end);
 
   // ========================================================
   // Arranque del slide

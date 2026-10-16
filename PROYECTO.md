@@ -54,6 +54,7 @@ Para no empezar desde cero, **copiar y pegar tal cual** el siguiente bloque en l
 nueva sesión (no hay que escribir nada más):
 
 ```
+Ayudeme con proyecto de recrear el Juego Snake II de los Nokias.
 Trabaja en el proyecto Snake_II-OLED_128x64-I2C (ESP32-S3, Arduino IDE) ubicado en
 C:\ESP32S3\Snake_II-OLED_128x64-I2C.
 ```

@@ -46,7 +46,7 @@ void Scroller::begin(int8_t dir, EndMode end) {
   // EXIT es un modo de salida: solo tiene sentido en vertical (la
   // horizontal reposa con el texto completo en pantalla y la cortina
   // oculta). En horizontal se fuerza STAY.
-  setDir(end);
+  setEndMode(end);
 
   _lineCount = 0;
 
@@ -67,7 +67,7 @@ void Scroller::begin(int8_t dir, EndMode end) {
   _done = true;
 }
 
-void Scroller::setDir(EndMode end) {
+void Scroller::setEndMode(EndMode end) {
   _endMode = end == EndMode::EXIT && _horizontal ? EndMode::STAY : end;
 }
 
@@ -116,17 +116,17 @@ void Scroller::startSlide() {
   // Dimensiones del bloque: alto = suma de (size*CHAR_H + 2) por línea;
   // ancho = ancho completo de la pantalla (líneas de fondo a todo lo
   // ancho con el texto centrado).
-  if(_lineCount) {
-  _height = 0;
-  for (uint8_t i = 0; i < _lineCount; i++) {
-    uint8_t size = _lines[i].size;
-    _height += size * CHAR_H + 2;
-  }
-  if (_height > HEIGHT) _height = HEIGHT;
+  if (_lineCount) {
+    _height = 0;
+    for (uint8_t i = 0; i < _lineCount; i++) {
+      uint8_t size = _lines[i].size;
+      _height += size * CHAR_H + 2;
+    }
+    if (_height > HEIGHT) _height = HEIGHT;
 
-  // _width = WIDTH;
+    // _width = WIDTH;
 
-  _size = _lines[0].size;
+    _size = _lines[0].size;
   }
 
   setStrip();
@@ -134,7 +134,7 @@ void Scroller::startSlide() {
   // Límites: los explícitos (setRow/setVertical) o los por defecto de
   // la dirección, resueltos ahora que hay dimensiones.
   if (_horizontal) {
-      if (!_setLimit) _rowY = OPTION_TOP;
+    if (!_setLimit) _rowY = OPTION_TOP;
 
     //   // Aparece desde el borde con la cortina fuera (WIDTH ± telón) y
     //   // reposa en x = 0: el texto completo en pantalla y la cortina ya
@@ -151,6 +151,9 @@ void Scroller::startSlide() {
     // Vertical sin límites: travesía completa de la pantalla.
     _from = HEIGHT;
     _to = -_height;
+  } else if (_endMode == EndMode::EXIT) {
+    _from = _pos;
+    _to -= _height;
   }
   _setLimit = false;
 
@@ -212,7 +215,7 @@ void Scroller::print() {
     if (posY < _lastPosY) {  // sube: se libera por abajo
       bandTop = posY + _height;
       bandBot = _lastPosY + _height;
-    } else {                 // baja: se libera por arriba
+    } else {  // baja: se libera por arriba
       bandTop = _lastPosY;
       bandBot = posY;
     }

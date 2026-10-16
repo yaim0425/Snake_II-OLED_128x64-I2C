@@ -168,11 +168,11 @@ public:
 private:
   Adafruit_SSD1306* _screen;
 
-  const uint8_t CHAR_W = Config::Screen::CHAR_W;
-  const uint8_t CHAR_H = Config::Screen::CHAR_H;
+  static constexpr uint8_t CHAR_W = Config::Screen::CHAR_W;
+  static constexpr uint8_t CHAR_H = Config::Screen::CHAR_H;
 
-  const int16_t WIDTH = Config::Screen::WIDTH;
-  const int16_t HEIGHT = Config::Screen::HEIGHT;
+  static constexpr int16_t WIDTH = Config::Screen::WIDTH;
+  static constexpr int16_t HEIGHT = Config::Screen::HEIGHT;
 
   uint8_t _sda;
   uint8_t _scl;
