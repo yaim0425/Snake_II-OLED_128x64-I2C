@@ -1,19 +1,8 @@
-// AISLADO: unidad de translation desactivada mientras se trabaja en Boot y
-// Legend. Arduino compila TODOS los .cpp de la carpeta del sketch, asi que este
-// archivo se seguiria compilando aunque Engine ya no lo incluya, y llama a la
-// API de Display que quedo comentada en Display.h.
-// Para revertir: borrar el #if 0 de aqui y el #endif del final.
-#if 0
-
 #include "Food.h"
 #include "Game.h"
 #include "Globals.h"
 
-#include "Sprite.h"
-
-#include "Config.h"
-
-#include <Adafruit_GFX.h>
+#include "Draw.h"
 
 // ========================================================
 // Constructor
@@ -27,7 +16,7 @@ Food::Food(uint8_t cols, uint8_t rows, uint8_t top)
     _x(0),
     _y(0),
     _has(false),
-    _specialTime(SPECIAL_TIME_DEFAULT) {}
+    _specialTime(SPECIAL_TIME) {}
 
 // ========================================================
 // Inicialización: no hay alimento
@@ -136,36 +125,25 @@ void Food::draw() const {
 // ========================================================
 
 void Food::drawNormal() const {
-  Adafruit_SSD1306& s = display.screen();
-  int16_t cx = (int16_t)_x * Config::Screen::CELL + Config::Screen::CELL / 2;
-  int16_t cy = _top + (int16_t)_y * Config::Screen::CELL + Config::Screen::CELL / 2;
+  int16_t centerX = (int16_t)_x * CELL + CELL / 2;
+  int16_t centerY = _top + (int16_t)_y * CELL + CELL / 2;
 
-  s.fillTriangle(cx, cy - 3, cx + 3, cy, cx, cy + 3, SSD1306_WHITE);
-  s.fillTriangle(cx, cy - 3, cx - 3, cy, cx, cy + 3, SSD1306_WHITE);
+  Draw::diamond(centerX, centerY);
 }
 
 // ========================================================
 // Comida especial: sprite SPECIAL_FOOD (8×4 px de 1 bit)
-// dibujado a 1 px por bit, centrado verticalmente en la
-// celda (la celda mide Config::Screen::CELL px, el sprite 4)
+// centrado verticalmente en la celda (la celda mide CELL px,
+// el sprite 4)
 // ========================================================
 
 void Food::drawSpecial() const {
-  Adafruit_SSD1306& s = display.screen();
-  int16_t baseX = (int16_t)_x * Config::Screen::CELL;
-  int16_t baseY = _top + (int16_t)_y * Config::Screen::CELL
-                  + (Config::Screen::CELL - Sprite::SPECIAL_FOOD_H) / 2;
+  int16_t baseX = (int16_t)_x * CELL;
+  int16_t baseY = _top + (int16_t)_y * CELL + (CELL - FOOD_HEIGHT) / 2;
 
-  for (uint8_t i = 0; i < Sprite::SPECIAL_FOOD_H; i++) {
-    for (uint8_t j = 0; j < Sprite::SPECIAL_FOOD_W; j++) {
-      if (Sprite::specialPixel(j, i))
-        s.drawPixel(baseX + (int16_t)j, baseY + (int16_t)i, SSD1306_WHITE);
-    }
-  }
+  display.drawBitmap(baseX, baseY, FOOD, FOOD_WIDTH, FOOD_HEIGHT, SSD1306_WHITE, SSD1306_BLACK);
 }
 
 // ====================================================================================
 // Fin
 // ====================================================================================
-
-#endif  // AISLADO (ver #if 0 al principio del archivo)

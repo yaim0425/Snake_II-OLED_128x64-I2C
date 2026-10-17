@@ -70,7 +70,7 @@ En desarrollo. `.ino` = wiring: define los globales (`Display`, `Buttons`, `Soun
 - **`Engine`:** despachador; posee las ventanas (no globales, no anidadas); llama `begin()` de la entrante al cambiar de estado. `loop()`: única lectura de botones + reposo (§26).
 - **Render sin `clear()` global:** cada ventana limpia solo en su primer frame. `MenuDifficulty`/`MenuSound` son capas sobre el `Menu` (sustituyen la banda de rombos); al salir hacen `changeState(MENU)` — hoy `begin()` completo porque `Menu::restoreDiamondBand()` sigue comentada (§11).
 - **Flujo:** `Boot` → `Legend` → `Menu`. La `Legend` solo aparece al arrancar. Submenús activos: `MenuSound` (On/Off), `MenuDifficulty` (nivel 1..10) y `MenuCredits` (roll vertical).
-- **Aislamiento (`AISLADO`):** solo queda `Game` (con `Food`): su `#include`/miembro `_game` y los estados `NEW`/`CONTINUE` siguen comentados e inertes (§11). El resto de ventanas está **activo**: `MenuSound`/`MenuDifficulty`/`MenuCredits` se abren al confirmar su opción con `ACTION_RIGHT` (el `switch` de `Engine::update` despacha `OPT_SOUND`/`OPT_DIFFICULTY`/`OPT_CREDITS`).
+- **Aislamiento (`AISLADO`):** solo queda `Game` (con `Food`): su `#include`/miembro `_game` y los estados `NEW`/`CONTINUE` siguen comentados e inertes (§11); `Food.cpp` ya **no** está desactivado (reactivado con la API pública de `Display`/`Draw`), solo falta cablear la partida. El resto de ventanas está **activo**: `MenuSound`/`MenuDifficulty`/`MenuCredits` se abren al confirmar su opción con `ACTION_RIGHT` (el `switch` de `Engine::update` despacha `OPT_SOUND`/`OPT_DIFFICULTY`/`OPT_CREDITS`).
 
 **Clases extraídas de `Game`:** `Food` (alimento), `Snake` (lógica pura), `Sprite.h` (tabla), `Timer.h` (reloj 64 bits; migración desde `millis()`).
 
@@ -106,7 +106,7 @@ Directorio: `D:\Documents\ESP32S3\Snake_II-OLED_128x64-I2C`
 | Archivo | Contenido |
 |---------|-----------|
 | `Display.h/.cpp` | Clase `Display`: OLED (`begin`, `clear`/`show`, `power(on)`, `fillRect`, `fillTriangle`, `drawText`, `drawBitmap`). Completa. |
-| `Config.h` | Constantes compartidas (namespace `Config`, §19): pines, geometría/regiones, `Difficulty`, `Version`, `Credits`, `Legend`, `Diamond`, `Button`, `Scroller`, `MenuStrip`, `DefaultTimer`, `Power`. Sin `#define` para valores. |
+| `Config.h` | Constantes compartidas (namespace `Config`, §19): pines, geometría/regiones, `Difficulty`, `Version`, `Credits`, `Legend`, `Diamond`, `Button`, `Scroller`, `MenuStrip`, `DefaultTimer`, `Power`, `Food`. Sin `#define` para valores. |
 | `Globals.h` | `extern` globales: `display`, `buttons`, `sound`, `storage` (definidos en el `.ino`). No declara `Buzzer` ni ventanas. |
 | `Buttons.h/.cpp` | Clase `Buttons`: debounce; `heldDown`/`pressed`/`released`/`anyHeld`/`anyPhysical`/`ignoreUntilRelease`; `MAX_BUTTONS` = contador del enum `Button`; `isSet` declarado en `.h` y definido en `.cpp`. Completa. |
 | `Boot.h/.cpp` | Clase `Boot`: Header "Press any button / to start" parpadeando (`PERIOD=500`, `OFF=20%`), Body con logo `Sprite::LOGO` (80×48) vía `drawBitmap(...,true,false)`. `begin()` suena `SFX_BOOT`; cualquier botón termina (sonido según botón). Animación de bandas anterior comentada. Completa. |
@@ -117,7 +117,7 @@ Directorio: `D:\Documents\ESP32S3\Snake_II-OLED_128x64-I2C`
 | `MenuSound.h/.cpp` | Clase `MenuSound`: selector On/Off con una flecha sobre la misma banda. Activa (`MENU_SOUND`); entrada desde `Menu` pendiente. Centra a mano (`Config::Screen::WIDTH`, `strlen*6`). Aplica con `Sound::setEnabled`. |
 | `MenuCredits.h/.cpp` | Clase `MenuCredits` (§10.4): roll vertical automático de todo `Config::Credits::CREDITS` (constante `COUNT` derivada; 8 bloques, estilo cine: títulos con barra blanca de ancho completo + nombres; avanza bloque a bloque mediante **dos vuelos** del `Scroller`: entra y reposa centrado (STAY), pausa externa `PAUSE_MS` y sale hacia arriba (EXIT) hasta desaparecer por el límite del Body). **Cada bloque se desliza con un `Scroller` propio** (§14). Tarjeta final `NAME`/`VERSION`/`RELEASE_DATE` (o `THANKS` si se entra desde `Game`), con el Header visible. Música `SFX_PIRATES`/`SFX_DRAGON_BALL` en bucle (`Sound::play(..., loop)`); `ACTION_UP` corta la música, suena `SFX_BACK` y vuelve al `Menu`. El reposo queda bloqueado mientras corre el roll (`Engine::sleepBlocked`). El `.cpp` usa solo los renombres de clase (`CREDITS`/`COUNT`/`TITLE`/`CARD_*`), sin `Config` directo ni `int32_t`. Completa. |
 | `Game.h/.cpp` | Clase `Game`: ventana del juego (estados `NEW`/`CONTINUE`). Coordina dificultad/velocidad, botones (MOVE→`Snake::turn`), `snake.step()`, `Food`, puntaje, sonidos, overlays y volcado del tablero (`Config::Screen::CELL`, `SPRITE_SCALE`). Completa. |
-| `Food.h/.cpp` | Clase `Food`: estado (posición, tipo normal/especial), `spawn` en celdas libres (consulta `Game::occupied`), dibujo del rombo/sprite `SPECIAL_FOOD`, temporizador de la especial. Celda de `Config::Screen::CELL`. Completa. |
+| `Food.h/.cpp` | Clase `Food`: estado (posición, tipo normal/especial), `spawn` en celdas libres (consulta `Game::occupied`), dibujo del rombo (`Draw::diamond`) y del sprite `SPECIAL_FOOD` (`Display::drawBitmap`), temporizador (`Config::Food::SPECIAL_TIME`). Renombra `CELL`/`FOOD`/`FOOD_WIDTH`/`FOOD_HEIGHT`; el `.cpp` no referencia `Config` ni `Sprite`. Completa. |
 | `Snake.h/.cpp` | Clase `Snake`: lógica pura (buffer circular, dirección + giro pendiente sin reversa, paso con wrap, colisión, comer/crecer, elección de sprites). Sin `Display`/`Sound`/`Food`. Completa. |
 | `Engine.h/.cpp` | Clase `Engine` (antes `App`): despachador; posee las ventanas `_boot`, `_menu`, `_menuDifficulty`, `_menuSound`, `_menuCredits`, `_game`, `_legend`; `changeState()` llama `begin()` de la entrante (parámetro `beginWindow=false` previsto para volver sin repintar); `isInGame()`/`sleepBlocked()` (éste bloquea el reposo en partida y mientras corre el roll de créditos). Completa. |
 | `Snake_II-OLED_128x64-I2C.ino` | Wiring: define servicios globales y `storage`; crea `Engine engine;` y `SleepManager sleepManager(engine);`. `setup()`: `display.begin()`, `buttons.begin()`, `sound.begin()`, `engine.begin()`, `sleepManager.begin()`. `loop()`: `buttons.read()` (única lectura), `if (!sleepManager.update()) return;` (si `false` = durmiendo/aviso, corta el frame), `engine.update()`, `engine.print()`, `sound.update()`, `display.show()`. |
@@ -536,7 +536,7 @@ Constantes de clase: de `Config::Screen` (`WIDTH`, `HEADER_TOP`, `BODY_TOP`, `BO
 
 ## 11. Clase `Engine` — despachador de ventanas
 
-`Engine.h/.cpp` (antes `App`). **No anida** las ventanas pero las **posee como miembros**: `Boot`, `Legend`, `Menu`, `MenuCredits`, `Game` son clases independientes (hermanas) declaradas como `_boot`, `_menu`, `_menuDifficulty`, `_menuSound`, `_menuCredits`, `_game`, `_legend`. No son globales ni se pasan por referencia. **Estado actual (aislado):** el único pendiente del aislamiento es `Game` (con `Food`): comentados los `#include`/miembro `_game` y los estados `NEW`/`CONTINUE`. `MenuCredits` está **activo**: estado `MENU_CREDITS` cableado (update/print/repaint/changeState) y `OPT_CREDITS` lo abre desde el despacho del `Menu`. `MENU_SOUND`/`MENU_DIFFICULTY` activos también; el despacho del `Menu` (`done()`+`selected()`) ya abre `OPT_SOUND`/`OPT_DIFFICULTY`/`OPT_CREDITS`.
+`Engine.h/.cpp` (antes `App`). **No anida** las ventanas pero las **posee como miembros**: `Boot`, `Legend`, `Menu`, `MenuCredits`, `Game` son clases independientes (hermanas) declaradas como `_boot`, `_menu`, `_menuDifficulty`, `_menuSound`, `_menuCredits`, `_game`, `_legend`. No son globales ni se pasan por referencia. **Estado actual (aislado):** el único pendiente del aislamiento es `Game`: comentados los `#include`/miembro `_game` y los estados `NEW`/`CONTINUE` (`Food.cpp` ya no está desactivado; solo falta cablear la partida). `MenuCredits` está **activo**: estado `MENU_CREDITS` cableado (update/print/repaint/changeState) y `OPT_CREDITS` lo abre desde el despacho del `Menu`. `MENU_SOUND`/`MENU_DIFFICULTY` activos también; el despacho del `Menu` (`done()`+`selected()`) ya abre `OPT_SOUND`/`OPT_DIFFICULTY`/`OPT_CREDITS`.
 
 ### Responsabilidad
 **Despachador puro**: su **estado interno** (`enum class State`) decide qué ventana corre y cuándo cambiar (`changeState()`, que llama al `begin()` de la ventana entrante). `loop()` no participa en transiciones: solo `engine.update()`/`engine.print()`. `setup()` inicia el hardware y llama `engine.begin()` (primera transición → `boot.begin()`).
@@ -768,10 +768,10 @@ La geometría del tablero (`COLS`=16, `ROWS`=6, `MAX_LENGTH`=96, rejilla 16×6 e
   - `ATE` → **puntaje suma el nivel actual** (`_score += _difficulty`, no +1 fijo; vale el nivel del momento de comer), `SFX_EAT`, regenera alimento (`_food.spawn(Food::Type::NORMAL, *this)`; si no hay celdas libres → tablero lleno → `die()`, la partida **se gana**/termina).
   - `DIED` → `die()`: `GAME_OVER` (`SFX_GAME_OVER`), `_hasGame = false`.
 - **Comer/crecer, colisión, giro, sprites:** los resuelve `Snake` (§18); `Game` solo consume el resultado y repinta.
-- **Alimento:** rombo simétrico centrado en la celda (dos `fillTriangle`), como el del menú; lo dibuja `Food` (§17). La **semilla aleatoria** se fija en `Game::reset()` con `randomSeed(esp_random() ^ (uint32_t)nowMs())` (`esp_random()` = RNG de hardware, entropía real) y se consume en `Food::spawn`.
+- **Alimento:** rombo simétrico centrado en la celda (`Draw::diamond`), como el del menú; lo dibuja `Food` (§17). La **semilla aleatoria** se fija en `Game::reset()` con `randomSeed(esp_random() ^ (uint32_t)nowMs())` (`esp_random()` = RNG de hardware, entropía real) y se consume en `Food::spawn`.
 - **Colisión con el cuerpo:** la celda destino es ilegal si coincide con el cuerpo **salvo la cola cuando NO come** (la cola se libera ese paso; bloqueante solo al comer); la resuelve `Snake::step`. Si colisiona: `GAME_OVER` (`SFX_GAME_OVER`), informa `SFX_BACK` al volver y `_hasGame = false`. **El récord (`_bestScore`) se verifica/actualiza solo aquí, en GAME OVER** (o al llenar el tablero, que también pasa por `die()`): partidas abandonadas con `ACTION_UP` no cuentan. Si supera el récord → **festejo de nuevo récord**: "GAME OVER" → "BUT" → "YOU ARE" → "THE BEST" en ciclo (`NEW_BEST_SIGN_MS` por letrero, `_newBest`/`_gameOverMs`/`_celeSfx`) hasta pulsar un botón; `SFX_NEW_BEST` suena solo la primera vez que aparece "THE BEST" (YOU ARE ya no la dispara).
 - **Pausa y salida:** `ACTION_RIGHT` (Btn2) durante `PLAY` pausa ("PAUSA", `SFX_PAUSE`); en `PAUSE` retoma con el mismo botón o `ACTION_LEFT` (`SFX_RESUME`). `ACTION_UP` (Btn1) durante la partida vuelve al menú **sin perderla** (`_hasGame` mantiene el tablero; `Continue` la reanuda en pausa). `GAME_OVER` deja `_hasGame = false`. Al salir, el `Engine` deja la selección en **`Continue`** si siguió en curso **y con puntos**, o en **`New`** si terminó en GAME OVER o sin puntos (`resumable = !game.isGameOver() && game.score() > 0`, aplicado con `menu.setSelected(...)`); además **"Continue" se oculta** cuando no hay partida o no tiene puntos (`menu.setContinueAvailable(resumable)`): al arrancar, tras `GAME OVER` o sin puntos quedan 4 opciones (New, Dificultad, Sound, Créditos).
-- **Header:** puntaje en `TEXT_12x16` (izq., no se mueve) y segundos restantes de la **comida especial** en `TEXT_12x16` (der., `_food.specialTime()`, por ahora fijo 60 solo layout). Se redibuja solo al cambiar. Ya no muestra el récord `HI` ("Best: N" queda solo en el menú).
+- **Header:** puntaje en `TEXT_12x16` (izq., no se mueve) y segundos restantes de la **comida especial** en `TEXT_12x16` (der., `_food.specialTime()`, por ahora `Config::Food::SPECIAL_TIME` = 60 solo layout). Se redibuja solo al cambiar. Ya no muestra el récord `HI` ("Best: N" queda solo en el menú).
 - **Overlays:** conteo 3-2-1 (un dígito/segundo, `COUNTDOWN_MS/3` ms por dígito, centrado) y "PAUSA"/"GAME OVER" como **banda blanca de lado a lado**. `drawOverlay(title, fullWidth)` dibuja **cuadro centrado** (`fullWidth=false`, el conteo) o **banda borde a borde** (`fullWidth=true`, PAUSA/GAME OVER). La banda sobresale 2 px arriba y 0 abajo y está **centrada como rectángulo a lo alto del Body** (16..63): `y` se deriva del alto de la banda (`bandH = h + 2`) y el texto queda 2 px dentro; siempre `fillRoundRect` blanco + texto invertido `TEXT_12x16` centrado. **Festejo:** si al morir se supera el "Best", "GAME OVER" pasa al ciclo de cuatro letreros (`NEW_BEST_SIGN_MS` cada uno) hasta pulsar un botón; `SFX_NEW_BEST` solo la primera vez que aparece "THE BEST". **Parpadeo del conteo:** en los últimos `COUNT_HIDE_MS = 250` ms de cada dígito el número y su cuadro desaparecen; al ocultarlo se marca `_dirtyBoard` una vez (`_overlayHidden`, reiniciado en `reset()`). **Pitido por dígito:** `SFX_TICK` al aparecer cada dígito (`_lastCount`, reiniciado en `reset()`; `SFX_START` no suena en `reset()`, se reserva al arranque real). Al pasar `START → PLAY` suena `SFX_START` (GO!) justo tras el "1". Al volver a `PLAY` se marca `_dirtyBoard`.
 
 ### Validación en host (MinGW)
@@ -785,12 +785,12 @@ Antes de escribir el código se simuló en el PC la lógica núcleo (misma aritm
 ```cpp
 Food(uint8_t cols, uint8_t rows, uint8_t top);
 ```
-Recibe la geometría (dibuja con la `Display` global): rejilla de `cols`×`rows` celdas de `Config::Screen::CELL` px desde la fila `top` (el Body). `Game` la construye: `_food(Snake::COLS, Snake::ROWS, Config::Screen::BODY_TOP)`. **El tamaño de celda no se declara en `Food`** (el viejo `static constexpr uint8_t CELL = 8` duplicaba `Config::Screen::CELL`); `Food.cpp` incluye `Config.h`.
+Recibe la geometría (dibuja con la `Display` global): rejilla de `cols`×`rows` celdas de `Config::Screen::CELL` px desde la fila `top` (el Body). `Game` la construye: `_food(Snake::COLS, Snake::ROWS, Config::Screen::BODY_TOP)`. El `Food` **renombra** `Config::Screen::CELL` como `CELL` (y el sprite como `FOOD`/`FOOD_WIDTH`/`FOOD_HEIGHT`) en su `.h`; **`Food.cpp` no referencia `Config` ni `Sprite`** (usa solo los renombres). El alto no puede llamarse `FOOD_H`: chocaría con la macro del include guard `#define FOOD_H`.
 
 ### Enum y constantes
 ```cpp
 enum class Type : uint8_t { NORMAL = 0, SPECIAL };
-static constexpr uint8_t SPECIAL_TIME_DEFAULT = 60;   // segundos iniciales de la especial (layout)
+static constexpr uint8_t SPECIAL_TIME = Config::Food::SPECIAL_TIME;   // segundos iniciales de la especial (layout)
 ```
 
 | Tipo | Significado |
@@ -809,7 +809,7 @@ static constexpr uint8_t SPECIAL_TIME_DEFAULT = 60;   // segundos iniciales de l
 | `uint8_t x()` / `y()` | Columna (0..`COLS`-1) / fila (0..`ROWS`-1). |
 | `uint8_t specialTime()` | Segundos restantes de la comida especial. |
 | `void setSpecialTime(uint8_t s)` | Actualiza el temporizador de la especial. |
-| `void draw() const` | Dibuja según tipo: `NORMAL` → rombo (`drawNormal`, dos `fillTriangle`); `SPECIAL` → sprite (`drawSpecial`, píxel a píxel del sprite de 1 bit). Si no hay alimento, no dibuja. |
+| `void draw() const` | Dibuja según tipo: `NORMAL` → rombo (`drawNormal` → `Draw::diamond`); `SPECIAL` → sprite (`drawSpecial` → `Display::drawBitmap`, 1 px por bit). Si no hay alimento, no dibuja. |
 
 `Game` usa `_food`: lo genera en `reset()` y al comer (`_food.spawn(Food::Type::NORMAL, *this)`; si devuelve `false` se muere), consulta `_food.has()/x()/y()` para comida y boca abierta, dibuja `_food.draw()` al volcar el tablero y muestra `_food.specialTime()` en el Header. La construye en la lista de inicialización como arriba.
 
@@ -917,7 +917,7 @@ namespace Button {          // repetición al mantener un botón (nuevo)
 }
 ```
 
-Los namespaces internos (`Pin`, `Screen`, `Difficulty`, `Version`, `Credits`, `Legend`, `Diamond`, `Button`, `Scroller`, `MenuStrip`, `DefaultTimer`) van en columna 0, sin indentar respecto de `namespace Config {`.
+Los namespaces internos (`Pin`, `Screen`, `Difficulty`, `Version`, `Credits`, `Legend`, `Diamond`, `Button`, `Scroller`, `MenuStrip`, `DefaultTimer`, `Food`) van en columna 0, sin indentar respecto de `namespace Config {`.
 
 ### Qué contiene y quién lo usa
 | Namespace | Constantes | Las usan |
@@ -930,6 +930,7 @@ Los namespaces internos (`Pin`, `Screen`, `Difficulty`, `Version`, `Credits`, `L
 | `Config::Button` | `DELAY` (400 ms)/`TICK` (100 ms) | `ButtonRepeat` (§23): mantener `DELAY` ms para repetir y luego un paso cada `TICK` ms; lo usan `Menu` y `MenuDifficulty` a través suyo. **Nuevo**. |
 | `Config::Legend` | `NEXT` (2500 ms)/`PERIOD` (100 ms)/`OFF` (50 %); `HOLD` **comentado** | `Legend` (ciclo de rombos con `_ticker`, parpadeo con `_blink`/`Blink`): `HOLD` pasó de 900 ms a comentado; `NEXT` subió de 2200 a 2500 ms. |
 | `Config::Diamond` | `SIZE` (3 px) | `Menu` (rombo marcador y triángulos: `Menu::SIZE`) y `Legend` (rombos de ACTION: `Legend::SIZE`). |
+| `Config::Food` | `SPECIAL_TIME` (60 s) | `Food` (segundos iniciales de la comida especial; renombrado `SPECIAL_TIME` en `Food.h`, §17; el Header de `Game` lo muestra). |
 | `Config::Scroller` | `ANIMATION_H` (4 ms/px)/`ANIMATION_V` (12 ms/px)/`MAX_LINES` (12) | `Scroller` (§14: `ANIM_H`/`ANIM_V` y el array fijo de líneas). Reemplaza a los antiguos `Config::ScrollerH` (`MAX_H`/`ANIMATION`) y `Config::ScrollerV` (`MAX_H`/`ANIMATION`), **retirados**. |
 | `Config::MenuStrip` | `BODY_H` (39)/`BODY_MIDDLE` (34)/`BOX_HEIGHT` (16)/`BOX_TOP` (= `BODY_MIDDLE - BOX_HEIGHT/2` = 26)/`VALUE_TOP` (44)/`VALUE_HEIGHT` (11)/`DIAMOND_Y` (= `VALUE_TOP + VALUE_HEIGHT/2` = 49)/`TRIANGLE_Y` (= `Screen::FOOT_TOP - 3` = 53) | `Menu` (cuadro y marcadores, §7) y `MenuSound` (banda del selector ON/OFF). Geometría **centrada en la mitad del Body** (`B`/`C` auxiliares). |
 | `Config::DefaultTimer` | `PERIOD` (500 ms)/`OFF` (20 %); `HOLD` **comentado** | Parpadeo "de cualquier ventana" sin cronómetro propio: hoy `Boot` (mensaje) y `Menu` (rombo de la opción). `HOLD` comentado (sin fase fija inicial). |
@@ -939,7 +940,7 @@ Las regiones `HEADER_TOP/H` y `BODY_TOP/H` reemplazan las constantes repetidas `
 
 La banda del pie tiene su geometría en `Config::Screen`: `FOOT_LINE` (`HEIGHT - (FOOT_H + 1 + 1)` = 54) está **comentado**; `FOOT_TOP` = 56 con `FOOT_H` = 8, derivados de `HEIGHT` como `HEADER_*`/`BODY_*` (antes `FOOT_TOP` = `HEIGHT - 9`, `FOOT_H` = 7). Hoy los usan **`Legend`** y **`Menu`** (pie: banda blanca `55..63` con "Best" y la versión).
 
-`CELL` es la **única** medida de px por celda (reemplaza al `static constexpr uint8_t CELL = 8` de `Food` y a los `8` literales de `Game::drawSprite`). Lo **no** compartido (factor de escala del sprite 4×4 a la celda) queda como constante propia con nombre: `Game::SPRITE_SCALE = 2` (`Sprite::SIZE * SPRITE_SCALE == Config::Screen::CELL`).
+`CELL` es la **única** medida de px por celda (reemplaza al `static constexpr uint8_t CELL = 8` de `Food` y a los `8` literales de `Game::drawSprite`); `Food` lo reexpone como `CELL` en su `.h` (§17). Lo **no** compartido (factor de escala del sprite 4×4 a la celda) queda como constante propia con nombre: `Game::SPRITE_SCALE = 2` (`Sprite::SIZE * SPRITE_SCALE == Config::Screen::CELL`).
 
 ---
 
@@ -1121,6 +1122,7 @@ namespace Draw {
 ### Quién lo usa
 - **`Menu`**: `toggleDiamond()` → `Draw::diamond(centerX, DIAMOND_Y, show)`; `toggleTriangle()` → `Draw::triangle(Draw::DIR_UP, centerX, TRIANGLE_Y, show)`.
 - **`Legend`**: flechas del pad MOVE con `Draw::triangle(Draw::DIR_UP/DIR_RIGHT/DIR_DOWN/DIR_LEFT, …)` y rombo activo con `Draw::diamond(…)` desde `Legend::toggleDiamond`. Se eliminaron `Legend::toggleTriangle` y la constante `SIZE`.
+- **`Food`**: rombo de la comida normal con `Draw::diamond(centerX, centerY)` en `Food::drawNormal` (§17).
 
 ### Decisiones
 - **Sin estado → función libre** (no método de instancia): por eso namespace. El único estado que toca (`display`, `SIZE`) es global/compartido.

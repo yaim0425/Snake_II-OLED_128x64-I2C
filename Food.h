@@ -3,6 +3,9 @@
 
 #include <Arduino.h>
 
+#include "Config.h"
+#include "Sprite.h"
+
 // ========================================================
 // Food — alimento del tablero (normal y especial)
 //
@@ -43,7 +46,7 @@ public:
 
   // Segundos iniciales de la comida especial (por ahora valor
   // fijo: solo el layout del Header)
-  static constexpr uint8_t SPECIAL_TIME_DEFAULT = 60;
+  static constexpr uint8_t SPECIAL_TIME = Config::Food::SPECIAL_TIME;
 
   // ========================================================
   // Constructor (recibe la geometría del tablero: COLS x ROWS
@@ -92,6 +95,16 @@ public:
   void draw() const;
 
 private:
+
+  // ========================================================
+  // Constantes (renombres de Config y Sprite: el .cpp no
+  // referencia esos espacios de nombres nunca)
+  // ========================================================
+
+  static constexpr uint8_t CELL        = Config::Screen::CELL;      // px por celda del tablero
+  static constexpr auto&   FOOD        = Sprite::SPECIAL_FOOD;      // bitmap del sprite (formato drawBitmap)
+  static constexpr uint8_t FOOD_WIDTH  = Sprite::SPECIAL_FOOD_W;    // ancho del sprite (px)
+  static constexpr uint8_t FOOD_HEIGHT = Sprite::SPECIAL_FOOD_H;    // alto del sprite (px)
 
   // ========================================================
   // Estado

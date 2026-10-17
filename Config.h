@@ -15,6 +15,7 @@
 //   - Version   : versión y fecha de release del firmware
 //                 (compartidas por las ventanas que las
 //                 muestren).
+//   - Food      : temporizador de la comida especial.
 //
 // Al usar constantes con tipo, ámbito (namespace) y constexpr
 // no chocan con nombres de librerías ni del core ESP32; por
@@ -155,6 +156,10 @@ constexpr uint8_t OFF = 50;       // % del período en que está oculto
 
 namespace Diamond {
 constexpr uint8_t SIZE = 3;  // px de un lado del rombo
+}
+
+namespace Food {
+constexpr uint8_t SPECIAL_TIME = 60;  // segundos iniciales de la comida especial
 }
 
 namespace Button {
