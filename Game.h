@@ -117,7 +117,6 @@ public:
   // ========================================================
 
   uint16_t score() const;
-  uint16_t bestScore() const;
 
   // ========================================================
   // ¿Una celda está ocupada por la serpiente? Lo consulta
@@ -134,10 +133,10 @@ private:
   // ========================================================
 
   enum class State : uint8_t {
-    START,       // conteo regresivo 3-2-1 (el tablero ya está dibujado)
-    PLAY,        // la serpiente se mueve cada _moveDelay ms
-    PAUSE,       // panel "PAUSA" sobre el tablero estático
-    GAME_OVER    // panel "GAME OVER"; al batir el récord muestra el ciclo BUT/YOU ARE/THE BEST; cualquier ACTION vuelve al menú
+    START,     // conteo regresivo 3-2-1 (el tablero ya está dibujado)
+    PLAY,      // la serpiente se mueve cada _moveDelay ms
+    PAUSE,     // panel "PAUSA" sobre el tablero estático
+    GAME_OVER  // panel "GAME OVER"; al batir el récord muestra el ciclo BUT/YOU ARE/THE BEST; cualquier ACTION vuelve al menú
   };
 
   // ========================================================
@@ -150,10 +149,10 @@ private:
   // Los sprites de 4x4 px se escalan con `SPRITE_SCALE` (2 px por
   // lado del sprite) para llenar la celda: SIZE * SPRITE_SCALE = CELL.
 
-  static constexpr uint8_t SPRITE_SCALE = 2;       // px por lado de cada píxel del sprite (4x4 escalado = 8x8)
-  static constexpr uint32_t COUNTDOWN_MS = 3000;   // duración del conteo regresivo inicial (3 s, uno por dígito)
-  static constexpr uint32_t COUNT_HIDE_MS = 250;   // al final de cada dígito: el número (y su cuadro) se ocultan antes del siguiente (parpadeo)
-  static constexpr uint32_t NEW_BEST_SIGN_MS = 1500; // duración de cada letrero del festejo de nuevo récord ("GAME OVER"/"BUT"/"YOU ARE"/"THE BEST")
+  // static constexpr uint8_t SPRITE_SCALE = 2;       // px por lado de cada píxel del sprite (4x4 escalado = 8x8)
+  // static constexpr uint32_t COUNTDOWN_MS = 3000;   // duración del conteo regresivo inicial (3 s, uno por dígito)
+  // static constexpr uint32_t COUNT_HIDE_MS = 250;   // al final de cada dígito: el número (y su cuadro) se ocultan antes del siguiente (parpadeo)
+  // static constexpr uint32_t NEW_BEST_SIGN_MS = 1500; // duración de cada letrero del festejo de nuevo récord ("GAME OVER"/"BUT"/"YOU ARE"/"THE BEST")
 
   // ========================================================
   // Métodos internos
@@ -164,9 +163,9 @@ private:
   void startPlay();
 
   // Lógica (coordinación; la serpiente la resuelve en Snake)
-  void handleTurn();              // lee MOVE y llama snake.turn() (tocando SFX_TURN si aceptó)
-  void step();                    // un paso: snake.step() + comida/puntaje/sonidos del resultado
-  void die();                     // colisión(GAME OVER) o tablero lleno
+  void handleTurn();  // lee MOVE y llama snake.turn() (tocando SFX_TURN si aceptó)
+  void step();        // un paso: snake.step() + comida/puntaje/sonidos del resultado
+  void die();         // colisión(GAME OVER) o tablero lleno
 
   // Render
   void drawSprite(Sprite::Part part, uint8_t x, uint8_t y);
@@ -182,33 +181,33 @@ private:
   // ========================================================
 
   State _state;
-  bool _exit;          // pidió volver al menú
-  bool _redraw;        // primer frame tras begin(): clear() completo + estáticos
-  bool _redrawHeader;  // el Header (puntaje/récord) cambió
-  bool _dirtyBoard;    // hay que volcar el tablero (movimiento, comida, overlay)
-  bool _overlayHidden; // el conteo está en su fase de parpadeo (cuadro + dígito ocultos)
-  uint8_t _lastCount;  // último dígito del conteo mostrado (0xFF = ninguno aún: pitido al aparecer el 3)
+  // bool _exit;          // pidió volver al menú
+  // bool _redraw;        // primer frame tras begin(): clear() completo + estáticos
+  // bool _redrawHeader;  // el Header (puntaje/récord) cambió
+  // bool _dirtyBoard;    // hay que volcar el tablero (movimiento, comida, overlay)
+  // bool _overlayHidden; // el conteo está en su fase de parpadeo (cuadro + dígito ocultos)
+  // uint8_t _lastCount;  // último dígito del conteo mostrado (0xFF = ninguno aún: pitido al aparecer el 3)
 
-  // Partida
-  bool _hasGame;          // hay una partida en curso (para "Continue")
-  uint8_t _difficulty;    // nivel del menú (1..10, default 5)
+  // // Partida
+  // bool _hasGame;          // hay una partida en curso (para "Continue")
+  // uint8_t _difficulty;    // nivel del menú (1..10, default 5)
   uint16_t _moveDelay;    // ms por paso, derivado de la dificultad
-  uint64_t _moveLast;     // instante (nowMs) del último paso
-  uint64_t _startMs;      // instante (nowMs) de entrada a START
-  uint64_t _gameOverMs;   // instante (nowMs) del fin de partida (arranca el festejo de récord)
+  // uint64_t _moveLast;     // instante (nowMs) del último paso
+  // uint64_t _startMs;      // instante (nowMs) de entrada a START
+  // uint64_t _gameOverMs;   // instante (nowMs) del fin de partida (arranca el festejo de récord)
 
-  // Festejo de nuevo récord (GAME OVER con _newBest): ciclo de letreros
-  // "GAME OVER"/"BUT"/"YOU ARE"/"THE BEST" hasta que se presiona un botón
-  bool _newBest;    // este fin de partida estableció un nuevo récord
-  uint8_t _celeSfx; // flag: 0 = la fanfarria aún no sonó en "THE BEST";
-                    // al sonar pasa a 1 (suena solo la primera vez que
-                    // aparece ese letrero del festejo)
+  // // Festejo de nuevo récord (GAME OVER con _newBest): ciclo de letreros
+  // // "GAME OVER"/"BUT"/"YOU ARE"/"THE BEST" hasta que se presiona un botón
+  // bool _newBest;    // este fin de partida estableció un nuevo récord
+  // uint8_t _celeSfx; // flag: 0 = la fanfarria aún no sonó en "THE BEST";
+  //                   // al sonar pasa a 1 (suena solo la primera vez que
+  //                   // aparece ese letrero del festejo)
 
-  // Serpiente (lógica pura, sin Display/Sound/Food) y alimento
-  Snake _snake;
-  Food _food;          // alimento del tablero (normal / especial) en la clase Food
+  // // Serpiente (lógica pura, sin Display/Sound/Food) y alimento
+  // Snake _snake;
+  // Food _food;          // alimento del tablero (normal / especial) en la clase Food
   uint16_t _score;
-  uint16_t _bestScore;
+  // uint16_t _bestScore;
 };
 
 #endif

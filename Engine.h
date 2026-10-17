@@ -8,7 +8,7 @@
 // que se reactivara al integrar la partida con el Menu. Arduino compila igual
 // los .cpp de la carpeta, asi que ademas de no incluir Game.h aqui, Game.cpp y
 // Food.cpp seguiran inertes (ver Engine.cpp).
-// #include "Game.h"
+#include "Game.h"
 #include "MenuSound.h"
 #include "Menu.h"
 #include "Legend.h"
@@ -116,8 +116,8 @@ private:
     LEGEND,
     MENU,
     MENU_SOUND,
-    // NEW,
-    // CONTINUE,
+    NEW,
+    CONTINUE,
     MENU_DIFFICULTY,
     MENU_CREDITS
   };
@@ -156,7 +156,7 @@ private:
   MenuSound _menuSound;
   MenuCredits _menuCredits;
   MenuDifficulty _menuDifficulty;
-  // Game _game;
+  Game _game;
 };
 
 #endif

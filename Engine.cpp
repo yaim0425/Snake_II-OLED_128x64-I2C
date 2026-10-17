@@ -68,38 +68,38 @@ void Engine::update() {
       _menuSound.update();
       if (_menuSound.done()) changeState(State::MENU);
       break;
-      // _menu.showOptions();
-      // changeState(State::MENU);
+    // _menu.showOptions();
+    // changeState(State::MENU);
 
-      // _menu.restoreDiamondBand();  // pendiente: Menu::restoreDiamondBand()
-      // sigue comentado en Menu.h/Menu.cpp; por eso changeState(MENU, false)
-      // hace igual el _menu.begin() completo (beginWindow se ignora).
+    // _menu.restoreDiamondBand();  // pendiente: Menu::restoreDiamondBand()
+    // sigue comentado en Menu.h/Menu.cpp; por eso changeState(MENU, false)
+    // hace igual el _menu.begin() completo (beginWindow se ignora).
 
-      // AISLADO: ventanas del Game y de los demás submenus (MenuSound ya esta
-      // activa: ver su case arriba). Se comentan por bloque entero, no linea
-      // por linea, para que el revert sea limpio. Al reactivar hay que volver
-      // a descomentar el enum de State y los miembros en Engine.h.
-      //
-      // case State::NEW:
-      // case State::CONTINUE:
-      //   {
-      //
-      //     _game.update();
-      //     if (_game.done()) {
-      //       sound.play(Sound::SFX_BACK);
-      //       _menu.setBestScore(_game.bestScore());
-      //       // "Continue" solo se habilita si la partida sigue en curso Y el
-      //       // jugador tiene puntos (score > 0): al salir sin haber comido no
-      //       // hay nada que reanudar. Con GAME OVER o sin puntos las opciones
-      //       // son 4 y la selección queda en "New".
-      //       bool gameOver = _game.isGameOver();
-      //       bool resumable = !gameOver && _game.score() > 0;
-      //       _menu.setContinueAvailable(resumable);
-      //       _menu.setSelected(resumable ? Menu::OPT_CONTINUE : Menu::OPT_NEW);
-      //       changeState(State::MENU);
-      //     }
-      //     break;
-      //   }
+    // AISLADO: ventanas del Game y de los demás submenus (MenuSound ya esta
+    // activa: ver su case arriba). Se comentan por bloque entero, no linea
+    // por linea, para que el revert sea limpio. Al reactivar hay que volver
+    // a descomentar el enum de State y los miembros en Engine.h.
+    //
+    case State::NEW:
+    case State::CONTINUE:
+      {
+        _game.update();
+        if (!_game.done()) break;
+        //   sound.play(Sound::SFX_BACK);
+        //   _menu.setBestScore(_game.bestScore());
+        //   // "Continue" solo se habilita si la partida sigue en curso Y el
+        //   // jugador tiene puntos (score > 0): al salir sin haber comido no
+        //   // hay nada que reanudar. Con GAME OVER o sin puntos las opciones
+        //   // son 4 y la selección queda en "New".
+
+        bool gameOver = _game.isGameOver();
+        bool resumable = !gameOver && _game.score() > 0;
+        // _menu.setContinueAvailable(resumable);
+        // _menu.setSelected(resumable ? Menu::OPT_CONTINUE : Menu::OPT_NEW);
+        // changeState(State::MENU_CREDITS);
+        // }
+        break;
+      }
 
     case State::MENU_DIFFICULTY:
       _menuDifficulty.update();
@@ -128,17 +128,12 @@ void Engine::print() {
     case State::LEGEND: _legend.print(); break;
     case State::MENU: _menu.print(); break;
     case State::MENU_SOUND: _menuSound.print(); break;
-    case State::MENU_DIFFICULTY:
-      _menuDifficulty.print();
-      break;
+    case State::MENU_DIFFICULTY: _menuDifficulty.print(); break;
     case State::MENU_CREDITS: _menuCredits.print(); break;
-
-      // AISLADO: solo queda Game (y Food, su comida). Al reactivarlo
-      // hay que volver a sacar del comentario sus estados y su ventana.
-      // case State::NEW:
-      // case State::CONTINUE:
-      //   _game.print();
-      //   break;
+    case State::NEW:
+    case State::CONTINUE:
+      _game.print();
+      break;
   }
 }
 
@@ -160,6 +155,7 @@ void Engine::repaint() {
     case State::BOOT: _boot.firstPrint(true); break;
     case State::LEGEND: _legend.firstPrint(true); break;
     case State::MENU: _menu.firstPrint(true); break;
+    case State::MENU_CREDITS: _menuCredits.firstPrint(true); break;
 
     case State::MENU_SOUND:
       // La base del Menu ya no se va a volver a dibujar por el loop
@@ -171,10 +167,6 @@ void Engine::repaint() {
     case State::MENU_DIFFICULTY:
       _menu.firstPrint(true);
       _menuDifficulty.firstPrint(true);
-      break;
-
-    case State::MENU_CREDITS:
-      _menuCredits.firstPrint(true);
       break;
   }
 }
@@ -199,8 +191,7 @@ bool Engine::isInGame() const {
 // ========================================================
 
 bool Engine::sleepBlocked() const {
-  return isInGame() ||
-  (_state == State::MENU_CREDITS && !_menuCredits.done());
+  return isInGame() || (_state == State::MENU_CREDITS && !_menuCredits.done());
 }
 
 // ========================================================
@@ -237,21 +228,9 @@ void Engine::changeState(State newState) {
 
     case State::MENU_SOUND: _menuSound.begin(); break;
     case State::MENU_DIFFICULTY: _menuDifficulty.begin(); break;
-    case State::MENU_CREDITS:
-      _menuCredits.begin();   // desde el menú: fromGame = false (las variantes de
-                              // Game se activarán al integrarlo)
-      break;
-
-      // AISLADO: solo queda Game (y Food, su comida). Al reactivarlo
-      // hay que volver a sacar del comentario sus estados y su ventana.
-      // case State::NEW:
-      //   _game.setDifficulty(_menuDifficulty.difficulty());
-      //   _game.begin(true);
-      //   break;
-      // case State::CONTINUE:
-      //   _game.setDifficulty(_menuDifficulty.difficulty());
-      //   _game.begin(false);
-      //   break;
+    case State::MENU_CREDITS: _menuCredits.begin(); break;
+    case State::NEW: _game.begin(true); break;
+    case State::CONTINUE: _game.begin(false); break;
   }
 }
 
