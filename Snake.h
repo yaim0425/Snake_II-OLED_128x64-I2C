@@ -3,6 +3,7 @@
 
 #include <Arduino.h>
 
+#include "Config.h"
 #include "Sprite.h"
 
 // ========================================================
@@ -49,9 +50,9 @@ public:
   // Configuración (geometría del tablero)
   // ========================================================
 
-  static constexpr uint8_t COLS = 16;               // columnas del tablero (16 celdas de 8 px = 128 px)
-  static constexpr uint8_t ROWS = 6;                // filas del tablero (6 celdas de 8 px = 48 px, Body)
-  static constexpr uint8_t MAX_LENGTH = COLS * ROWS; // 96: a lo sumo hay tantas celdas como segmentos
+  static constexpr uint8_t COLS = Config::Board::COLS;               // columnas del tablero (16 celdas de 8 px = 128 px)
+  static constexpr uint8_t ROWS = Config::Board::ROWS;               // filas del tablero (6 celdas de 8 px = 48 px, Body)
+  static constexpr uint8_t MAX_LENGTH = Config::Board::MAX_LENGTH;   // 96: a lo sumo hay tantas celdas como segmentos
 
   // ========================================================
   // Direcciones. El orden (UP=1, RIGHT, DOWN, LEFT) coincide
@@ -79,8 +80,8 @@ public:
   // ========================================================
 
   struct Seg {
-    uint8_t x;
-    uint8_t y;
+    uint8_t col;
+    uint8_t row;
     Dir dir;                 // dirección hacia el siguiente segmento (más cerca de la cabeza)
     Sprite::Part part;       // sprite persistente del segmento (TAIL, BODY, CORNER o BELLY)
   };
@@ -105,25 +106,25 @@ public:
   void clearPending();
 
   // ========================================================
-  // Giro de la cabeza (MOVE). `d` queda PENDIENTE (`_nextDir`)
-  // si es válido desde la dirección COMMITIDA (`_dir`): para
-  // `d` contraria (180°) se ignora y devuelve `false`.
-  // Devuelve `true` si el giro quedó pendiente (Game toca
-  // SFX_TURN solo en ese caso).
+  // Giro de la cabeza (MOVE). `direction` queda PENDIENTE
+  // (`_nextDir`) si es válido desde la dirección COMMITIDA
+  // (`_dir`): para `direction` contraria (180°) se ignora y
+  // devuelve `false`. Devuelve `true` si el giro quedó pendiente
+  // (Game toca SFX_TURN solo en ese caso).
   // ========================================================
 
-  bool turn(Dir d);
+  bool turn(Dir direction);
 
   // ========================================================
   // Un paso del tablero: aplicar el giro pendiente, mover la
   // cabeza (wrap), detectar colisión, moverse/crecer y derivar
-  // los sprites de las partes. `fx`/`fy` = celda del alimento
-  // (para comer/crecer y para decidir si la cola es bloqueante).
-  // Devuelve el resultado para que Game coordine (puntaje,
-  // sonido, alimento, GAME OVER).
+  // los sprites de las partes. `foodX`/`foodY` = celda del
+  // alimento (para comer/crecer y para decidir si la cola es
+  // bloqueante). Devuelve el resultado para que Game coordine
+  // (puntaje, sonido, alimento, GAME OVER).
   // ========================================================
 
-  Result step(uint8_t fx, uint8_t fy);
+  Result step(uint8_t foodX, uint8_t foodY);
 
   // ========================================================
   // ¿Una celda está ocupada por la serpiente? (lo consulta el
@@ -131,15 +132,15 @@ public:
   // Game::occupied, que delega aquí)
   // ========================================================
 
-  bool occupied(uint8_t x, uint8_t y) const;
+  bool occupied(uint8_t cellX, uint8_t cellY) const;
 
   // ========================================================
   // Acceso para dibujar (lo consume Game)
   // ========================================================
 
   uint8_t length() const;                 // cantidad de segmentos
-  const Seg& segment(uint8_t index) const; // segmento `index` (0 = cola, length()-1 = cabeza)
-  Sprite::Part headPart(bool hasFood, uint8_t fx, uint8_t fy) const; // sprite de la cabeza (boca según el alimento adyacente)
+  const Seg& segment(uint8_t segmentIndex) const; // segmento `segmentIndex` (0 = cola, length()-1 = cabeza)
+  Sprite::Part headPart(bool hasFood, uint8_t foodX, uint8_t foodY) const; // sprite de la cabeza (boca según el alimento adyacente)
 
 private:
 
@@ -147,18 +148,18 @@ private:
   // Métodos internos
   // ========================================================
 
-  uint8_t slot(uint8_t index) const;             // índice del ring buffer para el segmento `index`
-  Dir opposite(Dir d) const;                     // dirección opuesta (RIGHT<->LEFT, UP<->DOWN)
-  Sprite::Part bodyPartFor(Dir in, Dir out) const;  // BODY recto o CORNER al girar
-  Sprite::Part bellyPartFor(Dir in, Dir out) const; // BELLY recto o curvo (al comer)
+  uint8_t slot(uint8_t slotIndex) const;             // índice del ring buffer para el segmento `slotIndex`
+  Dir opposite(Dir direction) const;                 // dirección opuesta (RIGHT<->LEFT, UP<->DOWN)
+  Sprite::Part bodyPartFor(Dir inDir, Dir outDir) const;  // BODY recto o CORNER al girar
+  Sprite::Part bellyPartFor(Dir inDir, Dir outDir) const; // BELLY recto o curvo (al comer)
 
   // ========================================================
-  // Estado (ring buffer: los segmentos van de _tailIx a _headIx)
+  // Estado (ring buffer: los segmentos van de _tailIndex a _headIndex)
   // ========================================================
 
   Seg _body[MAX_LENGTH];
-  uint8_t _headIx;
-  uint8_t _tailIx;
+  uint8_t _headIndex;
+  uint8_t _tailIndex;
   uint8_t _length;
 
   Dir _dir;                // dirección COMMITIDA de la cabeza (la que usará en el

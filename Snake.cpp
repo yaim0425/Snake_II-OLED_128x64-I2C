@@ -5,8 +5,8 @@
 // ========================================================
 
 Snake::Snake()
-  : _headIx(0),
-    _tailIx(0),
+  : _headIndex(0),
+    _tailIndex(0),
     _length(0),
     _dir(Dir::RIGHT),
     _nextDir(Dir::NONE),
@@ -19,8 +19,8 @@ Snake::Snake()
 
 void Snake::reset() {
   _length = 4;
-  _tailIx = 0;
-  _headIx = 3;
+  _tailIndex = 0;
+  _headIndex = 3;
   _dir = Dir::RIGHT;
   _nextDir = Dir::NONE;
   _bellyPending = false;  // ninguna casilla pendiente de panza
@@ -56,18 +56,19 @@ void Snake::clearPending() {
 // la cabeza avanzará realmente.
 // ========================================================
 
-bool Snake::turn(Dir d) {
-  if (d == Dir::NONE || d == _dir || d == _nextDir) return false;
+bool Snake::turn(Dir direction) {
+  if (direction == Dir::NONE || direction == _dir || direction == _nextDir) return false;
 
   // Prohibir la reversa directa contra la dirección COMMITIDA (_dir),
   // no contra un giro pendiente intermedio (la cabeza no puede volver
   // sobre sí misma respecto a la dirección con la que avanzará)
-  if ((d == Dir::UP && _dir == Dir::DOWN) || (d == Dir::DOWN && _dir == Dir::UP) || (d == Dir::LEFT && _dir == Dir::RIGHT) || (d == Dir::RIGHT && _dir == Dir::LEFT)) {
+  if (
+    (direction == Dir::UP && _dir == Dir::DOWN) || (direction == Dir::DOWN && _dir == Dir::UP) || (direction == Dir::LEFT && _dir == Dir::RIGHT) || (direction == Dir::RIGHT && _dir == Dir::LEFT)) {
     return false;
   }
 
   // Giro aceptado: queda pendiente
-  _nextDir = d;
+  _nextDir = direction;
   return true;
 }
 
@@ -78,41 +79,41 @@ bool Snake::turn(Dir d) {
 // cae sobre él y, por lo tanto, si la cola es bloqueante).
 // ========================================================
 
-Snake::Result Snake::step(uint8_t fx, uint8_t fy) {
+Snake::Result Snake::step(uint8_t foodX, uint8_t foodY) {
   // Dirección real de este paso: el giro pendiente del último MOVE
   // válido (ya validado contra la dirección COMMITIDA en turn()).
-  // Se trabaja con una copia local `dir`: `_dir` (la dirección
+  // Se trabaja con una copia local `stepDir`: `_dir` (la dirección
   // COMMITIDA) SOLO se actualiza si el destino resulta legal, así al
   // colisionar la cabeza conserva su orientación real de movimiento
   // y no aparece dibujada "volteada" hacia el choque (headPart()
   // dibuja la cabeza según `_dir`).
-  Dir dir = _dir;
+  Dir stepDir = _dir;
   if (_nextDir != Dir::NONE) {
-    dir = _nextDir;
+    stepDir = _nextDir;
     _nextDir = Dir::NONE;
   }
 
-  const Seg& h = _body[_headIx];
-  uint8_t nx = h.x;
-  uint8_t ny = h.y;
+  const Seg& headSegment = _body[_headIndex];
+  uint8_t nextX = headSegment.col;
+  uint8_t nextY = headSegment.row;
 
-  switch (dir) {
-    case Dir::UP: ny = (ny == 0) ? (uint8_t)(ROWS - 1) : (uint8_t)(ny - 1); break;
-    case Dir::RIGHT: nx = (nx + 1) % COLS; break;
-    case Dir::DOWN: ny = (ny == ROWS - 1) ? 0 : (uint8_t)(ny + 1); break;
-    case Dir::LEFT: nx = (nx == 0) ? (uint8_t)(COLS - 1) : (uint8_t)(nx - 1); break;
+  switch (stepDir) {
+    case Dir::UP: nextY = (nextY == 0) ? (uint8_t)(ROWS - 1) : (uint8_t)(nextY - 1); break;
+    case Dir::RIGHT: nextX = (nextX + 1) % COLS; break;
+    case Dir::DOWN: nextY = (nextY == ROWS - 1) ? 0 : (uint8_t)(nextY + 1); break;
+    case Dir::LEFT: nextX = (nextX == 0) ? (uint8_t)(COLS - 1) : (uint8_t)(nextX - 1); break;
     default: break;
   }
 
-  bool eat = (nx == fx && ny == fy);
+  bool eat = (nextX == foodX && nextY == foodY);
 
   // Colisión con el cuerpo. Al comer la cola NO se mueve (es bloqueante);
   // sin comer, la celda de la cola se libera y es legal pisarla.
-  uint8_t skip = eat ? 0xFF : _tailIx;
-  for (uint8_t i = 0; i < _length; i++) {
-    uint8_t s = slot(i);
-    if (s == skip) continue;
-    if (_body[s].x == nx && _body[s].y == ny) {
+  uint8_t skip = eat ? 0xFF : _tailIndex;
+  for (uint8_t segmentIndex = 0; segmentIndex < _length; segmentIndex++) {
+    uint8_t slotIndex = slot(segmentIndex);
+    if (slotIndex == skip) continue;
+    if (_body[slotIndex].col == nextX && _body[slotIndex].row == nextY) {
       return Result::DIED;  // la cabeza NO avanza (para GAME OVER lo decide Game)
     }
   }
@@ -120,37 +121,37 @@ Snake::Result Snake::step(uint8_t fx, uint8_t fy) {
   // El destino es legal: la cabeza "commitea" la nueva dirección tras
   // el giro (si no se superó la validación, `_dir` quedó intacto y la
   // cabeza sigue apuntando hacia donde realmente viajaba).
-  _dir = dir;
+  _dir = stepDir;
 
   // El cuerpo NO se mueve: la casilla que la cabeza deja pasa a ser
   // cuerpo nuevo con su sprite persistente (BODY recto, CORNER si
   // giró, BELLY si era la casilla de la comida recién comida).
-  const Seg& oldHead = _body[_headIx];
-  Dir in = oldHead.dir;  // con qué dirección llegó la cabeza a esta casilla
-  Dir out = dir;         // con qué dirección se va hacia la nueva casilla
+  const Seg& oldHead = _body[_headIndex];
+  Dir inDir = oldHead.dir;  // con qué dirección llegó la cabeza a esta casilla
+  Dir outDir = stepDir;     // con qué dirección se va hacia la nueva casilla
 
   // La cabeza avanza a la nueva casilla (se agrega la nueva parte)
-  uint8_t ni = (_headIx + 1) % MAX_LENGTH;
-  _body[ni] = { nx, ny, dir, Sprite::HEAD_RIGHT_CLOSE };
-  _headIx = ni;
+  uint8_t newHeadIndex = (_headIndex + 1) % MAX_LENGTH;
+  _body[newHeadIndex] = { nextX, nextY, stepDir, Sprite::HEAD_RIGHT_CLOSE };
+  _headIndex = newHeadIndex;
 
   // La casilla que dejó la cabeza se convierte en cuerpo (parte persistente)
-  Seg& newBody = _body[(_headIx + MAX_LENGTH - 1) % MAX_LENGTH];
+  Seg& newBody = _body[(_headIndex + MAX_LENGTH - 1) % MAX_LENGTH];
 
   if (_bellyPending) {
     // Estaba sobre la comida (recién comida): al dejarla se pinta la panza
-    newBody.part = bellyPartFor(in, out);
+    newBody.part = bellyPartFor(inDir, outDir);
     _bellyPending = false;
   } else {
-    newBody.part = bodyPartFor(in, out);
+    newBody.part = bodyPartFor(inDir, outDir);
   }
-  newBody.dir = out;
+  newBody.dir = outDir;
 
   if (!eat) {
     // Se elimina la última parte (cola): el segmento que queda último
     // pasa a ser cola y recibe su sprite de cola apuntando como su dir
-    _tailIx = (_tailIx + 1) % MAX_LENGTH;
-    Seg& tail = _body[_tailIx];
+    _tailIndex = (_tailIndex + 1) % MAX_LENGTH;
+    Seg& tail = _body[_tailIndex];
     tail.part = (Sprite::Part)(Sprite::TAIL_TO_UP + ((uint8_t)tail.dir - 1));
     return Result::MOVED;
   }
@@ -167,10 +168,10 @@ Snake::Result Snake::step(uint8_t fx, uint8_t fy) {
 // alimento para generarse en una celda libre)
 // ========================================================
 
-bool Snake::occupied(uint8_t x, uint8_t y) const {
-  for (uint8_t i = 0; i < _length; i++) {
-    const Seg& s = _body[slot(i)];
-    if (s.x == x && s.y == y) return true;
+bool Snake::occupied(uint8_t cellX, uint8_t cellY) const {
+  for (uint8_t segmentIndex = 0; segmentIndex < _length; segmentIndex++) {
+    const Seg& currentSegment = _body[slot(segmentIndex)];
+    if (currentSegment.col == cellX && currentSegment.row == cellY) return true;
   }
   return false;
 }
@@ -183,8 +184,8 @@ uint8_t Snake::length() const {
   return _length;
 }
 
-const Snake::Seg& Snake::segment(uint8_t index) const {
-  return _body[slot(index)];
+const Snake::Seg& Snake::segment(uint8_t segmentIndex) const {
+  return _body[slot(segmentIndex)];
 }
 
 // ========================================================
@@ -197,33 +198,33 @@ const Snake::Seg& Snake::segment(uint8_t index) const {
 // (dir - 1).
 // ========================================================
 
-Sprite::Part Snake::headPart(bool hasFood, uint8_t fx, uint8_t fy) const {
-  uint8_t off = (uint8_t)_dir - 1;
+Sprite::Part Snake::headPart(bool hasFood, uint8_t foodX, uint8_t foodY) const {
+  uint8_t offset = (uint8_t)_dir - 1;
 
   // Próxima celda según la dirección actual
-  const Seg& head = _body[_headIx];
-  uint8_t nx = head.x;
-  uint8_t ny = head.y;
+  const Seg& head = _body[_headIndex];
+  uint8_t nextX = head.col;
+  uint8_t nextY = head.row;
   switch (_dir) {
-    case Dir::UP: ny = (ny == 0) ? (uint8_t)(ROWS - 1) : (uint8_t)(ny - 1); break;
-    case Dir::RIGHT: nx = (nx + 1) % COLS; break;
-    case Dir::DOWN: ny = (ny == ROWS - 1) ? 0 : (uint8_t)(ny + 1); break;
-    case Dir::LEFT: nx = (nx == 0) ? (uint8_t)(COLS - 1) : (uint8_t)(nx - 1); break;
+    case Dir::UP: nextY = (nextY == 0) ? (uint8_t)(ROWS - 1) : (uint8_t)(nextY - 1); break;
+    case Dir::RIGHT: nextX = (nextX + 1) % COLS; break;
+    case Dir::DOWN: nextY = (nextY == ROWS - 1) ? 0 : (uint8_t)(nextY + 1); break;
+    case Dir::LEFT: nextX = (nextX == 0) ? (uint8_t)(COLS - 1) : (uint8_t)(nextX - 1); break;
     default: break;
   }
 
-  bool aboutToEat = hasFood && nx == fx && ny == fy;
-  uint8_t base = aboutToEat ? Sprite::HEAD_UP_OPEN
-                            : Sprite::HEAD_UP_CLOSE;
-  return (Sprite::Part)(base + off);
+  bool aboutToEat = hasFood && nextX == foodX && nextY == foodY;
+  uint8_t basePart = aboutToEat ? Sprite::HEAD_UP_OPEN
+                                : Sprite::HEAD_UP_CLOSE;
+  return (Sprite::Part)(basePart + offset);
 }
 
 // ========================================================
 // Índice del ring buffer (segmento `index` contado desde la cola)
 // ========================================================
 
-uint8_t Snake::slot(uint8_t index) const {
-  return (_tailIx + index) % MAX_LENGTH;
+uint8_t Snake::slot(uint8_t slotIndex) const {
+  return (_tailIndex + slotIndex) % MAX_LENGTH;
 }
 
 // ========================================================
@@ -233,8 +234,8 @@ uint8_t Snake::slot(uint8_t index) const {
 // lado opuesto a `d`.
 // ========================================================
 
-Snake::Dir Snake::opposite(Dir d) const {
-  switch (d) {
+Snake::Dir Snake::opposite(Dir direction) const {
+  switch (direction) {
     case Dir::UP: return Dir::DOWN;
     case Dir::DOWN: return Dir::UP;
     case Dir::RIGHT: return Dir::LEFT;
@@ -252,27 +253,27 @@ Snake::Dir Snake::opposite(Dir d) const {
 // horiz LEFT -> vert UP +2 / DOWN +3).
 // ========================================================
 
-Sprite::Part Snake::bodyPartFor(Dir in, Dir out) const {
-  if (in == out) {
-    return (Sprite::Part)(Sprite::BODY_TO_UP + ((uint8_t)out - 1));
+Sprite::Part Snake::bodyPartFor(Dir inDir, Dir outDir) const {
+  if (inDir == outDir) {
+    return (Sprite::Part)(Sprite::BODY_TO_UP + ((uint8_t)outDir - 1));
   }
 
   // La esquina conecta el lado por el que la tubería ENTRA a la
-  // celda (opuesto a la dirección de llegada `in`; p. ej. *iba a
+  // celda (opuesto a la dirección de llegada `inDir`; p. ej. *iba a
   // la izquierda* -> entra por la derecha) y el lado por el que
-  // SALE (`out`; p. ej. *ahora va a arriba*). Los nombres son
+  // SALE (`outDir`; p. ej. *ahora va a arriba*). Los nombres son
   // esos dos lados: CORNER_<horizontal>_<vertical> (RIGHT_UP si
   // entra por la derecha y sale arriba, o entra por arriba y sale
   // a la derecha).
-  Dir entry = opposite(in);
-  Dir horiz = (entry == Dir::RIGHT || entry == Dir::LEFT) ? entry : out;
-  Dir vert = (entry == Dir::RIGHT || entry == Dir::LEFT) ? out : entry;
+  Dir entry = opposite(inDir);
+  Dir horizontal = (entry == Dir::RIGHT || entry == Dir::LEFT) ? entry : outDir;
+  Dir vertical = (entry == Dir::RIGHT || entry == Dir::LEFT) ? outDir : entry;
 
-  uint8_t base = Sprite::CORNER_RIGHT_UP;
-  if (horiz == Dir::RIGHT) base += (vert == Dir::UP) ? 0 : 1;
-  else base += (vert == Dir::UP) ? 2 : 3;
+  uint8_t basePart = Sprite::CORNER_RIGHT_UP;
+  if (horizontal == Dir::RIGHT) basePart += (vertical == Dir::UP) ? 0 : 1;
+  else basePart += (vertical == Dir::UP) ? 2 : 3;
 
-  return (Sprite::Part)base;
+  return (Sprite::Part)basePart;
 }
 
 // ========================================================
@@ -282,26 +283,26 @@ Sprite::Part Snake::bodyPartFor(Dir in, Dir out) const {
 // -> BELLY_RIGHT_UP(22) + desplazamiento (igual que CORNER).
 // ========================================================
 
-Sprite::Part Snake::bellyPartFor(Dir in, Dir out) const {
-  if (in == out) {
+Sprite::Part Snake::bellyPartFor(Dir inDir, Dir outDir) const {
+  if (inDir == outDir) {
     // Panza recta: comparte sprite por par de direcciones
-    if (out == Dir::UP || out == Dir::RIGHT)
+    if (outDir == Dir::UP || outDir == Dir::RIGHT)
       return Sprite::BELLY_TO_RIGHT;
     return Sprite::BELLY_TO_LEFT;
   }
 
   // Giro (igual que CORNER): la esquina conecta el lado por el que
-  // la tubería ENTRA (opuesto a `in`) y el lado por el que SALE
-  // (`out`). El nombre es BELLY_<horizontal>_<vertical>.
-  Dir entry = opposite(in);
-  Dir horiz = (entry == Dir::RIGHT || entry == Dir::LEFT) ? entry : out;
-  Dir vert = (entry == Dir::RIGHT || entry == Dir::LEFT) ? out : entry;
+  // la tubería ENTRA (opuesto a `inDir`) y el lado por el que SALE
+  // (`outDir`). El nombre es BELLY_<horizontal>_<vertical>.
+  Dir entry = opposite(inDir);
+  Dir horizontal = (entry == Dir::RIGHT || entry == Dir::LEFT) ? entry : outDir;
+  Dir vertical = (entry == Dir::RIGHT || entry == Dir::LEFT) ? outDir : entry;
 
-  uint8_t base = Sprite::BELLY_RIGHT_UP;
-  if (horiz == Dir::RIGHT) base += (vert == Dir::UP) ? 0 : 1;
-  else base += (vert == Dir::UP) ? 2 : 3;
+  uint8_t basePart = Sprite::BELLY_RIGHT_UP;
+  if (horizontal == Dir::RIGHT) basePart += (vertical == Dir::UP) ? 0 : 1;
+  else basePart += (vertical == Dir::UP) ? 2 : 3;
 
-  return (Sprite::Part)base;
+  return (Sprite::Part)basePart;
 }
 
 // ====================================================================================

@@ -10,6 +10,8 @@
 //
 //   - Pin       : pines de la placa (botones, buzzer, I2C).
 //   - Screen    : geometría del OLED y sus regiones.
+//   - Board     : geometría del tablero de juego (rejilla de
+//                 celdas, compartida por Snake/Game/Food).
 //   - Difficulty: límites de la dificultad (compartidos por
 //                 Menu y Game).
 //   - Version   : versión y fecha de release del firmware
@@ -88,6 +90,17 @@ constexpr uint8_t OPTION_H = 48;
 
 constexpr uint8_t CHAR_W = 6;
 constexpr uint8_t CHAR_H = 8;
+}
+
+// ========================================================
+// Tablero de juego: rejilla de celdas (compartida por
+// Snake/Game/Food)
+// ========================================================
+
+namespace Board {
+constexpr uint8_t COLS = Screen::WIDTH / Screen::CELL;   // columnas del tablero (16)
+constexpr uint8_t ROWS = Screen::BODY_H / Screen::CELL;  // filas del tablero (6)
+constexpr uint8_t MAX_LENGTH = COLS * ROWS;              // segmentos máximos (una celda por segmento)
 }
 
 // ========================================================

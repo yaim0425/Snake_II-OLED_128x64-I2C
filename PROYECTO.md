@@ -817,7 +817,7 @@ static constexpr uint8_t SPECIAL_TIME = Config::Food::SPECIAL_TIME;   // segundo
 
 ## 18. Clase `Snake` — API (lógica pura de la serpiente)
 
-`Snake.h/.cpp`. Encapsula toda la lógica de la serpiente, extraída de `Game`. Componente del juego (no ventana): **no depende de `Display`, `Sound` ni `Food`** —solo de `Arduino.h` (`delay`, `random`) y `Sprite.h` (enums de partes para elegir sprites que `Game` dibujará)—, por lo que se compila y prueba en el PC sin el resto.
+`Snake.h/.cpp`. Encapsula toda la lógica de la serpiente, extraída de `Game`. Componente del juego (no ventana): **no depende de `Display`, `Sound` ni `Food`** —usa `Config.h` (constantes del tablero), `Sprite.h` (enums de partes para elegir sprites que `Game` dibujará) y `Arduino.h`—, por lo que se compila y prueba en el PC sin el resto.
 
 ### Qué hace y qué no
 `Snake` mantiene el **buffer circular** de segmentos, la dirección commitida, el giro pendiente (sin buffer ni reversa directa), el avance con wrap, la detección de colisión, comer/crecer y la elección del sprite de cada parte. `Game` **coordina**: le pasa el alimento en cada paso, aplica puntaje/sonidos con el resultado, regenera la comida y dibuja. `Game` mantiene la **dificultad (ritmo)** y la **velocidad** (aquí no intervienen): `Snake::step` se llama una vez por paso y `Game` controla la cadencia.
@@ -826,12 +826,12 @@ static constexpr uint8_t SPECIAL_TIME = Config::Food::SPECIAL_TIME;   // segundo
 ```cpp
 Snake();
 ```
-Deja la serpiente vacía (longitud 0, dirección `NONE`); hay que llamar `reset()` antes de usarla.
+Deja la serpiente en su estado inicial tras construcción: `_dir = Dir::RIGHT`; hay que llamar `reset()` antes de usarla (o para iniciar una partida).
 
 ### Constantes
 | Constante | Valor | Significado |
 |-----------|-------|-------------|
-| `COLS`, `ROWS` | 16, 6 | Tablero: rejilla 16×6 de celdas de 8 px en el Body (128×48). Antes en `Game`; `Game`/`Food` las usan vía `Snake::COLS`/`Snake::ROWS`. |
+| `COLS`, `ROWS` | 16, 6 | Tablero: rejilla 16×6 de celdas de 8 px en el Body (128×48). Provienen de `Config::Board::COLS`/`ROWS` (alias en `Snake.h`). `Game`/`Food` las usan vía `Snake::COLS`/`Snake::ROWS`. |
 | `MAX_LENGTH` | 96 | Segmentos máximos (una celda por segmento; 16×6 celdas caben y nunca se repite celda viva). |
 | `Dir::NONE`/`UP`/`RIGHT`/`DOWN`/`LEFT` | 0/1/2/3/4 | Direcciones. El orden (UP=1..LEFT=4) coincide con el de los sprites por dirección (`dir-1`). `NONE` = sin dirección (estado vacío). |
 | `Result::MOVED`/`ATE`/`DIED` | — | Resultado de `step`: avanzó sin comer / comió (crece, la cola NO avanza ese paso) / colisión (muerte, sin moverse). |
@@ -841,28 +841,28 @@ Deja la serpiente vacía (longitud 0, dirección `NONE`); hay que llamar `reset(
 |--------|-------------|
 | `void reset()` | Inicializa: celdas `(1,2)..(4,2)`, cabeza a la derecha, longitud 4, giro pendiente `NONE`. |
 | `void clearPending()` | Descarta el giro pendiente (`_nextDir = NONE`). Lo llama `Game::begin()` al entrar (START) para no reanudar con un giro acumulado del menú. |
-| `bool turn(Dir d)` | **Único giro pendiente, sin buffer ni reversa directa**. Se evalúa **siempre** desde la dirección actual de la cabeza (`_dir`, la COMMITIDA): seguir, girar a izquierda o derecha; la contraria (180°) se **ignora**. Devuelve `true` si el giro quedó pendiente (el último válido pisa al anterior) para que `Game` toque `SFX_TURN` solo al aceptar. Así no se genera un GAME OVER espurio por una reversa falsa del último MOVE. |
-| `Result step(uint8_t fx, uint8_t fy)` | **Avanza un paso** (aplica el giro pendiente si lo hay). `(fx, fy)` = alimento (lo pasa `Game` desde `_food`). Devuelve `Result`; `Game` interpreta: `ATE` → crece (la cola NO avanza ese paso), `DIED` → no se mueve. |
-| `bool occupied(uint8_t x, uint8_t y)` | `true` si la celda `(x,y)` está ocupada. Lo consulta `Food` (al colocar alimento) vía `Game::occupied`, que delega aquí. |
+| `bool turn(Dir direction)` | **Único giro pendiente, sin buffer ni reversa directa**. Se evalúa **siempre** desde la dirección actual de la cabeza (`_dir`, la COMMITIDA): seguir, girar a izquierda o derecha; la contraria (180°) se **ignora**. Devuelve `true` si el giro quedó pendiente (el último válido pisa al anterior) para que `Game` toque `SFX_TURN` solo al aceptar. Así no se genera un GAME OVER espurio por una reversa falsa del último MOVE. |
+| `Result step(uint8_t foodX, uint8_t foodY)` | **Avanza un paso** (aplica el giro pendiente si lo hay). `(foodX, foodY)` = alimento (lo pasa `Game` desde `_food`). Devuelve `Result`; `Game` interpreta: `ATE` → crece (la cola NO avanza ese paso), `DIED` → no se mueve. |
+| `bool occupied(uint8_t cellX, uint8_t cellY)` | `true` si la celda `(cellX,cellY)` está ocupada. Lo consulta `Food` (al colocar alimento) vía `Game::occupied`, que delega aquí. |
 | `uint8_t length()` | Longitud actual. |
-| `const Seg& segment(uint8_t i)` | Segmento `i` (0 = cola, `length()-1` = cabeza) para que `Game` lo dibuje. |
-| `Sprite::Part headPart(bool hasFood, uint8_t fx, uint8_t fy)` | Sprite de la cabeza según la dirección commitida: `HEAD_<dir>_OPEN` **una casilla antes** de llegar al alimento (la comida está en la próxima celda según `_dir`) y `HEAD_<dir>_CLOSE` al colisionar con él (o sin comida). Lo consulta `Game` cada frame. |
+| `const Seg& segment(uint8_t segmentIndex)` | Segmento `segmentIndex` (0 = cola, `length()-1` = cabeza) para que `Game` lo dibuje. |
+| `Sprite::Part headPart(bool hasFood, uint8_t foodX, uint8_t foodY)` | Sprite de la cabeza según la dirección commitida: `HEAD_<dir>_OPEN` **una casilla antes** de llegar al alimento (la comida está en la próxima celda según `_dir`) y `HEAD_<dir>_CLOSE` al colisionar con él (o sin comida). Lo consulta `Game` cada frame. |
 
 ### Internos (segmentos y buffer)
 ```cpp
 enum class Dir : uint8_t { NONE = 0, UP = 1, RIGHT, DOWN, LEFT };
 enum class Result : uint8_t { MOVED, ATE, DIED };
-struct Seg {
-    uint8_t x, y;
+  struct Seg {
+    uint8_t col, row;
     Dir dir;            // hacia el segmento siguiente (más cerca de la cabeza)
     Sprite::Part part;  // sprite persistente
-};
-Seg _body[MAX_LENGTH];
-uint8_t _headIx, _tailIx;   // índices circular (cabeza/cola)
-uint8_t _length;
-Dir _dir, _nextDir;         // commitida + giro pendiente
-Sprite::Part bodyPartFor(Dir in, Dir out);
-Sprite::Part bellyPartFor(Dir in, Dir out);
+  };
+  Seg _body[MAX_LENGTH];
+  uint8_t _headIndex, _tailIndex;   // índices circular (cabeza/cola)
+  uint8_t _length;
+  Dir _dir, _nextDir;         // commitida + giro pendiente
+  Sprite::Part bodyPartFor(Dir inDir, Dir outDir);
+  Sprite::Part bellyPartFor(Dir inDir, Dir outDir);
 ```
 
 - **Ring buffer:** cola en `_tailIx`, cabeza en `_headIx`. Cada paso **agrega una parte nueva** (la cabeza) y **elimina la última** (la cola) salvo al comer (la cola NO avanza). El nuevo segmento se escribe en `slot()` = `_headIx+1` módulo `MAX_LENGTH`; la cabeza nueva apunta a ese slot.
@@ -899,6 +899,12 @@ namespace Screen {
   // constexpr uint8_t FOOT_LINE = HEIGHT - (8 + 2 + 1);  // línea separadora (comentada: no la dibuja nadie)
 }
 
+namespace Board {
+  constexpr uint8_t COLS = Screen::WIDTH / Screen::CELL;   // columnas del tablero (16)
+  constexpr uint8_t ROWS = Screen::BODY_H / Screen::CELL;  // filas del tablero (6)
+  constexpr uint8_t MAX_LENGTH = COLS * ROWS;              // segmentos máximos
+}
+
 namespace Difficulty {
   constexpr uint8_t MIN_LEVEL     = 1;
   constexpr uint8_t MAX_LEVEL     = 10;
@@ -924,6 +930,7 @@ Los namespaces internos (`Pin`, `Screen`, `Difficulty`, `Version`, `Credits`, `L
 |-----------|------------|----------|
 | `Config::Pin` | `BUTTONS`, `BUZZER`, `OLED_SDA`, `OLED_SCL` | el `.ino` (pasa `BUTTONS` a `Buttons` y `BUZZER` a `Sound`, que construye su `Buzzer`), `Buzzer` (pin por defecto), `Display` (pines I2C por defecto) |
 | `Config::Screen` | `WIDTH`/`HEIGHT`/`CELL`/`ADDRESS` y regiones `HEADER_*`/`BODY_*`/`FOOT_*` | `Display` (defaults y `regionBounds`), `Boot` (bandas TITULO=Header/CUERPO=Body), `Game` (tablero en el Body, celda de sprites y `BODY_TOP`), `Food` (celda: centro del rombo y sprite especial), `MenuCredits` (rol del Body), `Legend` (línea/fila del pie), `Scroller` (`WIDTH`) |
+| `Config::Board` | `COLS` (16), `ROWS` (6), `MAX_LENGTH` (96) | `Snake` (constantes del tablero; alias en `Snake.h`), `Game` y `Food` las usan vía `Snake::COLS`/`ROWS`. |
 | `Config::Difficulty` | `MIN_LEVEL`/`MAX_LEVEL`/`DEFAULT_LEVEL` | `MenuDifficulty` y `Game` (`setDifficulty`/velocidad): antes duplicadas. El sufijo `_LEVEL`/`DEFAULT_LEVEL` evita la macro `DEFAULT` del core ESP32. |
 | `Config::Version` | `VERSION`/`RELEASE_DATE` | `Menu` (`version`, texto del pie; antes `"v0.1"` en la firma). `RELEASE_DATE` lo usa la tarjeta final de `MenuCredits` (`CARD_DATE`). `NAME` ("Snake II") lo dibujan `Boot` (título) y `Menu` (Header). |
 | `Config::Credits` | `CREDITS[]` (30 filas; `COUNT` **derivada** con `sizeof`, `uint8_t`), `THANKS`, `PAUSE_MS` (1.5 s), `PX_MS` (40) | `MenuCredits` (§10.4): el roll y la tarjeta final (vía los renombres de clase `CREDITS`/`COUNT`/`CARD_THANKS`); `PAUSE_MS` es la **pausa externa** con el bloque centrado (entre el vuelo STAY y el EXIT). `PX_MS` queda **sin uso** (la velocidad del roll la da `Scroller::ANIMATION_V`, §14). `COUNT` se deriva del array: la lista nunca se desalinea. |
