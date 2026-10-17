@@ -40,66 +40,34 @@ void Engine::update() {
       if (!_menu.done()) break;
 
       switch (_menu.selected()) {
-        case Menu::OPT_SOUND: changeState(State::MENU_SOUND); break;
+        case Menu::OPT_NEW: changeState(State::NEW); break;
+        case Menu::OPT_CONTINUE: changeState(State::CONTINUE); break;
         case Menu::OPT_DIFFICULTY: changeState(State::MENU_DIFFICULTY); break;
+        case Menu::OPT_SOUND: changeState(State::MENU_SOUND); break;
         case Menu::OPT_CREDITS: changeState(State::MENU_CREDITS); break;
         default: changeState(State::LEGEND); break;
       }
-
-      // // Confirmar opción (ACTION_RIGHT) -> cambiar de ventana
-      // int8_t select = _menu.confirm();
-      // if (select >= 0) {
-      //   sound.play(Sound::SFX_CONFIRM);
-      //   // AISLADO: los destinos de abajo (Game y submenus) siguen
-      //   // desactivados, asi que el Menu no transiciona. Al reactivarlos
-      //   // hay que descomentar el switch y volver a habilitar los estados
-      //   // en el enum de Engine.h.
-      //   // switch (select) {
-      //   //   case Menu::OPT_NEW: changeState(State::NEW); break;
-      //   //   case Menu::OPT_CONTINUE: changeState(State::CONTINUE); break;
-      //   //   case Menu::OPT_DIFFICULTY: changeState(State::MENU_DIFFICULTY); break;
-      //   //   case Menu::OPT_SOUND: changeState(State::MENU_SOUND); break;
-      //   //   case Menu::OPT_CREDITS: changeState(State::MENU_CREDITS); break;
-      //   // }
-      // }
       break;
 
     case State::MENU_SOUND:
       _menuSound.update();
       if (_menuSound.done()) changeState(State::MENU);
       break;
-    // _menu.showOptions();
-    // changeState(State::MENU);
 
-    // _menu.restoreDiamondBand();  // pendiente: Menu::restoreDiamondBand()
-    // sigue comentado en Menu.h/Menu.cpp; por eso changeState(MENU, false)
-    // hace igual el _menu.begin() completo (beginWindow se ignora).
-
-    // AISLADO: ventanas del Game y de los demás submenus (MenuSound ya esta
-    // activa: ver su case arriba). Se comentan por bloque entero, no linea
-    // por linea, para que el revert sea limpio. Al reactivar hay que volver
-    // a descomentar el enum de State y los miembros en Engine.h.
-    //
     case State::NEW:
     case State::CONTINUE:
-      {
-        _game.update();
-        if (!_game.done()) break;
-        //   sound.play(Sound::SFX_BACK);
-        //   _menu.setBestScore(_game.bestScore());
-        //   // "Continue" solo se habilita si la partida sigue en curso Y el
-        //   // jugador tiene puntos (score > 0): al salir sin haber comido no
-        //   // hay nada que reanudar. Con GAME OVER o sin puntos las opciones
-        //   // son 4 y la selección queda en "New".
+      _game.update();
+      if (!_game.done()) break;
 
-        bool gameOver = _game.isGameOver();
-        bool resumable = !gameOver && _game.score() > 0;
-        // _menu.setContinueAvailable(resumable);
-        // _menu.setSelected(resumable ? Menu::OPT_CONTINUE : Menu::OPT_NEW);
-        // changeState(State::MENU_CREDITS);
-        // }
-        break;
-      }
+      sound.play(Sound::SFX_BACK);
+      // Pendiente (Menu::setBestScore/setContinueAvailable/setSelected
+      // siguen comentados): sincronizar el récord y habilitar "Continue".
+      //   _menu.setBestScore(_game.bestScore());
+      //   bool resumable = !_game.isGameOver() && _game.score() > 0;
+      //   _menu.setContinueAvailable(resumable);
+      //   _menu.setSelected(resumable ? Menu::OPT_CONTINUE : Menu::OPT_NEW);
+      changeState(State::MENU);
+      break;
 
     case State::MENU_DIFFICULTY:
       _menuDifficulty.update();
@@ -173,13 +141,10 @@ void Engine::repaint() {
 
 // ========================================================
 // ¿Se está jugando? (el reposo no aplica en partida)
-//
-// AISLADO: sin Game activo, siempre false. Al reactivarlo:
-//   return _state == State::NEW || _state == State::CONTINUE;
 // ========================================================
 
 bool Engine::isInGame() const {
-  return false;
+  return _state == State::NEW || _state == State::CONTINUE;
 }
 
 // ========================================================
@@ -229,8 +194,14 @@ void Engine::changeState(State newState) {
     case State::MENU_SOUND: _menuSound.begin(); break;
     case State::MENU_DIFFICULTY: _menuDifficulty.begin(); break;
     case State::MENU_CREDITS: _menuCredits.begin(); break;
-    case State::NEW: _game.begin(true); break;
-    case State::CONTINUE: _game.begin(false); break;
+    case State::NEW:
+      _game.setDifficulty(_menuDifficulty.difficulty());
+      _game.begin(true);
+      break;
+    case State::CONTINUE:
+      _game.setDifficulty(_menuDifficulty.difficulty());
+      _game.begin(false);
+      break;
   }
 }
 

@@ -62,10 +62,12 @@ bool Snake::turn(Dir direction) {
   // Prohibir la reversa directa contra la dirección COMMITIDA (_dir),
   // no contra un giro pendiente intermedio (la cabeza no puede volver
   // sobre sí misma respecto a la dirección con la que avanzará)
-  if (
-    (direction == Dir::UP && _dir == Dir::DOWN) || (direction == Dir::DOWN && _dir == Dir::UP) || (direction == Dir::LEFT && _dir == Dir::RIGHT) || (direction == Dir::RIGHT && _dir == Dir::LEFT)) {
-    return false;
-  }
+  bool invalid = false;
+  invalid = invalid || (direction == Dir::UP && _dir == Dir::DOWN);
+  invalid = invalid || (direction == Dir::DOWN && _dir == Dir::UP);
+  invalid = invalid || (direction == Dir::LEFT && _dir == Dir::RIGHT);
+  invalid = invalid || (direction == Dir::RIGHT && _dir == Dir::LEFT);
+  if (invalid) return false;
 
   // Giro aceptado: queda pendiente
   _nextDir = direction;
@@ -98,10 +100,10 @@ Snake::Result Snake::step(uint8_t foodX, uint8_t foodY) {
   uint8_t nextY = headSegment.row;
 
   switch (stepDir) {
-    case Dir::UP: nextY = (nextY == 0) ? (uint8_t)(ROWS - 1) : (uint8_t)(nextY - 1); break;
+    case Dir::UP: nextY = nextY == 0 ? ROWS - 1 : nextY - 1; break;
     case Dir::RIGHT: nextX = (nextX + 1) % COLS; break;
-    case Dir::DOWN: nextY = (nextY == ROWS - 1) ? 0 : (uint8_t)(nextY + 1); break;
-    case Dir::LEFT: nextX = (nextX == 0) ? (uint8_t)(COLS - 1) : (uint8_t)(nextX - 1); break;
+    case Dir::DOWN: nextY = nextY == ROWS - 1 ? 0 : nextY + 1; break;
+    case Dir::LEFT: nextX = nextX == 0 ? COLS - 1 : nextX - 1; break;
     default: break;
   }
 
@@ -142,9 +144,8 @@ Snake::Result Snake::step(uint8_t foodX, uint8_t foodY) {
     // Estaba sobre la comida (recién comida): al dejarla se pinta la panza
     newBody.part = bellyPartFor(inDir, outDir);
     _bellyPending = false;
-  } else {
+  } else 
     newBody.part = bodyPartFor(inDir, outDir);
-  }
   newBody.dir = outDir;
 
   if (!eat) {
@@ -206,16 +207,15 @@ Sprite::Part Snake::headPart(bool hasFood, uint8_t foodX, uint8_t foodY) const {
   uint8_t nextX = head.col;
   uint8_t nextY = head.row;
   switch (_dir) {
-    case Dir::UP: nextY = (nextY == 0) ? (uint8_t)(ROWS - 1) : (uint8_t)(nextY - 1); break;
+    case Dir::UP: nextY = nextY == 0 ? ROWS - 1 : nextY - 1; break;
     case Dir::RIGHT: nextX = (nextX + 1) % COLS; break;
-    case Dir::DOWN: nextY = (nextY == ROWS - 1) ? 0 : (uint8_t)(nextY + 1); break;
-    case Dir::LEFT: nextX = (nextX == 0) ? (uint8_t)(COLS - 1) : (uint8_t)(nextX - 1); break;
+    case Dir::DOWN: nextY = nextY == ROWS - 1 ? 0 : nextY + 1; break;
+    case Dir::LEFT: nextX = nextX == 0 ? COLS - 1 : nextX - 1; break;
     default: break;
   }
 
   bool aboutToEat = hasFood && nextX == foodX && nextY == foodY;
-  uint8_t basePart = aboutToEat ? Sprite::HEAD_UP_OPEN
-                                : Sprite::HEAD_UP_CLOSE;
+  uint8_t basePart = aboutToEat ? Sprite::HEAD_UP_OPEN : Sprite::HEAD_UP_CLOSE;
   return (Sprite::Part)(basePart + offset);
 }
 

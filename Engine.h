@@ -4,10 +4,6 @@
 #include "Boot.h"
 #include "MenuCredits.h"
 #include "MenuDifficulty.h"
-// AISLADO: el unico pendiente del aislamiento es Game (y Food, su comida),
-// que se reactivara al integrar la partida con el Menu. Arduino compila igual
-// los .cpp de la carpeta, asi que ademas de no incluir Game.h aqui, Game.cpp y
-// Food.cpp seguiran inertes (ver Engine.cpp).
 #include "Game.h"
 #include "MenuSound.h"
 #include "Menu.h"
@@ -21,9 +17,7 @@
 // no anidadas entre sí). Cada una es una clase independiente
 // con el patrón begin()/update()/print()/done() y usa los
 // servicios globales (Display, Buttons, Sound — ver Globals.h)
-// directamente. Durante el aislamiento quedan fuera Boot, Legend,
-// Menu, MenuSound, MenuDifficulty y MenuCredits (ver el bloque
-// AISLADO más abajo); Game sigue aislado.
+// directamente.
 //
 // Solo Engine conoce el estado (State): decide qué ventana se
 // ve (update()/print() despachan a la ventana activa) y, al
@@ -37,15 +31,13 @@
 // begin() los reinicie al entrar).
 //
 // ------------------------------------------------------------
-// AISLADO (temporal): el único pendiente del aislamiento es Game
-// (con Food), que se reactivará al integrar la partida con el
-// Menu. El resto de ventanas (Boot, Legend, Menu, MenuSound,
-// MenuDifficulty, MenuCredits) está activo y Engine las posee y
-// despacha: las transiciones del Menu hacia Game (OPT_NEW y
-// OPT_CONTINUE) siguen comentadas en Engine.cpp, y MenuCredits
-// ya se abre desde el Menu (OPT_CREDITS).
-// Para revertir, descomentar por bloques los estados, los
-// miembros y las funciones comentadas.
+// Todas las ventanas están activas y Engine las posee y despacha:
+// el Menu abre Game (OPT_NEW/OPT_CONTINUE), MenuCredits
+// (OPT_CREDITS), MenuDifficulty (OPT_DIFFICULTY) y MenuSound
+// (OPT_SOUND). Al volver de Game, la sincronización del récord y
+// de la opción "Continue" en el menú sigue pendiente (los métodos
+// Menu::setBestScore/setContinueAvailable/setSelected aún están
+// comentados), así que changeState(MENU) usa un placeholder.
 // ------------------------------------------------------------
 // ========================================================
 
@@ -106,9 +98,6 @@ private:
 
   // ========================================================
   // Estado interno: determina qué se ve y a qué ventana se despacha
-  //
-  // AISLADO: los estados del Game (NEW y CONTINUE) siguen comentados
-  // junto con su ventana.
   // ========================================================
 
   enum class State : uint8_t {
@@ -145,9 +134,6 @@ private:
 
   // ========================================================
   // Ventanas (miembros propios: las posee Engine, ninguna es global)
-  //
-  // AISLADO: Game sigue fuera (su .h no se incluye y Game.cpp/Food.cpp
-  // están inertes); el resto de ventanas está activo.
   // ========================================================
 
   Boot _boot;
