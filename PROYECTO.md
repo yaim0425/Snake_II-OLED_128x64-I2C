@@ -6,47 +6,24 @@ Snake II (estilo Nokia) para ESP32-S3 con Arduino IDE. POO: una clase por archiv
 
 ## 0. Reglas de trabajo con la IA
 
-- **La IA no debe hacer nada sin una orden explícita del usuario.**
+- Toda regla que el usuario dé debe quedar escrita en este documento, para que sobreviva a la siguiente sesión.
+- La IA no debe hacer nada sin una orden explícita del usuario.
 - No crear, modificar ni eliminar archivos por iniciativa propia.
-- **Excepción:** la IA puede modificar el `.gitignore` en cualquier momento, sin
-  esperar una orden explícita.
-- No proponer ni iniciar fases de desarrollo por su cuenta; solo actuar cuando
-  el usuario lo indique.
-- **La IA debe hacer un commit al modificar archivos** (cuando el usuario lo ordene
-  o como parte del flujo de trabajo ya autorizado).
-- **Agrupar los cambios por tema de modificación**: todo lo relacionado con un
-  mismo tema (código, este documento y, si corresponde, API) queda en un commit, y
-  el **mensaje del commit debe ser informativo**. Los micro-commits por cambio
-  puntual ya no se usan.
-- **La IA decide cuántos commits hacen falta según los temas**, aunque el usuario
-  diga "haz un commit" o "un commit de todos los cambios": si hay varios temas, se
-  hacen varios commits (nunca se fuerza todo en uno).
-- **Si el cambio necesita más de un commit**, seguir este procedimiento: (1) crear
-  un archivo `.json` (junto a `PROYECTO.md`, en la raíz del proyecto) que registre
-  los commits **pendientes** (futuros), con la lista de archivos de cada commit y el
-  mensaje de cada uno; (2) ir haciendo los commits según lo indicado en el punto 2;
-  **por cada commit hecho se borra ese commit del `.json`**; (3) cuando el `.json`
-  quede vacío (**todos los commits hechos), se elimina el archivo**; (4) actualizar
-  `PROYECTO.md`; (5) dar recomendaciones finales, brevemente.
-- **El `.json` es un punto de control (checkpoint):** si los commits se detienen por
-  cualquier razón, la siguiente sesión se retoma leyendo `PROYECTO.md` + el `.json`
-  (los commits pendientes que aún estén listados) y se continúa donde se quedó. Por
-  eso el `.json` se debe mantener al día tras cada commit y no debe borrarse hasta
-  haber completado todos.
-- **La IA debe actualizar este documento (`PROYECTO.md`) antes de hacer el commit**:
-  toda modificación de código debe quedar reflejada (secciones/API) y ese cambio a
-  `PROYECTO.md` debe incluirse en el mismo commit.
-- **Al pedir un commit, la IA no modifica el código** (`.ino`, `.h`, `.cpp`). No
-  "arregla" el código de los archivos para dejarlo bien antes de commitear: si algo
-  está mal, lo señala y espera orden. Sí puede, sin permiso: **modificar
-  comentarios** en `.ino`/`.h`/`.cpp`/`.md`, **mover código de posición**, **ajustar
-  las lineas vacias** y **ajustar la sangreia** (reordenar), pero **nunca cambiar el código**.
-- **Commit y `push` van juntos.** En cuanto se crea el commit se hace `push`
-  inmediatamente, sin pedir confirmación adicional.
-- **Toda regla que el usuario dé debe quedar escrita en este documento**, para que
-  sobreviva a la siguiente sesión (ver la frase de arranque de más abajo).
-- **La IA no compila sin permiso explícito del usuario.** El usuario compila por su
-  cuenta (compilar la IA y después el usuario demora el flujo de trabajo).
+- Excepción: la IA puede modificar el .gitignore en cualquier momento, sin esperar una orden explícita.
+- Proponer pero no iniciar fases de desarrollo por su cuenta; solo actuar cuando el usuario lo indique.
+- La IA debe hacer un commit cuando el usuario lo ordene o como parte del flujo de trabajo ya autorizado.
+- Agrupar los cambios por tema de modificación: todo lo relacionado con un mismo tema (código, este documento y, si corresponde, API) queda en un commit, y el mensaje del commit debe ser informativo. Los micro-commits por cambio puntual no se usan.
+- La IA decide cuántos commits hacen falta según los temas, aunque el usuario diga "haz un commit" o "un commit de todos los cambios": si hay varios temas, se hacen varios commits (nunca se fuerza todo en uno).
+- Si el cambio necesita más de un commit, seguir este procedimiento: (1) crear un archivo .json (junto a PROYECTO.md, en la raíz del proyecto) que registre los commits pendientes (futuros), con la lista de archivos de cada commit y el mensaje de cada uno; (2) ir haciendo los commits según lo indicado en el punto 2; por cada commit hecho se borra ese commit del .json; (3) cuando el .json quede vacío (todos los commits hechos), se elimina el archivo; (4) actualizar PROYECTO.md; (5) dar recomendaciones finales, brevemente.
+- El .json es un punto de control (checkpoint): si los commits se detienen por cualquier razón, la siguiente sesión se retoma leyendo PROYECTO.md + el .json (los commits pendientes que aún estén listados) y se continúa donde se quedó. Por eso el .json se debe mantener al día tras cada commit y no debe borrarse hasta haber completado todos.
+- La IA debe actualizar PROYECTO.md antes de hacer el commit: toda modificación de código debe quedar reflejada (secciones/API) y ese cambio a PROYECTO.md debe incluirse en el mismo commit.
+- Al pedir un commit, la IA no modifica el código (.ino, .h, .cpp). No "arregla" el código de los archivos para dejarlo bien antes de commitear: si algo está mal, lo señala y espera orden. Sí puede, sin permiso: modificar comentarios en .ino/.h/.cpp/.md, mover código de posición, ajustar las lineas vacias y ajustar la sangreia (reordenar), pero nunca cambiar el código.
+- Commit y push van juntos. En cuanto se crea el commit se hace push inmediatamente, sin pedir confirmación adicional.
+- La IA no compila sin permiso explícito del usuario. El usuario compila por su cuenta (compilar la IA y después el usuario demora el flujo de trabajo).
+- Despues de compactar la sesión, la siguiente sesion debe volver a leer las reglas.
+- El nombre de las variables dentro de las funciones y los parametros debe tener el nombre completo, en vez de cx usar centerX.
+- Las constantes se declaran en Config.h y de renombra en los .h de cada clase/API.
+- Al trabajar en una clase/AP modificar solo en la que se eata trabajando al menos que se indique lo contrario de forma directa.
 
 ### Frase para iniciar una nueva sesión
 
