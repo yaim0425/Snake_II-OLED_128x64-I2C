@@ -1,6 +1,7 @@
 #include "Game.h"
 #include "Globals.h"
 #include "Timer.h"
+#include "Blink.h"
 
 #include "Sprite.h"
 
@@ -9,29 +10,37 @@
 #include <esp_random.h>
 
 // ========================================================
-// Constructor
+// Constructor (GAME_OVER = "sin partida en curso": begin(false)
+// con este estado arranca una nueva)
 // ========================================================
 
 Game::Game()
   : _state(State::START),
-    _exit(false),
-    _redraw(true),
-    _redrawHeader(true),
-    _dirtyBoard(true),
-    _overlayHidden(false),
-    _lastCount(0xFF),
-    _hasGame(false),
-    _difficulty(Config::Difficulty::DEFAULT_LEVEL),
-    _moveDelay(0),
-    _moveLast(0),
-    _startMs(0),
-    _gameOverMs(0),
-    _newBest(false),
-    _celeSfx(0),
+    _done(false),
+    _clear(true),
+    _countFood(0),
+    _blinkChanged(false),
+    // _lastCountdown(0),
+    // _redrawHeader(true),
+    // _dirtyBoard(true),
+    // _overlayHidden(false),
+    // _lastCount(0xFF),
+    // _difficulty(Config::Difficulty::DEFAULT_LEVEL),
+    // _moveDelay(0),
+    // _score(0),
+    // _newBest(false),
+    // _celeSfx(0),
+    // _countdown(),
+    // _step(),
+    // _cele(),
+    _moveSnake(false),
+    _ateFood(false),
+    _ateSpecialFood(false),
+    _timer(10 * 1000),
+    _win(false),
     _snake(),
-    _food(Snake::COLS, Snake::ROWS, Config::Screen::BODY_TOP),
-    _score(0),
-    _bestScore(0) {}
+    _specialFood(),
+    _food() {}
 
 // ========================================================
 // Inicialización (al entrar en la ventana)
@@ -39,31 +48,54 @@ Game::Game()
 // `newGame` = true (NEW): reinicia la partida y arranca el
 // conteo regresivo 3-2-1. `false` (CONTINUE): reanuda la
 // partida anterior en pausa (el tablero se conserva) o
-// arranca una nueva si no hay partida en curso (por ejemplo
-// tras un GAME_OVER).
+// arranca una nueva si no hay partida en curso (GAME_OVER).
 // ========================================================
 
 void Game::begin(bool newGame) {
-  _exit = false;
-  _redraw = true;
-  _redrawHeader = true;
-  _dirtyBoard = true;
+  _done = false;
+  _clear = true;
+  // _redrawHeader = true;
+  // _dirtyBoard = true;
   _snake.clearPending();  // ningún giro pendiente al entrar
-  _newBest = false;      // el festejo de récord lo decide die() en cada muerte
-  _celeSfx = 0;
-  _gameOverMs = 0;
+  // _newBest = false;      // el festejo de récord lo decide die() en cada muerte
+  // _celeSfx = 0;
+  _win = false;
+  speedFor(storage.difficulty());
+  _state = State::PAUSE;
 
-  if (newGame || !_hasGame) {
-    // Nueva partida (velocidad según la dificultad actual del menú)
-    _state = State::START;
-    reset();
-    Serial.println("Snake II: nueva partida");
-  } else {
-    // Reanudar la partida anterior: queda en pausa, el jugador
-    // la retoma con ACTION_RIGHT (o ACTION_LEFT)
-    _state = State::PAUSE;
-    Serial.println("Snake II: continuar partida");
-  }
+  if (!newGame)  return;
+
+  _ateFood = false;
+  _moveSnake = false;
+  _ateSpecialFood = false;
+
+  // Nueva partida (velocidad según la dificultad actual del menú)
+  _snake.reset();
+
+  randomSeed(esp_random() ^ (uint32_t)nowMs());
+  _specialFood.spawn(Food::Type::SPECIAL, *this);
+  _food.spawn(Food::Type::NORMAL, *this);
+  _specialFood.clear();
+
+  _state = State::START;
+  _countFood = 0;
+  _score = 0;
+
+  _blink.start();
+  _timer = Ticker(_moveDelay);
+
+  _countdown = COUNT;
+  _blinkChanged = false;
+  // _lastCountdown = 0;
+
+  // reset();
+  // Serial.println("Snake II: nueva partida");
+  // } else // {
+  // Reanudar la partida anterior: queda en pausa, el jugador
+  // la retoma con ACTION_RIGHT (o ACTION_LEFT)
+  // _state = State::PAUSE;
+  // Serial.println("Snake II: continuar partida");
+  // }
 }
 
 // ========================================================
@@ -71,15 +103,15 @@ void Game::begin(bool newGame) {
 // ========================================================
 
 void Game::setDifficulty(uint8_t level) {
-  if (level < Config::Difficulty::MIN_LEVEL) level = Config::Difficulty::MIN_LEVEL;
-  if (level > Config::Difficulty::MAX_LEVEL) level = Config::Difficulty::MAX_LEVEL;
-  _difficulty = level;
+  // if (level < Config::Difficulty::MIN_LEVEL) level = Config::Difficulty::MIN_LEVEL;
+  // if (level > Config::Difficulty::MAX_LEVEL) level = Config::Difficulty::MAX_LEVEL;
+  // _difficulty = level;
 
-  // La dificultad se aplica EN CALIENTE: si hay una partida en curso
-  // (PLAY o PAUSE) su velocidad (_moveDelay) se actualiza al instante
-  // con el nuevo nivel; la próxima partida nueva la vuelve a derivar
-  // en reset().
-  _moveDelay = speedFor(_difficulty);
+  // // La dificultad se aplica EN CALIENTE: si hay una partida en curso
+  // // (PLAY o PAUSE) su velocidad (_moveDelay) se actualiza al instante
+  // // con el nuevo nivel; la próxima partida nueva la vuelve a derivar
+  // // en reset().
+  // _moveDelay = speedFor(_difficulty);
 }
 
 // ========================================================
@@ -87,26 +119,24 @@ void Game::setDifficulty(uint8_t level) {
 // ========================================================
 
 void Game::reset() {
-  // Semilla del generador aleatorio (lo consume Food::spawn): esp_random()
-  // es el RNG de hardware del ESP32 (entropía real, no predecible ni de 32
-  // bits fijos como micros()); se combina con el reloj (nowMs) por defensa.
-  randomSeed(esp_random() ^ (uint32_t)nowMs());
+  // // Semilla del generador aleatorio (lo consume Food::spawn): esp_random()
+  // // es el RNG de hardware del ESP32 (entropía real, no predecible ni de 32
+  // // bits fijos como micros()); se combina con el reloj (nowMs) por defensa.
+  // randomSeed(esp_random() ^ (uint32_t)nowMs());
 
-  _hasGame = true;  // arranca una partida en curso (reanudable desde "Continue")
-  _score = 0;  // el récord (_bestScore) se conserva entre partidas
-  _overlayHidden = false;  // el conteo arranca con el primer dígito visible
-  _lastCount = 0xFF;  // ningún dígito del conteo mostrado aún
+  // _score = 0;               // el récord vive en Storage (storage.bestScore())
+  // _overlayHidden = false;   // el conteo arranca con el primer dígito visible
+  // _lastCount = 0xFF;        // ningún dígito del conteo mostrado aún
 
-  _snake.reset();
+  // _snake.reset();
 
-  _moveDelay = speedFor(_difficulty);
-  _startMs = nowMs();
-  _moveLast = 0;
+  // _moveDelay = speedFor(_difficulty);
+  // _countdown.start();
 
-  // Alimento en una celda libre (al arrancar siempre hay celdas)
-  _food.spawn(Food::Type::NORMAL, *this);
-  // El conteo regresivo 3-2-1 suena solo con sus propios pitidos (SFX_TICK,
-  // uno por dígito, en print()): ya no hay jingle SFX_START al entrar a START.
+  // // Alimento en una celda libre (al arrancar siempre hay celdas)
+  // _food.spawn(Food::Type::NORMAL, *this);
+  // // El conteo regresivo 3-2-1 suena solo con sus propios pitidos (SFX_TICK,
+  // // uno por dígito, en print()): ya no hay jingle SFX_START al entrar a START.
 }
 
 // ========================================================
@@ -115,8 +145,9 @@ void Game::reset() {
 
 void Game::startPlay() {
   _state = State::PLAY;
-  _moveLast = nowMs();
-  _dirtyBoard = true;  // borra el overlay "3-2-1"/"PAUSA" del tablero
+  _timer.start();
+  _clear = true;
+  // _state = State::PAUSE;
 }
 
 // ========================================================
@@ -124,70 +155,93 @@ void Game::startPlay() {
 // ========================================================
 
 void Game::update() {
-  if (_exit) return;
+  if (_done) return;
 
   switch (_state) {
-
-    case State::START: {
-      // Conteo regresivo 3-2-1: se puede pre-girar la cabeza;
-      // se entra a PLAY al confirmar con ACTION_RIGHT o al
-      // agotarse el conteo (COUNTDOWN_MS). Al arrancar la partida
-      // (después del "1") suena el jingle GO! (SFX_START).
-      handleTurn();
-      if (buttons.pressed(Buttons::ACTION_RIGHT)) {
-        sound.play(Sound::SFX_START);
-        startPlay();
-      } else if (nowMs() - _startMs >= COUNTDOWN_MS) {
-        sound.play(Sound::SFX_START);
-        startPlay();
-      }
-      break;
-    }
-
-    case State::PLAY: {
-      handleTurn();
-      // Btn2 (ACTION_RIGHT) = Select / Pause: al presionar durante la
-      // partida se congela el tablero y se muestra el panel "PAUSA".
-      // En PAUSE se retoma con el mismo botón (o ACTION_LEFT).
-      if (buttons.pressed(Buttons::ACTION_RIGHT)) {
-        sound.play(Sound::SFX_PAUSE);
-        _state = State::PAUSE;
+    case State::START:
+      {
+        // Conteo regresivo 3-2-1: se puede pre-girar la cabeza;
+        // se entra a PLAY al confirmar con ACTION_RIGHT o al
+        // agotarse el conteo (COUNTDOWN_MS). Al arrancar la partida
+        // (después del "1") suena el jingle GO! (SFX_START).
+        // handleTurn();
+        if (buttons.pressed(Buttons::ACTION_RIGHT)) {
+          sound.play(Sound::SFX_START);
+          startPlay();
+        } else {
+          _blinkChanged = _blink.changed(PERIOD, OFF);
+          if (_blinkChanged && !_blink.isVisible(PERIOD, OFF))
+            if (_countdown == 1) {
+              sound.play(Sound::SFX_START);
+              startPlay();
+            } else
+              _countdown -= 1;
+          // } else {
+          //   _updateCountdown = _blink.changed(PERIOD, OFF) && !_blink.isVisible(PERIOD, OFF);
+          //   if (_countdown == 1) {
+          //     sound.play(Sound::SFX_START);
+          //     startPlay();
+          //   } else
+          //     _countdown -= 1;
+        }
         break;
       }
-      if (nowMs() - _moveLast >= _moveDelay) {
-        _moveLast = nowMs();
-        step();
-      }
-      break;
-    }
 
-    case State::PAUSE: {
+    case State::PLAY:
+      {
+        if (buttons.pressed(Buttons::MOVE_UP)) {
+          if (_snake.turn(Snake::Dir::UP)) sound.play(Sound::SFX_TURN);
+        } else if (buttons.pressed(Buttons::MOVE_RIGHT)) {
+          if (_snake.turn(Snake::Dir::RIGHT)) sound.play(Sound::SFX_TURN);
+        } else if (buttons.pressed(Buttons::MOVE_DOWN)) {
+          if (_snake.turn(Snake::Dir::DOWN)) sound.play(Sound::SFX_TURN);
+        } else if (buttons.pressed(Buttons::MOVE_LEFT)) {
+          if (_snake.turn(Snake::Dir::LEFT)) sound.play(Sound::SFX_TURN);
+        }
+
+        // // Btn2 (ACTION_RIGHT) = Select / Pause: al presionar durante la
+        // // partida se congela el tablero y se muestra el panel "PAUSA".
+        // // En PAUSE se retoma con el mismo botón (o ACTION_LEFT).
+        if (buttons.pressed(Buttons::ACTION_RIGHT)) {
+          sound.play(Sound::SFX_PAUSE);
+          _state = State::PAUSE;
+          break;
+        }
+
+        _moveSnake = _timer.consume() > 0;
+        if (_moveSnake) step();
+        // if (_step.expired(_moveDelay)) {
+        //   _step.start();
+        //   step();
+        // }
+        break;
+      }
+
+    case State::PAUSE:
       // Reanudar con Btn2 (ACTION_RIGHT, "Select / Pause") o ACTION_LEFT
-      if (buttons.pressed(Buttons::ACTION_RIGHT) ||
-          buttons.pressed(Buttons::ACTION_LEFT)) {
+      if (buttons.pressed(Buttons::ACTION_RIGHT)) {
         sound.play(Sound::SFX_RESUME);
         startPlay();
       }
       break;
-    }
 
-    case State::GAME_OVER: {
+    case State::GAME_OVER:
       // Cualquier botón ACTION vuelve al menú
-      if (buttons.pressed(Buttons::ACTION_UP) || buttons.pressed(Buttons::ACTION_RIGHT) ||
-          buttons.pressed(Buttons::ACTION_DOWN) || buttons.pressed(Buttons::ACTION_LEFT)) {
-        _exit = true;
-      }
+      if (buttons.anyHeld()) _done = true;
+      _win = _score > storage.bestScore();
+      if (_win) storage.setBestScore(_score);
       break;
-    }
+
+    default: break;
   }
 
-  if (_exit) return;
+  if (_done) return;
 
   // Botón común "volver al menú" de todas las ventanas (ACTION_UP).
   // En GAME_OVER ya se manejó arriba. La partida NO se pierde:
   // "Continue" la reanuda en pausa.
   if (_state != State::GAME_OVER && buttons.pressed(Buttons::ACTION_UP)) {
-    _exit = true;
+    _done = true;
   }
 }
 
@@ -198,15 +252,15 @@ void Game::update() {
 // ========================================================
 
 void Game::handleTurn() {
-  if (buttons.pressed(Buttons::MOVE_UP)) {
-    if (_snake.turn(Snake::Dir::UP)) sound.play(Sound::SFX_TURN);
-  } else if (buttons.pressed(Buttons::MOVE_RIGHT)) {
-    if (_snake.turn(Snake::Dir::RIGHT)) sound.play(Sound::SFX_TURN);
-  } else if (buttons.pressed(Buttons::MOVE_DOWN)) {
-    if (_snake.turn(Snake::Dir::DOWN)) sound.play(Sound::SFX_TURN);
-  } else if (buttons.pressed(Buttons::MOVE_LEFT)) {
-    if (_snake.turn(Snake::Dir::LEFT)) sound.play(Sound::SFX_TURN);
-  }
+  // if (buttons.pressed(Buttons::MOVE_UP)) {
+  //   if (_snake.turn(Snake::Dir::UP)) sound.play(Sound::SFX_TURN);
+  // } else if (buttons.pressed(Buttons::MOVE_RIGHT)) {
+  //   if (_snake.turn(Snake::Dir::RIGHT)) sound.play(Sound::SFX_TURN);
+  // } else if (buttons.pressed(Buttons::MOVE_DOWN)) {
+  //   if (_snake.turn(Snake::Dir::DOWN)) sound.play(Sound::SFX_TURN);
+  // } else if (buttons.pressed(Buttons::MOVE_LEFT)) {
+  //   if (_snake.turn(Snake::Dir::LEFT)) sound.play(Sound::SFX_TURN);
+  // }
 }
 
 // ========================================================
@@ -219,28 +273,55 @@ void Game::handleTurn() {
 // ========================================================
 
 void Game::step() {
-  Snake::Result r = _snake.step(_food.x(), _food.y());
+  Snake::Result action = _snake.step(_food, _specialFood);
 
-  if (r == Snake::Result::DIED) {
+  if (action == Snake::Result::DIED) {
     die();
     return;
   }
 
-  if (r == Snake::Result::ATE) {
-    // El valor de la comida es el nivel de dificultad actual: como la
-    // dificultad puede cambiar en caliente, el puntaje suma el `_difficulty`
-    // del momento de comer (no el de arranque).
-    _score += _difficulty;
-    _redrawHeader = true;
+  _specialFood.lessTime();
+  _ateFood = action == Snake::Result::ATE_FOOT;
+  _ateSpecialFood = action == Snake::Result::ATE_SPECIAL;
+  if (_ateFood || _ateSpecialFood) {
+    // // El valor de la comida es el nivel de dificultad actual: como la
+    // // dificultad puede cambiar en caliente, el puntaje suma el `_difficulty`
+    // // del momento de comer (no el de arranque).
+    // _score += _difficulty;
+    // _redrawHeader = true;
     sound.play(Sound::SFX_EAT);
-    // Si el tablero quedó lleno, spawn devuelve false y se muere abajo
-    if (!_food.spawn(Food::Type::NORMAL, *this)) {
-      die();
-      return;
+
+    if (_ateFood) {
+      _score += _food.score();
+      _food.clear();
+      spawnFood(_food);
+      _countFood++;
+    }
+
+    if (_countFood == FOOD_COUNT) {
+      spawnFood(_specialFood);
+      _countFood = 0;
+    }
+
+    if (_ateSpecialFood) {
+      _score += _specialFood.score();
+      _specialFood.clear();
     }
   }
+}
 
-  _dirtyBoard = true;
+void Game::spawnFood(Food& food) {
+  if (food.spawn(food.type(), *this)) return;
+
+  _snake.reset();
+  if (storage.difficulty() < Config::Difficulty::MAX_LEVEL) {
+    storage.setBestScore(storage.difficulty() + 1);
+    _clear = true;
+  } else {
+    die();
+    return;
+  }
+  food.spawn(food.type(), *this);
 }
 
 // ========================================================
@@ -249,21 +330,24 @@ void Game::step() {
 
 void Game::die() {
   _state = State::GAME_OVER;
-  _hasGame = false;  // "Continue" ya no reanuda: arranca una nueva
+  _win = _score > storage.bestScore();
+  if (_win) storage.setBestScore(_score);
+  _done = true;
 
-  // El récord solo se verifica/actualiza al terminar en GAME OVER
-  // (no durante la partida): el "Best" del menú refleja partidas
-  // terminadas, no puntajes en curso. Al establecerse un NUEVO
-  // récord se activa el festejo (ciclo "GAME OVER"/"BUT"/"YOU ARE"/
-  // "THE BEST" en print(), con SFX_NEW_BEST solo la primera vez
-  // que aparece el letrero "THE BEST").
-  _newBest = _score > _bestScore;
-  if (_newBest) _bestScore = _score;
-  _gameOverMs = nowMs();
-  _celeSfx = 0;
-  _redrawHeader = true;
-  sound.play(Sound::SFX_GAME_OVER);
-  _dirtyBoard = true;
+  // // El récord solo se verifica/actualiza al terminar en GAME OVER
+  // // (no durante la partida): el "Best" del menú refleja partidas
+  // // terminadas, no puntajes en curso. El récord vive en Storage.
+  // // Al establecerse un NUEVO récord se activa el festejo (ciclo
+  // // "GAME OVER"/"BUT"/"YOU ARE"/"THE BEST" en print(), con
+  // // SFX_NEW_BEST solo la primera vez que aparece "THE BEST").
+  // _win = _score > storage.bestScore();
+  // if (_win) storage.setBestScore(_score);
+  // // _cele.start();
+  // // _celeSfx = 0;
+  // // _redrawHeader = true;
+  // // sound.play(Sound::SFX_GAME_OVER);
+  // // _dirtyBoard = true;
+  // _done = true;
 }
 
 // ========================================================
@@ -272,7 +356,7 @@ void Game::die() {
 // ========================================================
 
 bool Game::occupied(uint8_t x, uint8_t y) const {
-  return _snake.occupied(x, y);
+  return _snake.occupied(x, y) || _food.occupied(x, y) || _specialFood.occupied(x, y);
 }
 
 // ========================================================
@@ -282,18 +366,18 @@ bool Game::occupied(uint8_t x, uint8_t y) const {
 // ========================================================
 
 void Game::drawSprite(Sprite::Part part, uint8_t x, uint8_t y) {
-  int16_t baseX = (int16_t)x * Config::Screen::CELL;
-  int16_t baseY = Config::Screen::BODY_TOP + (int16_t)y * Config::Screen::CELL;
+  // int16_t baseX = (int16_t)x * Config::Screen::CELL;
+  // int16_t baseY = Config::Screen::BODY_TOP + (int16_t)y * Config::Screen::CELL;
 
-  for (uint8_t i = 0; i < Sprite::SIZE; i++) {
-    for (uint8_t j = 0; j < Sprite::SIZE; j++) {
-      if (Sprite::pixel(part, j, i)) {
-        display.fillRect(baseX + SPRITE_SCALE * (int16_t)j,
-                         baseY + SPRITE_SCALE * (int16_t)i,
-                         SPRITE_SCALE, SPRITE_SCALE, true);
-      }
-    }
-  }
+  // for (uint8_t i = 0; i < Sprite::SIZE; i++) {
+  //   for (uint8_t j = 0; j < Sprite::SIZE; j++) {
+  //     if (Sprite::pixel(part, j, i)) {
+  //       display.fillRect(baseX + SPRITE_SCALE * (int16_t)j,
+  //                        baseY + SPRITE_SCALE * (int16_t)i,
+  //                        SPRITE_SCALE, SPRITE_SCALE, true);
+  //     }
+  //   }
+  // }
 }
 
 // ========================================================
@@ -303,14 +387,14 @@ void Game::drawSprite(Sprite::Part part, uint8_t x, uint8_t y) {
 // ========================================================
 
 void Game::drawSnake() {
-  uint8_t n = _snake.length();
-  for (uint8_t i = 0; i < n; i++) {
-    const Snake::Seg& seg = _snake.segment(i);
-    Sprite::Part part = (i == n - 1)
-                          ? _snake.headPart(_food.has(), _food.x(), _food.y())
-                          : seg.part;
-    drawSprite(part, seg.col, seg.row);
-  }
+  // uint8_t n = _snake.length();
+  // for (uint8_t i = 0; i < n; i++) {
+  //   const Snake::Seg& seg = _snake.segment(i);
+  //   Sprite::Part part = (i == n - 1)
+  //                         ? _snake.headPart(_food.has(), _food.x(), _food.y())
+  //                         : seg.part;
+  //   drawSprite(part, seg.col, seg.row);
+  // }
 }
 
 // ========================================================
@@ -323,17 +407,37 @@ void Game::drawSnake() {
 // idioma que Menu/MenuSound/Legend).
 // ========================================================
 
-void Game::drawHeader() {
-  char buf[8];
+// void Game::drawHeader() {
+//   // char buf[8];
 
-  // Puntuación actual, esquina superior izquierda (NO se mueve)
-  snprintf(buf, sizeof(buf), "%u", (unsigned)_score);
-  display.drawText(buf, 0, 0, TEXT_12x16);
+//   // // Puntuación actual, esquina superior izquierda (NO se mueve)
+//   // snprintf(buf, sizeof(buf), "%u", (unsigned)_score);
+//   // display.drawText(buf, 0, 0, TEXT_12x16);
 
-  // Segundos restantes de la comida especial, a la derecha
-  snprintf(buf, sizeof(buf), "%u", (unsigned)_food.specialTime());
-  int16_t w = (int16_t)strlen(buf) * Config::Screen::CHAR_W * TEXT_12x16;
-  display.drawText(buf, Config::Screen::WIDTH - w, 0, TEXT_12x16);
+//   // // Segundos restantes de la comida especial, a la derecha
+//   // snprintf(buf, sizeof(buf), "%u", (unsigned)_food.specialTime());
+//   // int16_t w = (int16_t)strlen(buf) * Config::Screen::CHAR_W * TEXT_12x16;
+//   // display.drawText(buf, Config::Screen::WIDTH - w, 0, TEXT_12x16);
+// }
+// void Game::drawTime() {
+//   // // if (_food.specialTime() == -1) return;
+//   // char time[8];
+//   // if (_food.specialTime() == 0) {
+//   //   time[0] = ' ';
+//   //   time[1] = '\0';
+//   // } else
+//   // snprintf(time, sizeof(time), " %u", (unsigned)_food.specialTime());
+//   // int16_t w = strlen(time) * Config::Screen::CHAR_W * TEXT_12x16;
+//   // // if (_food.specialTime() == -1)
+//   // // display.drawText(" ", Config::Screen::WIDTH - 1, 0, TEXT_12x16);
+//   // // else
+//   // display.drawText(time, Config::Screen::WIDTH - w, 0, TEXT_12x16);
+// }
+
+void Game::printScore() {
+  char score[8];
+  snprintf(score, sizeof(score), "%u", (unsigned)_score);
+  display.drawText(score, 0, 0, TEXT_12x16);
 }
 
 // ========================================================
@@ -342,19 +446,17 @@ void Game::drawHeader() {
 // texto invertido centrado en el rectángulo.
 // ========================================================
 
-void Game::drawOverlay(const char* title, bool fullWidth) {
-  int16_t w = (int16_t)strlen(title) * Config::Screen::CHAR_W * TEXT_12x16;
-  int16_t h = (int16_t)Config::Screen::CHAR_H * TEXT_12x16;
-  int16_t x = (Config::Screen::WIDTH - w) / 2;
-  int16_t bandH = h + 2;   // banda: 2 px sobre el texto, 0 debajo
-  int16_t y = Config::Screen::BODY_TOP + (Config::Screen::HEIGHT - Config::Screen::BODY_TOP - bandH) / 2 + 2;
+void Game::drawOverlay(const char* title, bool fullWidth, bool show) {
+  int16_t w = strlen(title) * CHAR_W * TEXT_12x16;
+  int16_t h = CHAR_H * TEXT_12x16;
+  int16_t x = display.centerX(title, TEXT_12x16);
+  int16_t y = BODY_MIDDLE - h / 2;
 
-  if (fullWidth) {
-    display.fillRect(0, y - 2, Config::Screen::WIDTH, bandH, true);
-  } else {
-    display.fillRect(x - 4, y - 2, w + 6, bandH, true);
-  }
-  display.drawText(title, x, y, TEXT_12x16, SSD1306_BLACK, SSD1306_WHITE);
+  if (fullWidth)
+    display.fillRect(0, y - 2, WIDTH, h + 2, show);
+  else
+    display.fillRect(x - 2, y - 2, w + 2, h + 2, show);
+  display.drawText(title, x, y, TEXT_12x16, false, show);
 }
 
 // ========================================================
@@ -366,115 +468,188 @@ void Game::drawOverlay(const char* title, bool fullWidth) {
 // más rápido (88 ms).
 // ========================================================
 
-uint16_t Game::speedFor(uint8_t level) const {
-  uint8_t jumps = level - 1;                  // saltos entre niveles
-  uint8_t wide  = (level + 1) / 3;            // saltos de 102 (nivel%3 == 1)
-  return (uint16_t)(1000 - (uint16_t)jumps * 101 - wide);
+void Game::speedFor(uint8_t level) {
+  uint8_t jumps = level - 1;       // saltos entre niveles
+  uint8_t wide = (level + 1) / 3;  // saltos de 102 (nivel%3 == 1)
+  _moveDelay = 1000 - jumps * 101 - wide;
+}
+
+// ========================================================
+// Primer frame tras begin() (patrón de las ventanas): clear()
+// completo + marcar estáticos para que print() los redibuje.
+// `forceRedraw` repite el frame completo (repintado tras un
+// diagnóstico del reposo).
+// ========================================================
+
+void Game::firstPrint(bool forceRedraw) {
+  if (!_clear && !forceRedraw) return;
+
+  display.clear();
+  _clear = false;
+
+  printScore();
+  _food.print();
+  _specialFood.print();
+  _snake.print(_food, _specialFood);
+
+  if (_state == State::PAUSE || _state == State::START) {
+    if (forceRedraw)
+      drawOverlay("PAUSA", false, true);
+    // else
+    //   drawOverlay(" ", false, true);
+  }
 }
 
 // ========================================================
 // Dibujar
 //
 // Renderizado por zonas (sin clear() global): el clear()
-// completo solo al entrar; luego por frame se borra/redibuja
-// únicamente lo dinámico:
-//   - Header (puntaje/récord) solo cuando cambian sus valores
+// completo solo al entrar (firstPrint); luego por frame se
+// borra/redibuja únicamente lo dinámico:
+//   - Header (puntaje/comida especial) solo cuando cambian sus valores
 //   - Tablero (alimento + serpiente) solo cuando algo cambió
 //     (movimiento, comida, overlay que desaparece)
 //   - Overlay (conteo "3-2-1"/"PAUSA"/"GAME OVER") en cada frame
 // ========================================================
 
 void Game::print() {
+  if (_done) return;
+
   // Primer frame tras begin(): clear() completo + redibujar todo
-  if (_redraw) {
-    display.clear();
-    _redraw = false;
-    _dirtyBoard = true;
-    _redrawHeader = true;
-  }
+  firstPrint();
 
-  // Header: solo cuando el puntaje o el récord cambió
-  if (_redrawHeader) {
-    display.fillRect(0, 0, Config::Screen::WIDTH, Config::Screen::BODY_TOP, false);
-    drawHeader();
-    _redrawHeader = false;
-  }
+  _food.print();
+  _specialFood.print();  
+  // _specialFood.printTime();
+  if (_ateFood || _ateSpecialFood) printScore();
+  if (_moveSnake) _snake.print(_food, _specialFood);
 
-  // Tablero: solo cuando algo cambió
-  if (_dirtyBoard) {
-    display.fillRect(0, Config::Screen::BODY_TOP, Config::Screen::WIDTH,
-                     Config::Screen::HEIGHT - Config::Screen::BODY_TOP, false);
-    if (_food.has()) _food.draw();
-    drawSnake();
-    _dirtyBoard = false;
-  }
+  // // Header: solo cuando el puntaje o la comida especial cambió
+  // if (_redrawHeader) {
+  //   display.fillRect(0, 0, Config::Screen::WIDTH, Config::Screen::BODY_TOP, false);
+  //   drawHeader();
+  //   _redrawHeader = false;
+  // }
 
-  // Overlay según el estado
+  // // Tablero: solo cuando algo cambió
+  // if (_dirtyBoard) {
+  //   display.fillRect(0, Config::Screen::BODY_TOP, Config::Screen::WIDTH,
+  //                    Config::Screen::HEIGHT - Config::Screen::BODY_TOP, false);
+  //   if (_food.has()) _food.draw();
+  //   drawSnake();
+  //   _dirtyBoard = false;
+  // }
+
+  // // Overlay según el estado
   switch (_state) {
-    case State::START: {
-      // Conteo regresivo 3-2-1: un dígito por segundo (COUNTDOWN_MS/3).
-      // Al final de cada fracción el número (y su cuadro) desaparece antes
-      // de que aparezca el siguiente: el cambio es como un parpadeo
-      // (COUNT_HIDE_MS ocultos por dígito; al ocultarlo se restaura el
-      // tablero que hay debajo del cuadro).
-      uint32_t elapsed = (uint32_t)(nowMs() - _startMs);
-      uint32_t seg = COUNTDOWN_MS / 3;
-      uint32_t pos = elapsed % seg;   // posición dentro del dígito actual
-      uint32_t done = elapsed / seg;  // cuántos dígitos se completaron
-      uint8_t n = (done >= 3) ? 0 : (uint8_t)(3 - done);
-
-      // Pitido del conteo: un SFX_TICK por dígito, al cambiar el mostrado
-      // (incluido el "3" inicial: _lastCount arranca en 0xFF)
-      if (n != _lastCount) {
-        _lastCount = n;
-        sound.play(Sound::SFX_TICK);
-      }
-
-      if (pos >= seg - COUNT_HIDE_MS) {
-        // Fase de parpadeo: el dígito y su cuadro desaparecen. Se marca
-        // el tablero para borrar la zona del overlay una sola vez.
-        if (!_overlayHidden) {
-          _overlayHidden = true;
-          _dirtyBoard = true;
+    case State::START:
+      // {
+      if (_blinkChanged) {
+        if (_blink.isVisible(PERIOD, OFF)) {
+          sound.play(Sound::SFX_TICK);
+          char number[2];
+          number[0] = (char)('0' + _countdown);
+          number[1] = '\0';
+          drawOverlay(number, false, true);
+        } else {
+          drawOverlay(" ", false, false);
+          _clear = true;
+          firstPrint();
         }
-      } else {
-        _overlayHidden = false;
-        char buf[2];
-        buf[0] = (char)('0' + n);
-        buf[1] = '\0';
-        drawOverlay(buf);
       }
+      // drawOverlay("X", false);
+      // if (_blink.changed(PERIOD, OFF))
+      //   sound.play(Sound::SFX_TICK);
+      // drawOverlay("A", false);
+      // if (_blink.isVisible(PERIOD, OFF))
+      // drawOverlay("B", false);
+      // if (_blink.changed(PERIOD, OFF) && _blink.isVisible(PERIOD, OFF))
+      // drawOverlay("C", false);
+
+      // if (_blink.changed(PERIOD, OFF)) {
+      // if (_blink.isVisible(PERIOD, OFF)) {
+      // if (_blink.changed(PERIOD, OFF) && _blink.isVisible(PERIOD, OFF)) {
+      // if (_updateCountdown) {
+      // if (_lastCountdown != _countdown) {
+      // if (_blinkChanged && _blink.isVisible(PERIOD, OFF)) {
+      //   sound.play(Sound::SFX_TICK);
+      //   char number[2];
+      //   number[0] = (char)('0' + _countdown);
+      //   number[1] = '\0';
+      //   drawOverlay(number, false, true);
+      // }
+
+      // if (_blinkChanged && !_blink.isVisible(PERIOD, OFF)) {
+      //   drawOverlay(" ", false, true);
+      // }
+
+      // // Conteo regresivo 3-2-1: un dígito por segundo (COUNTDOWN_MS/3).
+      // // Al final de cada fracción el número (y su cuadro) desaparece antes
+      // // de que aparezca el siguiente: el cambio es como un parpadeo
+      // // (COUNT_HIDE_MS ocultos por dígito; al ocultarlo se restaura el
+      // // tablero que hay debajo del cuadro).
+      // uint32_t elapsed = (uint32_t)_countdown.elapsed();
+      // uint32_t seg = COUNTDOWN_MS / 3;
+      // uint32_t pos = elapsed % seg;   // posición dentro del dígito actual
+      // uint32_t done = elapsed / seg;  // cuántos dígitos se completaron
+      // uint8_t n = (done >= 3) ? 0 : (uint8_t)(3 - done);
+
+      // // Pitido del conteo: un SFX_TICK por dígito, al cambiar el mostrado
+      // // (incluido el "3" inicial: _lastCount arranca en 0xFF)
+      // if (n != _lastCount) {
+      //   _lastCount = n;
+      //   sound.play(Sound::SFX_TICK);
+      // }
+
+      // if (pos >= seg - COUNT_HIDE_MS) {
+      //   // Fase de parpadeo: el dígito y su cuadro desaparecen. Se marca
+      //   // el tablero para borrar la zona del overlay una sola vez.
+      //   if (!_overlayHidden) {
+      //     _overlayHidden = true;
+      //     _dirtyBoard = true;
+      //   }
+      // } else {
+      //   _overlayHidden = false;
+      //   char buf[2];
+      //   buf[0] = (char)('0' + n);
+      //   buf[1] = '\0';
+      //   drawOverlay(buf);
+      // }
       break;
-    }
-    case State::PAUSE:     drawOverlay("PAUSA", true);   break;
-    case State::GAME_OVER: {
-      if (_newBest) {
-        // Festejo de nuevo récord: ciclo "GAME OVER" -> "BUT" -> "YOU ARE" ->
-        // "THE BEST" (NEW_BEST_SIGN_MS cada uno) hasta que se presiona
-        // un botón. La fanfarria (SFX_NEW_BEST) suena solo la primera vez
-        // que aparece el letrero "THE BEST" (_celeSfx; el "GAME OVER" ya sonó
-        // en die() con SFX_GAME_OVER).
-        uint8_t phase = (uint8_t)((nowMs() - _gameOverMs) / NEW_BEST_SIGN_MS % 4);
-        switch (phase) {
-          case 0:
-            drawOverlay("GAME OVER", true);
-            break;
-          case 1:
-            drawOverlay("BUT", true);
-            break;
-          case 2:
-            drawOverlay("YOU ARE", true);
-            break;
-          default:
-            if (!(_celeSfx & 0x01)) { _celeSfx |= 0x01; sound.play(Sound::SFX_NEW_BEST); }
-            drawOverlay("THE BEST", true);
-            break;
-        }
-        break;
-      }
-      drawOverlay("GAME OVER", true);
-      break;
-    }
+      // }
+
+    case State::PAUSE: drawOverlay("PAUSA", true, true); break;
+    // case State::GAME_OVER:
+    //   // {
+    //   //   if (_newBest) {
+    //   //     // Festejo de nuevo récord: ciclo "GAME OVER" -> "BUT" -> "YOU ARE" ->
+    //   //     // "THE BEST" (NEW_BEST_SIGN_MS cada uno) hasta que se presiona
+    //   //     // un botón. La fanfarria (SFX_NEW_BEST) suena solo la primera vez
+    //   //     // que aparece el letrero "THE BEST" (_celeSfx; el "GAME OVER" ya sonó
+    //   //     // en die() con SFX_GAME_OVER).
+    //   //     uint8_t phase = (uint8_t)(_cele.elapsed() / NEW_BEST_SIGN_MS % 4);
+    //   //     switch (phase) {
+    //   //       case 0:
+    //   //         drawOverlay("GAME OVER", true);
+    //   //         break;
+    //   //       case 1:
+    //   //         drawOverlay("BUT", true);
+    //   //         break;
+    //   //       case 2:
+    //   //         drawOverlay("YOU ARE", true);
+    //   //         break;
+    //   //       default:
+    //   //         if (!(_celeSfx & 0x01)) { _celeSfx |= 0x01; sound.play(Sound::SFX_NEW_BEST); }
+    //   //         drawOverlay("THE BEST", true);
+    //   //         break;
+    //   //     }
+    //   //     break;
+    //   //   }
+    //   // sound.play(Sound::SFX_GAME_OVER);
+    //   drawOverlay("GAME OVER", true, true);
+    //   break;
+      // }
+
     default: break;
   }
 }
@@ -484,7 +659,7 @@ void Game::print() {
 // ========================================================
 
 bool Game::done() const {
-  return _exit;
+  return _done;
 }
 
 // ========================================================
@@ -499,15 +674,19 @@ bool Game::isGameOver() const {
 }
 
 // ========================================================
-// Puntajes
+// Puntaje
 // ========================================================
 
 uint16_t Game::score() const {
   return _score;
 }
 
-uint16_t Game::bestScore() const {
-  return _bestScore;
+Game::State Game::state() const {
+  return _state;
+}
+
+bool Game::win() const {
+  return _win;
 }
 
 // ====================================================================================

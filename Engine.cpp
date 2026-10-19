@@ -60,13 +60,14 @@ void Engine::update() {
       if (!_game.done()) break;
 
       sound.play(Sound::SFX_BACK);
-      // Pendiente (Menu::setBestScore/setContinueAvailable/setSelected
-      // siguen comentados): sincronizar el récord y habilitar "Continue".
-      //   _menu.setBestScore(_game.bestScore());
+      // El récord ya lo volcó Game::die() en Storage (storage.bestScore());
+      // queda pendiente habilitar "Continue" (Menu::setContinueAvailable y
+      // setSelected siguen comentados):
       //   bool resumable = !_game.isGameOver() && _game.score() > 0;
       //   _menu.setContinueAvailable(resumable);
       //   _menu.setSelected(resumable ? Menu::OPT_CONTINUE : Menu::OPT_NEW);
-      changeState(State::MENU);
+      if (!_game.isGameOver()) changeState(State::MENU);
+      else changeState(State::MENU_CREDITS);
       break;
 
     case State::MENU_DIFFICULTY:
@@ -98,6 +99,7 @@ void Engine::print() {
     case State::MENU_SOUND: _menuSound.print(); break;
     case State::MENU_DIFFICULTY: _menuDifficulty.print(); break;
     case State::MENU_CREDITS: _menuCredits.print(); break;
+
     case State::NEW:
     case State::CONTINUE:
       _game.print();
@@ -125,6 +127,11 @@ void Engine::repaint() {
     case State::MENU: _menu.firstPrint(true); break;
     case State::MENU_CREDITS: _menuCredits.firstPrint(true); break;
 
+    case State::NEW:
+    case State::CONTINUE:
+      _game.firstPrint(true);
+      break;
+
     case State::MENU_SOUND:
       // La base del Menu ya no se va a volver a dibujar por el loop
       // (la ventana activa es el parche): se dibuja aquí mismo.
@@ -143,8 +150,12 @@ void Engine::repaint() {
 // ¿Se está jugando? (el reposo no aplica en partida)
 // ========================================================
 
-bool Engine::isInGame() const {
-  return _state == State::NEW || _state == State::CONTINUE;
+bool Engine::inGame() const {
+  return (_state == State::NEW || _state == State::CONTINUE) && _game.state() == Game::State::PLAY;
+}
+
+bool Engine::inCredits() const {
+  return _state == State::MENU_CREDITS && !_menuCredits.done();
 }
 
 // ========================================================
@@ -156,7 +167,7 @@ bool Engine::isInGame() const {
 // ========================================================
 
 bool Engine::sleepBlocked() const {
-  return isInGame() || (_state == State::MENU_CREDITS && !_menuCredits.done());
+  return inGame() || inCredits();
 }
 
 // ========================================================
@@ -172,37 +183,43 @@ bool Engine::sleepBlocked() const {
 // ========================================================
 
 void Engine::changeState(State newState) {
-  _state = newState;
-
-  switch (_state) {
+  switch (newState) {
     case State::BOOT: _boot.begin(); break;
     case State::LEGEND: _legend.begin(); break;
-    case State::MENU:
-      {
+    case State::MENU_SOUND: _menuSound.begin(); break;
+    case State::MENU_DIFFICULTY: _menuDifficulty.begin(); break;
+
+    case State::MENU: {
         // beginWindow=false: solo se usa al volver de MenuDifficulty/MenuSound,
         // que ya dejaron repintada la banda de rombos (restoreDiamondBand) y
         // por tanto no necesitan el clear() completo de Menu::begin().
         // if (beginWindow) _menu.begin();
 
-        bool showContinue = false;  // !_game.isGameOver() && _game.score() > 0;
-        int8_t selected = _menu.selected() != Menu::OPT_SOUND ? _menu.selected() : Menu::OPT_SOUND;
-        // selected = selected == Menu::OPT_SOUND && showContinue ? _menu.OPT_CONTINUE : Menu::OPT_SOUND;
+        // bool showContinue = false; 
+        bool showContinue = !_game.isGameOver() && _game.score() > 0;
+        bool fromGame = _state == State::NEW || _state == State::CONTINUE;
+        int8_t selected = fromGame && showContinue ? Menu::OPT_CONTINUE : (!showContinue && _menu.selected() == Menu::OPT_CONTINUE ? Menu::OPT_NEW : _menu.selected());
+        // selected = selected != Menu::OPT_NEW && showContinue ? Menu::OPT_NEW : selected;
         _menu.begin(showContinue, selected);
         break;
       }
 
-    case State::MENU_SOUND: _menuSound.begin(); break;
-    case State::MENU_DIFFICULTY: _menuDifficulty.begin(); break;
-    case State::MENU_CREDITS: _menuCredits.begin(); break;
+    case State::MENU_CREDITS:
+      _menuCredits.begin(_game.isGameOver(), _game.win());
+      break;
+
     case State::NEW:
       _game.setDifficulty(_menuDifficulty.difficulty());
       _game.begin(true);
       break;
+
     case State::CONTINUE:
       _game.setDifficulty(_menuDifficulty.difficulty());
       _game.begin(false);
       break;
   }
+
+  _state = newState;
 }
 
 // ====================================================================================

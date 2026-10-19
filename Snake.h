@@ -3,6 +3,7 @@
 
 #include <Arduino.h>
 
+#include "Food.h"
 #include "Config.h"
 #include "Sprite.h"
 
@@ -27,13 +28,14 @@
 //     cabeza (boca abierta/cerrada según el alimento adyacente):
 //     la parte de cada segmento se deriva de la geometría de sus
 //     vecinos y la dirección de la cabeza.
+//   - Dibujo propio (`draw`): pinta la serpiente con la Display
+//     global y borra la celda de la cola liberada en el último
+//     `step()` (repintando sus píxeles en negro), igual que Food
+//     dibuja/borra su alimento.
 //
-// NO depende de Display, Sound ni Food: el dibujo, los efectos y
-// el alimento los coordina Game, que usa los resultados de `step`
-// (MOVED/ATE/DIED) y los segmentos (`length`/`segment`) para
-// volcar la serpiente a la pantalla. Al ser de solo lógica se
-// puede probar en el PC sin el resto del hardware (mismo núcleo
-// que se validó antes de escribir Game).
+// NO depende de Sound ni Food: los efectos y el alimento los
+// coordina Game, que llama a `step()` y después a `draw()` (o
+// redibuja el tablero entero).
 //
 // Nota sobre `compactar`: la casilla que la cabeza deja se
 // convierte en cuerpo con su sprite persistente, según por qué
@@ -71,7 +73,8 @@ public:
 
   enum class Result : uint8_t {
     MOVED,   // la cabeza avanzó sin comer
-    ATE,     // la cabeza avanzó y comió (creció)
+    ATE_FOOT,     // la cabeza avanzó y comió (creció)
+    ATE_SPECIAL,
     DIED     // colisión con el cuerpo: la cabeza NO avanzó
   };
 
@@ -124,7 +127,7 @@ public:
   // (puntaje, sonido, alimento, GAME OVER).
   // ========================================================
 
-  Result step(uint8_t foodX, uint8_t foodY);
+  Result step(Food food, Food specialFood);
 
   // ========================================================
   // ¿Una celda está ocupada por la serpiente? (lo consulta el
@@ -140,9 +143,37 @@ public:
 
   uint8_t length() const;                 // cantidad de segmentos
   const Seg& segment(uint8_t segmentIndex) const; // segmento `segmentIndex` (0 = cola, length()-1 = cabeza)
-  Sprite::Part headPart(bool hasFood, uint8_t foodX, uint8_t foodY) const; // sprite de la cabeza (boca según el alimento adyacente)
+  Sprite::Part headPart(Food food, Food specialFood) const; // sprite de la cabeza (boca según el alimento adyacente)
+
+  // ========================================================
+  // Dibujar: la serpiente se pinta a sí misma (como Food).
+  // Pinta todas las partes (la cabeza con la boca según el
+  // alimento) y, si el último step() liberó una cola, borra
+  // antes esa celda repintando sus píxeles en negro.
+  // ========================================================
+
+  void print(Food food, Food specialFood);
 
 private:
+
+  // ========================================================
+  // Constantes (renombres de Config y Sprite: el .cpp no
+  // referencia esos espacios de nombres nunca)
+  // ========================================================
+
+  static constexpr uint8_t CELL         = Config::Board::CELL;     // px por celda del tablero (8)
+  // static constexpr uint8_t PART_WIDTH = Sprite::;
+  // static constexpr uint8_t PART_HEIGHT = Sprite::HEIGHT;
+  // static constexpr uint8_t SIZE = Sprite::SIZE;
+  static constexpr uint8_t SIZE         = Sprite::SIZE;             // px del sprite de la serpiente (4)
+  // static constexpr uint8_t SIZE         = Sprite::SPRITE_SIZE;             // px del sprite de la serpiente (4)
+  static constexpr uint8_t SCALE = Config::Board::SCALE;              // px por lado de cada píxel del sprite (2)
+  static constexpr uint8_t BODY_TOP     = Config::Screen::BODY_TOP; // fila superior del tablero (Body)
+
+  static constexpr uint8_t START_COL    = Config::Snake::START_COL;
+  static constexpr uint8_t START_ROW    = Config::Snake::START_ROW;
+  static constexpr uint8_t START_LENGTH = Config::Snake::START_LENGTH;
+  static constexpr uint8_t START_DIR    = Config::Snake::START_DIR;
 
   // ========================================================
   // Métodos internos
@@ -152,6 +183,11 @@ private:
   Dir opposite(Dir direction) const;                 // dirección opuesta (RIGHT<->LEFT, UP<->DOWN)
   Sprite::Part bodyPartFor(Dir inDir, Dir outDir) const;  // BODY recto o CORNER al girar
   Sprite::Part bellyPartFor(Dir inDir, Dir outDir) const; // BELLY recto o curvo (al comer)
+
+  // Dibujo de una celda: cada píxel del sprite 4x4 se pinta como un
+  // bloque SPRITE_SCALE x SPRITE_SCALE px; `white` = píxel en blanco
+  // (dibujar) o en negro (borrar, fondo del Body)
+  void drawSprite(Sprite::Part part, uint8_t col, uint8_t row, bool white);
 
   // ========================================================
   // Estado (ring buffer: los segmentos van de _tailIndex a _headIndex)
@@ -167,6 +203,9 @@ private:
   Dir _nextDir;            // único giro pendiente ("el siguiente"): se valida contra `_dir` (la
                            // cabeza no puede volver sobre la dirección con la que avanzará)
   bool _bellyPending;      // la cabeza está sobre la casilla de la comida: al dejarla se pinta BELLY
+
+  bool _tailDropped;       // el último step() liberó una cola: _droppedSeg espera de ser borrada en draw()
+  Seg _droppedSeg;         // cola liberada (celda + sprite con el que estaba pintada)
 };
 
 #endif

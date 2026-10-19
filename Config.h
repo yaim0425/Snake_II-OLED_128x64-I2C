@@ -67,7 +67,6 @@ namespace Screen {
 
 constexpr uint8_t WIDTH = 128;     // px de ancho
 constexpr uint8_t HEIGHT = 64;     // px de alto
-constexpr uint8_t CELL = 8;        // px por celda de la rejilla
 constexpr uint8_t ADDRESS = 0x3C;  // dirección I2C
 
 // Regiones: Header (0..15) y Body (16..63)
@@ -84,6 +83,7 @@ constexpr uint8_t FOOT_TOP = HEIGHT - FOOT_H;  // Punto Y del texto del pie
 // constexpr uint8_t BODY_MIDDLE = BODY_TOP + (BODY_H - FOOT_H - 1) / 2 - 2; // -8  5
 // constexpr uint8_t BODY_MIDDLE = BODY_TOP + (BODY_H - FOOT_H - 1) / 2 - 6;
 // constexpr uint8_t BODY_MIDDLE = BODY_TOP + (BODY_H - FOOT_H - 1) / 2 + 5;
+constexpr uint8_t BODY_MIDDLE = BODY_TOP + BODY_H / 2;
 
 constexpr uint8_t OPTION_TOP = 16;
 constexpr uint8_t OPTION_H = 48;
@@ -98,9 +98,15 @@ constexpr uint8_t CHAR_H = 8;
 // ========================================================
 
 namespace Board {
-constexpr uint8_t COLS = Screen::WIDTH / Screen::CELL;   // columnas del tablero (16)
-constexpr uint8_t ROWS = Screen::BODY_H / Screen::CELL;  // filas del tablero (6)
+constexpr uint8_t CELL = 8;        // px por celda de la rejilla
+constexpr uint8_t COLS = Screen::WIDTH / CELL;   // columnas del tablero (16)
+constexpr uint8_t ROWS = Screen::BODY_H / CELL;  // filas del tablero (6)
 constexpr uint8_t MAX_LENGTH = COLS * ROWS;              // segmentos máximos (una celda por segmento)
+constexpr uint8_t SCALE = 2;
+
+constexpr uint8_t COUNT = 3;
+constexpr uint16_t PERIOD = 1000;   // duración del conteo regresivo inicial (3 s, uno por dígito)
+constexpr uint16_t OFF = 25;   // al final de cada dígito: el número (y su cuadro) se ocultan antes del siguiente (parpadeo)
 }
 
 // ========================================================
@@ -172,7 +178,15 @@ constexpr uint8_t SIZE = 3;  // px de un lado del rombo
 }
 
 namespace Food {
-constexpr uint8_t SPECIAL_TIME = 60;  // segundos iniciales de la comida especial
+constexpr uint8_t SPECIAL_TIME = Board::COLS + Board::ROWS;  // segundos iniciales de la comida especial
+constexpr uint8_t FOOD_COUNT = 10;
+}
+
+namespace Snake {
+constexpr uint8_t START_COL = 1;      // columna de la cola al arrancar
+constexpr uint8_t START_ROW = 2;      // fila (serpiente horizontal en el Body)
+constexpr uint8_t START_LENGTH = 4;   // segmentos iniciales
+constexpr uint8_t START_DIR = 2;      // dirección inicial = Dir::RIGHT (orden de Snake::Dir: UP=1..LEFT=4)
 }
 
 namespace Button {
@@ -203,7 +217,7 @@ constexpr uint32_t DIAG_MS = 2 * 1000;           // reposo: duración del aviso 
 namespace MenuStrip {
 static constexpr int16_t TRIANGLE_Y = Screen::FOOT_TOP - 3;
 
-static constexpr int16_t BODY_H = (Screen::FOOT_TOP - 2) - Screen::BODY_TOP + 1;  // Alto del cuerpo (sin el pie)
+static constexpr int16_t BODY_H = (Screen::FOOT_TOP - 2) - Screen::BODY_TOP + 1;  // Alto del cuerpo (con el pie)
 static constexpr int16_t Y = (int16_t)(BODY_H / 2);                   // Aux mitad del alto del cuerpo
 static constexpr int16_t Z = 2 * Y == BODY_H ? Y : Y - 1;             // Mitad del alto del cuerpo
 static constexpr int16_t BODY_MIDDLE = Screen::BODY_TOP + Z;          // Posición mitad del alto del cuerpo

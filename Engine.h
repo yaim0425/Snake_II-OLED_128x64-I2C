@@ -78,7 +78,8 @@ public:
   // ¿Se está jugando? (el reposo no aplica en partida)
   // ========================================================
 
-  bool isInGame() const;
+  bool inGame() const;
+  bool inCredits() const;
 
   // ========================================================
   // ¿El reposo no aplica en este momento? (en partida y mientras
@@ -93,7 +94,6 @@ public:
   // ========================================================
 
   // void setBestScore(uint16_t value);
-
 private:
 
   // ========================================================

@@ -113,8 +113,14 @@ void Menu::begin(bool showContinue, int8_t selected) {
   _lastScroll = true;
   _confirm = false;
   _done = false;
+  _scroller.begin(Draw::DIR_LEFT, Scroller::EndMode::STAY);
 
-  if (selected == OPT_NEW || selected == OPT_CREDITS)
+
+  bool clear = false;
+  clear = clear || selected == OPT_NEW;
+  clear = clear || selected == OPT_CONTINUE;
+  clear = clear || selected == OPT_CREDITS;
+  if (clear)
     _clear = true;
   else
     showOptions();
@@ -517,6 +523,11 @@ void Menu::blinkOption() {
   } else if (!_scroller.done()) return;
   else if (_lastSelected != _selected) return;
   else if (!_blink.changed(PERIOD, OFF)) return;
+
+  if (_done && !_scroller.done()) {
+    display.fillRect(0, BOX_TOP - 1, WIDTH, BOX_HEIGHT + 2, true);
+    _scroller.begin(Draw::DIR_RIGHT, Scroller::EndMode::STAY);
+  }
 
   const bool visible = _done || _blink.isVisible(PERIOD, OFF);
   toggleText(visible);

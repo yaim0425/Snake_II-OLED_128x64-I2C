@@ -1,7 +1,10 @@
 #include "Snake.h"
+#include "Food.h"
+#include "Globals.h"
 
 // ========================================================
-// Constructor (sin hardware: el tablero se arma en reset())
+// Constructor (el tablero se arma en reset(); el dibujo usa la
+// Display global, como Food)
 // ========================================================
 
 Snake::Snake()
@@ -10,26 +13,29 @@ Snake::Snake()
     _length(0),
     _dir(Dir::RIGHT),
     _nextDir(Dir::NONE),
-    _bellyPending(false) {}
+    _bellyPending(false),
+    _tailDropped(false),
+    _droppedSeg{ 0, 0, Dir::NONE, Sprite::EMPTY } {}
 
 // ========================================================
-// Reinicio: serpiente inicial horizontal (1,2)..(4,2),
-// cabeza a la derecha
+// Reinicio: serpiente inicial horizontal (START_COL,START_ROW)
+// de START_LENGTH segmentos, cabeza en START_DIR
 // ========================================================
 
 void Snake::reset() {
-  _length = 4;
+  _length = START_LENGTH;
   _tailIndex = 0;
-  _headIndex = 3;
-  _dir = Dir::RIGHT;
+  _headIndex = START_LENGTH - 1;
+  _dir = (Dir)START_DIR;
   _nextDir = Dir::NONE;
   _bellyPending = false;  // ninguna casilla pendiente de panza
+  _tailDropped = false;   // nada que borrar al arrancar
 
   // Cada segmento guarda su dirección y su sprite persistente
-  _body[0] = { 1, 2, Dir::RIGHT, Sprite::TAIL_TO_RIGHT };
-  _body[1] = { 2, 2, Dir::RIGHT, Sprite::BODY_TO_RIGHT };
-  _body[2] = { 3, 2, Dir::RIGHT, Sprite::BODY_TO_RIGHT };
-  _body[3] = { 4, 2, Dir::RIGHT, Sprite::HEAD_RIGHT_CLOSE };
+  _body[0] = { START_COL + 1, START_ROW, Dir::RIGHT, Sprite::TAIL_TO_RIGHT };
+  _body[1] = { START_COL + 2, START_ROW, Dir::RIGHT, Sprite::BODY_TO_RIGHT };
+  _body[2] = { START_COL + 3, START_ROW, Dir::RIGHT, Sprite::BODY_TO_RIGHT };
+  _body[3] = { START_COL + 4, START_ROW, Dir::RIGHT, Sprite::HEAD_RIGHT_CLOSE };
 }
 
 // ========================================================
@@ -62,12 +68,12 @@ bool Snake::turn(Dir direction) {
   // Prohibir la reversa directa contra la dirección COMMITIDA (_dir),
   // no contra un giro pendiente intermedio (la cabeza no puede volver
   // sobre sí misma respecto a la dirección con la que avanzará)
-  bool invalid = false;
-  invalid = invalid || (direction == Dir::UP && _dir == Dir::DOWN);
-  invalid = invalid || (direction == Dir::DOWN && _dir == Dir::UP);
-  invalid = invalid || (direction == Dir::LEFT && _dir == Dir::RIGHT);
-  invalid = invalid || (direction == Dir::RIGHT && _dir == Dir::LEFT);
-  if (invalid) return false;
+  // bool invalid = false;
+  // invalid = invalid || (direction == Dir::UP && _dir == Dir::DOWN);
+  // invalid = invalid || (direction == Dir::DOWN && _dir == Dir::UP);
+  // invalid = invalid || (direction == Dir::LEFT && _dir == Dir::RIGHT);
+  // invalid = invalid || (direction == Dir::RIGHT && _dir == Dir::LEFT);
+  if (_dir == opposite(direction)) return false;
 
   // Giro aceptado: queda pendiente
   _nextDir = direction;
@@ -81,7 +87,11 @@ bool Snake::turn(Dir direction) {
 // cae sobre él y, por lo tanto, si la cola es bloqueante).
 // ========================================================
 
-Snake::Result Snake::step(uint8_t foodX, uint8_t foodY) {
+Snake::Result Snake::step(Food food, Food specialFood) {
+  // La cola liberada en el paso anterior ya se pintó (contrato:
+  // Game llama a draw() después de cada step())
+  _tailDropped = false;
+
   // Dirección real de este paso: el giro pendiente del último MOVE
   // válido (ya validado contra la dirección COMMITIDA en turn()).
   // Se trabaja con una copia local `stepDir`: `_dir` (la dirección
@@ -107,7 +117,7 @@ Snake::Result Snake::step(uint8_t foodX, uint8_t foodY) {
     default: break;
   }
 
-  bool eat = (nextX == foodX && nextY == foodY);
+  bool eat = food.occupied(nextX, nextY) || specialFood.occupied(nextX, nextY);
 
   // Colisión con el cuerpo. Al comer la cola NO se mueve (es bloqueante);
   // sin comer, la celda de la cola se libera y es legal pisarla.
@@ -115,9 +125,8 @@ Snake::Result Snake::step(uint8_t foodX, uint8_t foodY) {
   for (uint8_t segmentIndex = 0; segmentIndex < _length; segmentIndex++) {
     uint8_t slotIndex = slot(segmentIndex);
     if (slotIndex == skip) continue;
-    if (_body[slotIndex].col == nextX && _body[slotIndex].row == nextY) {
+    if (_body[slotIndex].col == nextX && _body[slotIndex].row == nextY)
       return Result::DIED;  // la cabeza NO avanza (para GAME OVER lo decide Game)
-    }
   }
 
   // El destino es legal: la cabeza "commitea" la nueva dirección tras
@@ -144,13 +153,18 @@ Snake::Result Snake::step(uint8_t foodX, uint8_t foodY) {
     // Estaba sobre la comida (recién comida): al dejarla se pinta la panza
     newBody.part = bellyPartFor(inDir, outDir);
     _bellyPending = false;
-  } else 
+  } else
     newBody.part = bodyPartFor(inDir, outDir);
   newBody.dir = outDir;
 
   if (!eat) {
-    // Se elimina la última parte (cola): el segmento que queda último
-    // pasa a ser cola y recibe su sprite de cola apuntando como su dir
+    // Se elimina la última parte (cola): se recuerda su celda y su
+    // sprite para que draw() borre su celda de la pantalla. El
+    // segmento que queda último pasa a ser cola y recibe su sprite
+    // de cola apuntando como su dir.
+    _droppedSeg = _body[_tailIndex];
+    _tailDropped = true;
+
     _tailIndex = (_tailIndex + 1) % MAX_LENGTH;
     Seg& tail = _body[_tailIndex];
     tail.part = (Sprite::Part)(Sprite::TAIL_TO_UP + ((uint8_t)tail.dir - 1));
@@ -161,7 +175,12 @@ Snake::Result Snake::step(uint8_t foodX, uint8_t foodY) {
   // pendiente para pintarse cuando la cabeza deje la casilla.
   _length++;
   _bellyPending = true;
-  return Result::ATE;
+
+  if(specialFood.occupied(nextX, nextY))
+    return Result::ATE_SPECIAL;
+
+    if(food.occupied(nextX, nextY))
+  return Result::ATE_FOOT;
 }
 
 // ========================================================
@@ -199,7 +218,7 @@ const Snake::Seg& Snake::segment(uint8_t segmentIndex) const {
 // (dir - 1).
 // ========================================================
 
-Sprite::Part Snake::headPart(bool hasFood, uint8_t foodX, uint8_t foodY) const {
+Sprite::Part Snake::headPart(Food food, Food specialFood) const {
   uint8_t offset = (uint8_t)_dir - 1;
 
   // Próxima celda según la dirección actual
@@ -214,9 +233,53 @@ Sprite::Part Snake::headPart(bool hasFood, uint8_t foodX, uint8_t foodY) const {
     default: break;
   }
 
-  bool aboutToEat = hasFood && nextX == foodX && nextY == foodY;
+  bool aboutToEat = food.occupied(nextX, nextY) || specialFood.occupied(nextX, nextY);
   uint8_t basePart = aboutToEat ? Sprite::HEAD_UP_OPEN : Sprite::HEAD_UP_CLOSE;
   return (Sprite::Part)(basePart + offset);
+}
+
+// ========================================================
+// Dibujar: la serpiente se pinta a sí misma con la Display
+// global (como Food). Primero borra la cola liberada en el
+// último step() (si la hubo) y luego pinta todas las partes
+// (la cabeza con la boca según el alimento).
+// ========================================================
+
+void Snake::print(Food food, Food specialFood) {
+  // La cola liberada se borra repintando sus píxeles en negro (el
+  // fondo del Body ya es negro)
+  if (_tailDropped) {
+    drawSprite(_droppedSeg.part, _droppedSeg.col, _droppedSeg.row, false);
+    _tailDropped = false;
+  }
+
+  // Cuerpo y cabeza (de la cola a la cabeza: la cabeza queda encima)
+  for (uint8_t i = 0; i < _length; i++) {
+    const Seg& seg = _body[slot(i)];
+    Sprite::Part part = i == _length - 1 ? headPart(food, specialFood) : seg.part;
+    drawSprite(part, seg.col, seg.row, true);
+  }
+}
+
+// ========================================================
+// Dibujar una celda: cada píxel del sprite 4x4 se pinta como un
+// bloque SPRITE_SCALE x SPRITE_SCALE px (2x2: completa la celda
+// de CELL px = 8x8). `white` = píxel en blanco (dibujar) o en
+// negro (borrar)
+// ========================================================
+
+void Snake::drawSprite(Sprite::Part part, uint8_t col, uint8_t row, bool white) {
+
+  int16_t baseX = col * CELL;
+  int16_t baseY = BODY_TOP + row * CELL;
+  // display.drawBitmap(
+  //   baseX, baseY,
+  //   Sprite::SPRITES[part], Sprite::SIZE, Sprite::SIZE,
+  //   SSD1306_WHITE, SSD1306_BLACK);
+
+  for (uint8_t i = 0; i < SIZE; i++)
+    for (uint8_t j = 0; j < SIZE; j++)
+      display.fillRect(baseX + SCALE * j, baseY + SCALE * i, SCALE, SCALE, white && Sprite::pixel(part, j, i));
 }
 
 // ========================================================

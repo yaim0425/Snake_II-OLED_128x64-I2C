@@ -94,9 +94,9 @@ private:
   static constexpr uint8_t BODY_H = Config::Screen::BODY_H;
   static constexpr uint8_t BODY_TOP = Config::Screen::BODY_TOP;
 
-  static constexpr auto& LOGO = Sprite::LOGO;
-  static constexpr uint8_t LOGO_W = Sprite::LOGO_W;
-  static constexpr uint8_t LOGO_H = Sprite::LOGO_H;
+  static constexpr auto& LOGO = Logo::LOGO;
+  static constexpr uint8_t LOGO_W = Logo::LOGO_W;
+  static constexpr uint8_t LOGO_H = Logo::LOGO_H;
 
   // Avance de 1 px cada ANIM_TICK ms
   // static constexpr uint32_t ANIM_TICK = 30;

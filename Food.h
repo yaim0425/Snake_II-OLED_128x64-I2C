@@ -5,6 +5,7 @@
 
 #include "Config.h"
 #include "Sprite.h"
+#include "timer.h"
 
 // ========================================================
 // Food — alimento del tablero (normal y especial)
@@ -54,13 +55,14 @@ public:
   // `top`; dibuja con la Display global — Globals.h)
   // ========================================================
 
-  Food(uint8_t cols, uint8_t rows, uint8_t top);
+  Food();
 
   // ========================================================
   // Inicialización: no hay alimento
   // ========================================================
 
   void begin();
+  void lessTime();
 
   // ========================================================
   // Colocar un alimento de un tipo en una celda libre al
@@ -83,16 +85,20 @@ public:
 
   bool has() const;                     // ¿hay alimento en el tablero?
   Type type() const;                    // tipo del alimento actual
-  uint8_t x() const;                    // columna (0..COLS-1)
-  uint8_t y() const;                    // fila (0..ROWS-1)
-  uint8_t specialTime() const;          // segundos restantes de la comida especial
-  void setSpecialTime(uint8_t seconds); // actualiza el temporizador de la especial
+  // uint8_t x() const;                    // columna (0..COLS-1)
+  // uint8_t y() const;                    // fila (0..ROWS-1)
+  // uint8_t specialTime() const;          // segundos restantes de la comida especial
+  // void setSpecialTime(uint8_t seconds); // actualiza el temporizador de la especial
 
   // ========================================================
   // Dibujar según el tipo (rombo NORMAL / sprite SPECIAL)
   // ========================================================
 
-  void draw() const;
+  void print();
+  // void clear() const;
+  void printTime(bool show = false);
+  bool occupied(uint8_t x, uint8_t y) const;
+  uint8_t score() const;
 
 private:
 
@@ -101,10 +107,20 @@ private:
   // referencia esos espacios de nombres nunca)
   // ========================================================
 
-  static constexpr uint8_t CELL        = Config::Screen::CELL;      // px por celda del tablero
-  static constexpr auto&   FOOD        = Sprite::SPECIAL_FOOD;      // bitmap del sprite (formato drawBitmap)
-  static constexpr uint8_t FOOD_WIDTH  = Sprite::SPECIAL_FOOD_W;    // ancho del sprite (px)
-  static constexpr uint8_t FOOD_HEIGHT = Sprite::SPECIAL_FOOD_H;    // alto del sprite (px)
+  static constexpr uint8_t CELL        = Config::Board::CELL;      // px por celda del tablero
+  static constexpr auto&   SPECIAL_FOOD        = Special::SPECIAL_FOOD;      // bitmap del sprite (formato drawBitmap)
+  static constexpr uint8_t SPECIAL_FOOD_W  = Special::SPECIAL_FOOD_W;    // ancho del sprite (px)
+  static constexpr uint8_t SPECIAL_FOOD_H = Special::SPECIAL_FOOD_H;    // alto del sprite (px)
+  static constexpr uint8_t SCALE = Config::Board::SCALE;
+
+  static constexpr uint8_t CHAR_W = Config::Screen::CHAR_W;
+  static constexpr int16_t WIDTH = Config::Screen::WIDTH;
+
+  static constexpr int8_t COLS = Config::Board::COLS;
+  static constexpr int8_t ROWS = Config::Board::ROWS;
+
+  static constexpr int8_t BODY_TOP = Config::Screen::BODY_TOP;
+  // static constexpr int8_t SPECIAL_TIME = Config::Food::SPECIAL_TIME;
 
   // ========================================================
   // Estado
@@ -118,14 +134,18 @@ private:
   uint8_t _x;
   uint8_t _y;
   bool _has;
-  uint8_t _specialTime;
+  uint8_t _time;
+
+  // Ticker _timer;
+  uint8_t _lastTime;
+  uint8_t _score;
 
   // ========================================================
   // Helpers de dibujo
   // ========================================================
 
-  void drawNormal() const;   // rombo simétrico centrado en la celda
-  void drawSpecial() const;  // sprite SPECIAL_FOOD (8×4 px) centrado
+  void printNormal(bool show = true) const;   // rombo simétrico centrado en la celda
+  void printSpecial(bool show = true) const;  // sprite SPECIAL_FOOD (8×4 px) centrado
 };
 
 #endif
