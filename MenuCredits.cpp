@@ -28,6 +28,7 @@ void MenuCredits::begin(bool fromGame, bool winner) {
   startStay();
   sound.stop();
   sound.play(fromGame && winner ? Sound::SFX_DRAGON_BALL : Sound::SFX_PIRATES, true);
+  // if (!_fromGame)
 }
 
 void MenuCredits::update() {
@@ -37,8 +38,7 @@ void MenuCredits::update() {
 
   if (buttons.anyHeld()) sound.stop();
 
-  if (buttons.pressed(Buttons::MOVE_UP) || buttons.pressed(Buttons::MOVE_RIGHT) ||
-    buttons.pressed(Buttons::MOVE_DOWN) || buttons.pressed(Buttons::MOVE_LEFT)) {
+  if (buttons.pressed(Buttons::MOVE_UP) || buttons.pressed(Buttons::MOVE_RIGHT) || buttons.pressed(Buttons::MOVE_DOWN) || buttons.pressed(Buttons::MOVE_LEFT)) {
     sound.play(Sound::SFX_CLICK, false);
     exit = true;
   } else if (buttons.pressed(Buttons::ACTION_UP)) {

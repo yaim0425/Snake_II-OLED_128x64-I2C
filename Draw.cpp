@@ -2,28 +2,28 @@
 #include "Globals.h"
 
 namespace Draw {
-  void triangle(int8_t dir, int16_t centerX, int16_t centerY, bool show) {
-    switch (dir) {
-      case DIR_UP:
-        display.fillTriangle(centerX - SIZE, centerY, centerX, centerY - SIZE, centerX + SIZE, centerY, show);
-        break;
+void triangle(int8_t dir, int16_t centerX, int16_t centerY, bool show) {
+  switch (dir) {
+    case DIR_UP:
+      display.fillTriangle(centerX - SIZE, centerY, centerX, centerY - SIZE, centerX + SIZE, centerY, show);
+      break;
 
-      case DIR_RIGHT:
-        display.fillTriangle(centerX, centerY - SIZE, centerX + SIZE, centerY, centerX, centerY + SIZE, show);
-        break;
+    case DIR_RIGHT:
+      display.fillTriangle(centerX, centerY - SIZE, centerX + SIZE, centerY, centerX, centerY + SIZE, show);
+      break;
 
-      case DIR_DOWN:
-        display.fillTriangle(centerX - SIZE, centerY, centerX, centerY + SIZE, centerX + SIZE, centerY, show);
-        break;
+    case DIR_DOWN:
+      display.fillTriangle(centerX - SIZE, centerY, centerX, centerY + SIZE, centerX + SIZE, centerY, show);
+      break;
 
-      case DIR_LEFT:
-        display.fillTriangle(centerX, centerY - SIZE, centerX - SIZE, centerY, centerX, centerY + SIZE, show);
-        break;
-    }
+    case DIR_LEFT:
+      display.fillTriangle(centerX, centerY - SIZE, centerX - SIZE, centerY, centerX, centerY + SIZE, show);
+      break;
   }
+}
 
-  void diamond(int16_t centerX, int16_t centerY, bool show) {
-    triangle(DIR_UP, centerX, centerY, show);
-    triangle(DIR_DOWN, centerX, centerY, show);
-  }
+void diamond(int16_t centerX, int16_t centerY, bool show) {
+  triangle(DIR_UP, centerX, centerY, show);
+  triangle(DIR_DOWN, centerX, centerY, show);
+}
 }

@@ -26,7 +26,7 @@ private:
   static constexpr int16_t HEADER_TOP = Config::Screen::HEADER_TOP;
   static constexpr int16_t BODY_TOP = Config::Screen::BODY_TOP;
   static constexpr int16_t BODY_H = Config::Screen::BODY_H;
-  static constexpr int16_t LINE_H = Config::Screen::CHAR_H + 2;   // alto de fila de un bloque
+  static constexpr int16_t LINE_H = Config::Screen::CHAR_H + 2;  // alto de fila de un bloque
 
   // Constantes
   // Pausa al terminar cada bloque de créditos, en milisegundos.

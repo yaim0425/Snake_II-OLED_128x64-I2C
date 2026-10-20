@@ -43,7 +43,6 @@ private:
   // Funciones
   void blinkMessage();
   void drawMessage(bool show);
-
 };
 
 // ========================================================

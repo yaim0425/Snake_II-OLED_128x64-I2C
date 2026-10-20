@@ -13,7 +13,12 @@
 class Menu {
 public:
   // Constantes
-  enum Option : uint8_t { OPT_NEW = 0, OPT_CONTINUE, OPT_DIFFICULTY, OPT_SOUND, OPT_CREDITS, OPT_COUNT };
+  enum Option : uint8_t { OPT_NEW = 0,
+                          OPT_CONTINUE,
+                          OPT_DIFFICULTY,
+                          OPT_SOUND,
+                          OPT_CREDITS,
+                          OPT_COUNT };
 
   // Funciones
   Menu();

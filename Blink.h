@@ -11,7 +11,7 @@ public:
   // Constantes
   // Parpadeo estándar de la interfaz: ciclo de 500 ms con 20 % apagado.
   static constexpr uint32_t PERIOD = 500;
-  static constexpr uint8_t OFF     = 20;
+  static constexpr uint8_t OFF = 20;
 
   // Funciones
   void start();

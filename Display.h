@@ -3,7 +3,8 @@
 #include <Adafruit_SSD1306.h>
 #include "Config.h"
 
-enum TextSize { TEXT_6x8 = 1, TEXT_12x16 = 2 };
+enum TextSize { TEXT_6x8 = 1,
+                TEXT_12x16 = 2 };
 
 // ========================================================
 // Display — Pantalla OLED: bus I2C y regiones
@@ -36,22 +37,22 @@ public:
   void clear();
   void show();
   void power(bool on);
-  void drawPixel(uint8_t x, uint8_t y, bool white);
+  void drawPixel(int16_t x, int16_t y, bool white);
   void fillRect(
-    uint8_t x, uint8_t y,
+    int16_t x, int16_t y,
     uint16_t width, uint16_t height,
     bool white);
   void fillTriangle(
-    uint8_t x0, uint8_t y0,
-    uint8_t x1, uint8_t y1,
-    uint8_t x2, uint8_t y2,
+    int16_t x0, int16_t y0,
+    int16_t x1, int16_t y1,
+    int16_t x2, int16_t y2,
     bool white);
   void drawText(
-    const char* text, uint8_t x, uint8_t y, uint8_t size,
+    const char* text, int16_t x, int16_t y, uint8_t size,
     bool tColor, bool bgColor);
   void drawBitmap(
-    uint8_t x, uint8_t y, const uint8_t* bitmap,
-    uint8_t w, uint8_t h, bool color, bool bgColor);
+    int16_t x, int16_t y, const uint8_t* bitmap,
+    int16_t w, int16_t h, bool color, bool bgColor);
 
   uint8_t centerX(const char* text, uint8_t size) const;
 

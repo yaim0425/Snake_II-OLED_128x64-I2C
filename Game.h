@@ -13,7 +13,12 @@
 class Game {
 public:
   // Constantes
-  enum class State : uint8_t { START, PLAY, PAUSE, GAME_OVER };
+  enum class State : uint8_t {
+    START,
+    PLAY,
+    PAUSE,
+    GAME_OVER
+  };
 
   // Funciones
   Game();

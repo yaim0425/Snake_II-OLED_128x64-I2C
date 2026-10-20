@@ -25,7 +25,16 @@ public:
 
 private:
   // Constantes
-  enum class State : uint8_t { BOOT = 0, LEGEND, MENU, MENU_SOUND, NEW, CONTINUE, MENU_DIFFICULTY, MENU_CREDITS };
+  enum class State : uint8_t {
+    BOOT = 0,
+    LEGEND,
+    MENU,
+    MENU_SOUND,
+    NEW,
+    CONTINUE,
+    MENU_DIFFICULTY,
+    MENU_CREDITS
+  };
 
   // Funciones
   void changeState(State newState);

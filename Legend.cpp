@@ -32,8 +32,7 @@ void Legend::begin() {
 void Legend::update() {
   bool exit = false;
 
-  if (buttons.pressed(Buttons::MOVE_UP) || buttons.pressed(Buttons::MOVE_RIGHT) ||
-    buttons.pressed(Buttons::MOVE_DOWN) || buttons.pressed(Buttons::MOVE_LEFT)) {
+  if (buttons.pressed(Buttons::MOVE_UP) || buttons.pressed(Buttons::MOVE_RIGHT) || buttons.pressed(Buttons::MOVE_DOWN) || buttons.pressed(Buttons::MOVE_LEFT)) {
     sound.play(Sound::SFX_CLICK, false);
     exit = true;
   } else if (buttons.pressed(Buttons::ACTION_UP)) {

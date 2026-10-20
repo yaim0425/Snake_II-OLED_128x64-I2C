@@ -10,7 +10,7 @@ Snake::Snake()
     _nextDir(Draw::DIR_NONE),
     _bellyPending(false),
     _tailDropped(false),
-    _droppedSeg{0, 0, Draw::DIR_NONE, Sprite::EMPTY} {}
+    _droppedSeg{ 0, 0, Draw::DIR_NONE, Sprite::EMPTY } {}
 
 void Snake::reset() {
   _length = START_LENGTH;
@@ -21,10 +21,10 @@ void Snake::reset() {
   _bellyPending = false;
   _tailDropped = false;
 
-  _body[0] = {START_COL + 1, START_ROW, Draw::DIR_RIGHT, Sprite::TAIL_TO_RIGHT};
-  _body[1] = {START_COL + 2, START_ROW, Draw::DIR_RIGHT, Sprite::BODY_TO_RIGHT};
-  _body[2] = {START_COL + 3, START_ROW, Draw::DIR_RIGHT, Sprite::BODY_TO_RIGHT};
-  _body[3] = {START_COL + 4, START_ROW, Draw::DIR_RIGHT, Sprite::HEAD_RIGHT_CLOSE};
+  _body[0] = { START_COL + 1, START_ROW, Draw::DIR_RIGHT, Sprite::TAIL_TO_RIGHT };
+  _body[1] = { START_COL + 2, START_ROW, Draw::DIR_RIGHT, Sprite::BODY_TO_RIGHT };
+  _body[2] = { START_COL + 3, START_ROW, Draw::DIR_RIGHT, Sprite::BODY_TO_RIGHT };
+  _body[3] = { START_COL + 4, START_ROW, Draw::DIR_RIGHT, Sprite::HEAD_RIGHT_CLOSE };
 }
 
 void Snake::clearPending() {
@@ -75,7 +75,7 @@ Snake::Result Snake::step(const Food& food, const Food& specialFood) {
   Draw::Direction inDir = oldHead.dir;
   Draw::Direction outDir = stepDir;
   uint8_t newHeadIndex = (_headIndex + 1) % MAX_LENGTH;
-  _body[newHeadIndex] = {nextX, nextY, stepDir, Sprite::HEAD_RIGHT_CLOSE};
+  _body[newHeadIndex] = { nextX, nextY, stepDir, Sprite::HEAD_RIGHT_CLOSE };
   _headIndex = newHeadIndex;
   Seg& newBody = _body[(_headIndex + MAX_LENGTH - 1) % MAX_LENGTH];
 

@@ -11,7 +11,10 @@
 class Scroller {
 public:
   // Constantes
-  enum class EndMode : uint8_t { STAY, EXIT };
+  enum class EndMode : uint8_t {
+    STAY,
+    EXIT
+  };
 
   // Funciones
   Scroller();

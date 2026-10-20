@@ -18,7 +18,10 @@ public:
   static constexpr uint8_t MAX_LENGTH = Config::Board::MAX_LENGTH;
 
   // Constantes
-  enum class Result : uint8_t { MOVED, ATE_FOOT, ATE_SPECIAL, DIED };
+  enum class Result : uint8_t { MOVED,
+                                ATE_FOOT,
+                                ATE_SPECIAL,
+                                DIED };
 
   struct Seg {
     uint8_t col;

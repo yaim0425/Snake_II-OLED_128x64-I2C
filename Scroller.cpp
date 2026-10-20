@@ -224,7 +224,6 @@ void Scroller::setStrip() {
 
 bool Scroller::getStripPixel(uint16_t x, uint8_t y) const {
   if (x >= WIDTH) return false;
-
   if (y >= HEIGHT) return false;
 
   uint8_t rowBytes = y / 8;
@@ -234,7 +233,6 @@ bool Scroller::getStripPixel(uint16_t x, uint8_t y) const {
 
 void Scroller::setStripPixel(uint16_t x, uint8_t y, bool color) {
   if (x >= WIDTH) return;
-
   if (y >= HEIGHT) return;
 
   uint8_t rowBytes = y / 8;
@@ -243,7 +241,7 @@ void Scroller::setStripPixel(uint16_t x, uint8_t y, bool color) {
   if (color)
     _strip[rowBytes][x] |= (uint8_t)(1 << bit);
   else
-    _strip[rowBytes][x] &= (uint8_t)~(1 << bit);
+    _strip[rowBytes][x] &= (uint8_t) ~(1 << bit);
 }
 
 int16_t Scroller::blockX() const {
@@ -261,12 +259,15 @@ void Scroller::curtain() {
   int16_t xBack = _dir == Draw::DIR_LEFT ? blockX() : blockX() + WIDTH;
   int16_t centerX;
   int16_t centerY;
+
   const int16_t size = (CHAR_H / 2) * _size;
   const int16_t height = _rowY + (CHAR_H / 2) * _size;
   const int16_t xFront = xBack + dir * CHAR_W * _size;
+
   centerX = xFront;
   centerY = height;
   display.fillTriangle(centerX + dir * size, centerY, centerX, centerY, centerX, centerY - size, false);
+
   centerX = xFront;
   centerY = height + 1;
   display.fillTriangle(centerX + dir * size, centerY, centerX, centerY, centerX, centerY + size, false);
@@ -276,9 +277,11 @@ void Scroller::curtain() {
 
   centerY = _rowY;
   display.fillRect(centerX, centerY, CHAR_W * _size, CHAR_H * _size + 2, false);
+
   centerX = xBack;
   centerY = height;
   display.fillTriangle(centerX + dir * size, centerY, centerX, centerY, centerX, centerY - size, true);
+
   centerX = xBack;
   centerY = height + 1;
   display.fillTriangle(centerX + dir * size, centerY, centerX, centerY, centerX, centerY + size, true);

@@ -65,45 +65,47 @@ void Game::update() {
   if (_done) return;
 
   switch (_state) {
-    case State::START: {
-      if (buttons.pressed(Buttons::ACTION_RIGHT)) {
-        sound.play(Sound::SFX_START, false);
-        startPlay();
-      } else {
-        _blinkChanged = _blink.changed(PERIOD, OFF);
+    case State::START:
+      {
+        if (buttons.pressed(Buttons::ACTION_RIGHT)) {
+          sound.play(Sound::SFX_START, false);
+          startPlay();
+        } else {
+          _blinkChanged = _blink.changed(PERIOD, OFF);
 
-        if (_blinkChanged && !_blink.isVisible(PERIOD, OFF))
-          if (_countdown == 1) {
-            sound.play(Sound::SFX_START, false);
-            startPlay();
-          } else
-            _countdown -= 1;
-      }
-      break;
-    }
-
-    case State::PLAY: {
-      if (buttons.pressed(Buttons::MOVE_UP)) {
-        if (_snake.turn(Draw::DIR_UP)) sound.play(Sound::SFX_TURN, false);
-      } else if (buttons.pressed(Buttons::MOVE_RIGHT)) {
-        if (_snake.turn(Draw::DIR_RIGHT)) sound.play(Sound::SFX_TURN, false);
-      } else if (buttons.pressed(Buttons::MOVE_DOWN)) {
-        if (_snake.turn(Draw::DIR_DOWN)) sound.play(Sound::SFX_TURN, false);
-      } else if (buttons.pressed(Buttons::MOVE_LEFT)) {
-        if (_snake.turn(Draw::DIR_LEFT)) sound.play(Sound::SFX_TURN, false);
-      }
-
-      if (buttons.pressed(Buttons::ACTION_RIGHT)) {
-        sound.play(Sound::SFX_PAUSE, false);
-        _state = State::PAUSE;
+          if (_blinkChanged && !_blink.isVisible(PERIOD, OFF))
+            if (_countdown == 1) {
+              sound.play(Sound::SFX_START, false);
+              startPlay();
+            } else
+              _countdown -= 1;
+        }
         break;
       }
 
-      _moveSnake = _timer.consume() > 0;
+    case State::PLAY:
+      {
+        if (buttons.pressed(Buttons::MOVE_UP)) {
+          if (_snake.turn(Draw::DIR_UP)) sound.play(Sound::SFX_TURN, false);
+        } else if (buttons.pressed(Buttons::MOVE_RIGHT)) {
+          if (_snake.turn(Draw::DIR_RIGHT)) sound.play(Sound::SFX_TURN, false);
+        } else if (buttons.pressed(Buttons::MOVE_DOWN)) {
+          if (_snake.turn(Draw::DIR_DOWN)) sound.play(Sound::SFX_TURN, false);
+        } else if (buttons.pressed(Buttons::MOVE_LEFT)) {
+          if (_snake.turn(Draw::DIR_LEFT)) sound.play(Sound::SFX_TURN, false);
+        }
 
-      if (_moveSnake) step();
-      break;
-    }
+        if (buttons.pressed(Buttons::ACTION_RIGHT)) {
+          sound.play(Sound::SFX_PAUSE, false);
+          _state = State::PAUSE;
+          break;
+        }
+
+        _moveSnake = _timer.consume() > 0;
+
+        if (_moveSnake) step();
+        break;
+      }
 
     case State::PAUSE:
       if (buttons.pressed(Buttons::ACTION_RIGHT)) {

@@ -127,7 +127,6 @@ bool Engine::sleepBlocked() const {
 }
 
 void Engine::changeState(State newState) {
-  _state = newState;
 
   switch (newState) {
     case State::BOOT:
@@ -151,8 +150,11 @@ void Engine::changeState(State newState) {
       break;
 
     case State::MENU_CREDITS:
-      _menuCredits.begin(_game.isGameOver(), _game.win());
-      break;
+      {
+        bool fromGame = _state == State::NEW || _state == State::CONTINUE;
+        _menuCredits.begin(fromGame, _game.win());
+        break;
+      }
 
     case State::NEW:
       _game.begin(true);
@@ -164,4 +166,5 @@ void Engine::changeState(State newState) {
 
     default: break;
   }
+  _state = newState;
 }
