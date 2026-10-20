@@ -1,254 +1,80 @@
 #ifndef GAME_H
 #define GAME_H
-
 #include "Config.h"
 #include "Timer.h"
 #include "Blink.h"
-
 #include "Food.h"
 #include "Snake.h"
 
 // ========================================================
-// Game — ventana del juego de la serpiente
-//
-// Ocupa los estados NEW ("New") y CONTINUE ("Continue") del
-// Engine.
-//
-// Game COORDINA: la lógica de la serpiente (buffer circular,
-// giro pendiente, colisiones, elección de sprites) vive en la
-// clase Snake, que no toca Display/Sound/Food; Game decide el
-// ritmo (dificultad), lee los botones, llama `snake.step()`,
-// gestiona el alimento (Food), toca los efectos y dibuja el
-// tablero con los segmentos que Snake expone.
-//
-//   - Tablero: rejilla de Snake::COLS x Snake::ROWS celdas de
-//     Config::Screen::CELL px (8x8) en el Body (filas 16..63). La
-//     serpiente sale por un borde y reaparece por el opuesto (wrap
-//     en X y en Y, estilo Nokia del juego original).
-//   - Sprites: los 4x4 px de Sprite, dibujados con píxel doble
-//     (SPRITE_SCALE = 2 px por lado) para ocupar la celda de 8x8.
-//   - Estados: START (conteo regresivo 3-2-1), PLAY (se mueve
-//     cada _moveDelay ms según la dificultad), PAUSE y GAME_OVER.
-//   - Controles: MOVE deja un único giro pendiente validado
-//     contra la dirección commitida (sin reversa directa, lo
-//     decide Snake::turn). ACTION_RIGHT (Btn2) es "Select /
-//     Pause": en PLAY pausa (panel "PAUSA") y en
-//     PAUSE/CONTINUE reanuda (ACTION_LEFT también reanuda).
-//     ACTION_UP (Btn1, "Volver") vuelve al menú en cualquier
-//     momento (la partida NO se pierde mientras no sea GAME_OVER:
-//     el menú muestra "Continue" al volver solo si la partida
-//     sigue en curso Y tiene score > 0; sin puntos se oculta); en
-//     GAME_OVER cualquier ACTION vuelve al menú. Al ESTABLECER
-//     UN NUEVO RÉCORD (storage.bestScore), en vez del letrero
-//     estático se muestra en ciclo "GAME OVER" → "BUT" → "YOU ARE"
-//     → "THE BEST" (cada letrero NEW_BEST_SIGN_MS) hasta que se
-//     presiona un botón; la fanfarria (SFX_NEW_BEST) suena solo
-//     la PRIMERA vez que aparece el letrero "THE BEST".
+// Game — partida: movimiento, puntuación y overlays
 // ========================================================
 
 class Game {
 public:
+  // Constantes
+  enum class State : uint8_t { START, PLAY, PAUSE, GAME_OVER };
 
-  // ========================================================
-  // Constructor (sin parámetros de servicios: usa los globales
-  // Display, Buttons y Sound — Globals.h)
-  // ========================================================
-
+  // Funciones
   Game();
-
-  // ========================================================
-  // Inicialización (al entrar en la ventana)
-  //
-  // `newGame` = true (NEW): reinicia todo y arranca el
-  // conteo regresivo 3-2-1. `false` (CONTINUE): reanuda la
-  // partida anterior en pausa, o arranca una nueva si no hay
-  // partida en curso (estado GAME_OVER).
-  // ========================================================
-
   void begin(bool newGame);
-
-  // ========================================================
-  // Dificultad del menú (1..10). Se aplica a la velocidad
-  // (ms por paso) AL INSTANTE, incluso con la partida ya
-  // iniciada: al cambiar el nivel, _moveDelay se recalcula en
-  // caliente y la partida en curso (PLAY o PAUSE) sigue el nuevo
-  // ritmo; también vale para la próxima partida nueva.
-  // ========================================================
-
-  void setDifficulty(uint8_t level);
-
-  // ========================================================
-  // Actualizar (consume los eventos de botones leídos en loop())
-  // ========================================================
-
   void update();
-
-  // ========================================================
-  // Dibujar
-  // ========================================================
-
   void print();
-
-  // ========================================================
-  // Primer frame tras begin() (patrón de las demás ventanas):
-  // el clear() completo y el redibujado de estáticos se hacen
-  // una sola vez; `forceRedraw` los repite (repintado tras un
-  // diagnóstico del reposo).
-  // ========================================================
-
-  void firstPrint(bool forceRedraw = false);
-
-  // ========================================================
-  // Salida (true = pidió volver al menú)
-  // ========================================================
-
+  void firstPrint(bool forceRedraw);
   bool done() const;
-
-  // ========================================================
-  // ¿La partida terminó en GAME OVER? Lo usa el Engine al salir
-  // para dejar la selección del menú en "New" (Game Over) o
-  // "Continue" (salida con la partida aún en curso).
-  // ========================================================
-
+  bool showContinue() const;
   bool isGameOver() const;
-
-  // ========================================================
-  // ¿Una celda está ocupada por la serpiente? Lo consulta
-  // Food (al colocar el alimento en una celda libre). Delega
-  // en Snake.
-  // ========================================================
-
   bool occupied(uint8_t x, uint8_t y) const;
-
-  // ========================================================
-  // Estado del juego
-  // ========================================================
-
-  enum class State : uint8_t {
-    START, // conteo regresivo 3-2-1 (el tablero ya está dibujado)
-    PLAY,  // la serpiente se mueve cada _moveDelay ms
-    PAUSE, // panel "PAUSA" sobre el tablero estático
-    GAME_OVER // panel "GAME OVER"; al batir el récord muestra el ciclo BUT/YOU ARE/THE BEST; cualquier ACTION vuelve al menú
-  };
-
-  // ========================================================
-  // Puntaje actual (el récord vive en Storage: `storage.bestScore()`)
-  // ========================================================
-
-  uint16_t score() const;
-  State state() const; 
+  State state() const;
   bool win() const;
   void speedFor(uint8_t level);
 
 private:
-
-  // ========================================================
-  // Geometría y tiempos
-  // ========================================================
-  // La celda del tablero mide `Config::Screen::CELL` px (8x8) y
-  // la fila superior del tablero es el Body
-  // (`Config::Screen::BODY_TOP`): la celda no se redeclara aquí,
-  // se toma de `Config` (fuente única, la usan `Food` y `Game`).
-  // Los sprites de 4x4 px se escalan con `SPRITE_SCALE` (2 px por
-  // lado del sprite) para llenar la celda: SIZE * SPRITE_SCALE = CELL.
-
-  // static constexpr uint8_t SPRITE_SCALE = 2;       // px por lado de cada píxel del sprite (4x4 escalado = 8x8)
-  // static constexpr uint32_t COUNTDOWN_MS = 3000;   // duración del conteo regresivo inicial (3 s, uno por dígito)
-  // static constexpr uint32_t COUNT_HIDE_MS = 250;   // al final de cada dígito: el número (y su cuadro) se ocultan antes del siguiente (parpadeo)
-  // static constexpr uint32_t NEW_BEST_SIGN_MS = 1500; // duración de cada letrero del festejo de nuevo récord ("GAME OVER"/"BUT"/"YOU ARE"/"THE BEST")
-
+  // Variables comunes de las ventanas
   static constexpr int16_t BODY_MIDDLE = Config::Screen::BODY_MIDDLE;
-  static constexpr int8_t COUNT = Config::Board::COUNT;
-  static constexpr int16_t PERIOD = Config::Board::PERIOD;
-  static constexpr int8_t OFF = Config::Board::OFF;
-
   static constexpr uint8_t CHAR_H = Config::Screen::CHAR_H;
   static constexpr uint8_t CHAR_W = Config::Screen::CHAR_W;
-
   static constexpr int16_t HEIGHT = Config::Screen::HEIGHT;
   static constexpr int16_t WIDTH = Config::Screen::WIDTH;
 
-  static constexpr int8_t FOOD_COUNT = Config::Food::FOOD_COUNT;
+  // Constantes
+  // Conteo de salida (3-2-1) y ritmo de su parpadeo.
+  static constexpr int8_t COUNT = 3;
+  static constexpr int16_t PERIOD = 1000;
+  static constexpr int8_t OFF = 25;
 
-  // ========================================================
-  // Métodos internos
-  // ========================================================
+  // Comidas normales requeridas antes de soltar una especial.
+  static constexpr int8_t FOOD_COUNT = 10;
 
-  // Arranque/reanudación
-  void reset();
+  // Funciones
   void startPlay();
-
-  // Lógica (coordinación; la serpiente la resuelve en Snake)
-  void handleTurn();  // lee MOVE y llama snake.turn() (tocando SFX_TURN si aceptó)
-  void step();        // un paso: snake.step() + comida/puntaje/sonidos del resultado
-  void die();         // colisión(GAME OVER) o tablero lleno
-
-  // Render
-  void drawSprite(Sprite::Part part, uint8_t x, uint8_t y);
-  void drawSnake();
-  // void drawHeader();
-  void drawOverlay(const char* title, bool fullWidth = false, bool show = true);
+  void step();
+  void die();
+  void drawOverlay(const char* title, bool fullWidth, bool show);
   void spawnFood(Food& food);
-
-  // Velocidad según dificultad (1..10): cuanto más alta, más rápido
-
-  // ========================================================
-  // ========================================================
-
   void printScore();
-  // void drawTime();
 
-  // ========================================================
-  // Estado
-  // ========================================================
-
+  // Variables
   State _state;
   bool _win;
-  // State _result;
-  bool _done;          // pidió volver al menú
-  bool _clear;         // primer frame tras begin(): clear() completo + estáticos
-  // bool _redrawHeader;  // el Header (puntaje/comida especial) cambió
-  // bool _dirtyBoard;    // hay que volcar el tablero (movimiento, comida, overlay)
-  // bool _overlayHidden; // el conteo está en su fase de parpadeo (cuadro + dígito ocultos)
-  // uint8_t _lastCount;  // último dígito del conteo mostrado (0xFF = ninguno aún: pitido al aparecer el 3)
-
-  // // Partida
-  // uint8_t _difficulty;    // nivel del menú (1..10, default 5)
-  uint16_t _moveDelay;    // ms por paso, derivado de la dificultad
+  bool _done;
+  bool _clear;
   uint16_t _score;
-
-  // // Festejo de nuevo récord (GAME OVER con _newBest): ciclo de letreros
-  // // "GAME OVER"/"BUT"/"YOU ARE"/"THE BEST" hasta que se presiona un botón
-  // bool _newBest;    // este fin de partida estableció un nuevo récord
-  // uint8_t _celeSfx; // flag: 0 = la fanfarria aún no sonó en "THE BEST";
-  //                   // al sonar pasa a 1 (suena solo la primera vez que
-  //                   // aparece ese letrero del festejo)
-
-  // // Cronómetros (Timer.h)
-  // Stopwatch _countdown;  // conteo regresivo 3-2-1 (arranca en reset())
-  // Stopwatch _step;       // intervalo entre pasos (arranca en startPlay())
-  // Stopwatch _cele;       // fase de los letreros del festejo (arranca en die())
-  // Stopwatch _timer;
   Ticker _timer;
   Blink _blink;
   int8_t _countdown;
-  // int8_t _lastCountdown;
-  // bool _updateCountdown;
   bool _blinkChanged;
-
   bool _moveSnake;
   bool _ateFood;
   bool _ateSpecialFood;
-
-  // Serpiente (lógica pura, sin Display/Sound/Food) y alimento
   Snake _snake;
-  Food _food;          // alimento del tablero (normal / especial) en la clase Food
-  Food _specialFood;          // alimento del tablero (normal / especial) en la clase Food
+  Food _food;
+  Food _specialFood;
   int8_t _countFood;
 };
 
-#endif
-
-// ====================================================================================
+// ========================================================
 // Fin
-// ====================================================================================
+// ========================================================
+
+#endif

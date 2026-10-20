@@ -1,17 +1,15 @@
 #ifndef BUTTONS_H
 #define BUTTONS_H
-
 #include <Arduino.h>
+#include "Config.h"
+
+// ========================================================
+// Buttons — lectura de botones con antirrebote
+// ========================================================
 
 class Buttons {
 public:
-
-  // ========================================================
-  // Configuración
-  // ========================================================
-
-  // static constexpr uint8_t MAX_BUTTONS = 8;
-
+  // Constantes
   enum Button : uint8_t {
     MOVE_UP = 0,
     MOVE_RIGHT,
@@ -22,106 +20,46 @@ public:
     ACTION_RIGHT,
     ACTION_DOWN,
     ACTION_LEFT,
-
     MAX_BUTTONS
   };
 
-  // ========================================================
-  // Constructor
-  // ========================================================
+  // Pines por defecto (orden = enum Button).
+  static constexpr int8_t PINS[MAX_BUTTONS] = {
+    Config::Pin::MOVE_UP, Config::Pin::MOVE_RIGHT, Config::Pin::MOVE_DOWN, Config::Pin::MOVE_LEFT,
+    Config::Pin::ACTION_UP, Config::Pin::ACTION_RIGHT, Config::Pin::ACTION_DOWN, Config::Pin::ACTION_LEFT
+  };
 
-  Buttons(
-    const int8_t* pins,
-    uint32_t buttonDelay = 30
-  );
-
-  // ========================================================
-  // Inicialización
-  // ========================================================
-
+  // Funciones
+  Buttons(const int8_t* pins, uint32_t buttonDelay);
   void begin();
-
-  // ========================================================
-  // Lectura
-  // ========================================================
-
   void read();
-
-  // ========================================================
-  // Estado actual
-  // ========================================================
-
   bool heldDown(uint8_t index) const;
   bool pressed(uint8_t index) const;
-  bool released(uint8_t index) const;
-
-  // true si algún botón está presionado ahora (no distingue cuál)
   bool anyHeld() const;
-
-  // true si algún botón está físicamente presionado (sin debounce ni
-  // supresión): la usa el wiring como "actividad" para el reposo.
   bool anyPhysical() const;
-
-  // Anula la activación de todos los botones hasta que se suelten
-  // (el botón que despertó al equipo no debe contar como pulsación)
   void ignoreUntilRelease();
 
-  // Los accesos por botón con nombre (moveUp/moveDown..., xxxPressed/xxxReleased)
-  // se eliminaron: se usan state/pressed/released con el enum Button, p. ej.
-  // `buttons.pressed(Buttons::ACTION_RIGHT)`. API única, sin boilerplate.
-
 private:
-
-  // ========================================================
-  // Mascara de los botones MOVE (bits 0..3 del byte de estado)
-  // ========================================================
-
+  // Constantes
   static constexpr uint8_t MOVE_MASK =
-    (uint8_t)((1u << MOVE_UP) | (1u << MOVE_RIGHT) |
-              (1u << MOVE_DOWN) | (1u << MOVE_LEFT));
+    (uint8_t)((1u << MOVE_UP) | (1u << MOVE_RIGHT) | (1u << MOVE_DOWN) | (1u << MOVE_LEFT));
 
-  // ========================================================
-  // Pines
-  // ========================================================
-
-  int8_t _pins[MAX_BUTTONS];
-
-  // ========================================================
-  // Estados (agrupados en bytes: 1 bit por botón, botón 0-7)
-  // ========================================================
-
-  // Estado físico sin filtrar (para detectar cambios antes del debounce)
-  uint8_t _rawButtons;
-
-  // Estado confirmado actual (debounce aplicado)
-  uint8_t _buttons;
-
-  // Se acaba de presionar (evento de un solo ciclo)
-  uint8_t _pressed;
-
-  // Se acaba de soltar (evento de un solo ciclo)
-  uint8_t _released;
-
-  // Ignora toda activación hasta que se suelten los botones
-  // (tras despertar del reposo: el botón que despertó no debe contar)
-  bool _ignore;
-
-  // ========================================================
-  // Helper: verifica un bit (botón 0-7) en un estado agrupado
-  // ========================================================
-
+  // Funciones
   static bool isSet(uint8_t states, uint8_t botton);
 
-  // ========================================================
-  // Debounce
-  // ========================================================
-
+  // Variables
+  int8_t _pins[MAX_BUTTONS];
+  uint8_t _rawButtons;
+  uint8_t _buttons;
+  uint8_t _pressed;
+  uint8_t _released;
+  bool _ignore;
   uint64_t _buttonLast[MAX_BUTTONS];
   uint32_t _buttonDelay;
 };
 
-#endif
-
-// ====================================================================================
+// ========================================================
 // Fin
-// ====================================================================================
+// ========================================================
+
+#endif

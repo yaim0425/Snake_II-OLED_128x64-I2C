@@ -1,190 +1,106 @@
 #ifndef MENU_CREDITS_H
 #define MENU_CREDITS_H
-
 #include <Arduino.h>
-
 #include "Config.h"
 #include "Timer.h"
-#include "Blink.h"
 #include "Scroller.h"
 
 // ========================================================
-// MenuCredits — roll de créditos (ventana del Engine)
-//
-// Muestra todo Config::Credits::CREDITS como un roll vertical
-// automático, estilo cine, que avanza bloque a bloque:
-//
-//   - Header fijo 0..15 con el título (CREDITS / GAME OVER /
-//     YOU WIN) en 12x16 centrado.
-//   - Body 16..63 = banda del roll (alto de fila 10 px).
-//   - El texto se clasifica por el patrón del array: la primera
-//     fila de cada bloque (tras un separador) es un Título
-//     (barra blanca de ancho completo con letra negra); el resto
-//     son nombres (texto normal). El bloque inicial (Snake II /
-//     versión / fecha) no lleva barra.
-//   - Cada bloque se desliza con el Scroller en DOS VUELOS: entra
-//     desde abajo y reposa centrado (STAY); tras la pausa externa
-//     ~PAUSE_MS sale hacia arriba (EXIT) y desaparece por el
-//     límite superior del Body antes de que suba el siguiente.
-//   - Al terminar el último bloque aparece la tarjeta final: las
-//     tres filas NAME / VERSION / RELEASE_DATE centradas, o el
-//     mensaje THANKS si se llegó desde Game (fromGame = true).
-//     El Header permanece visible durante la tarjeta.
-//   - Salida: ACTION_UP en cualquier momento corta la música
-//     (sound.stop()), suena SFX_BACK y se vuelve al Menu.
-//     Mientras el roll corre suena de fondo SFX_PIRATES (desde
-//     Game) o SFX_DRAGON_BALL (desde el menú), ambas en bucle.
-//
-// El reposo no aplica mientras el roll corre: Engine pregunta
-// rolling() (SleepManager solo cuenta la inactividad cuando el
-// reposo está permitido, así el conteo empieza al acabar el roll).
-//
-// Regla: todo lo que viene de Config está renombrado en las
-// constantes privadas (CREDITS/COUNT/TITLE/CARD_*); el
-// .cpp NO referencia Config nunca.
+// MenuCredits — créditos, game over y victoria (roll)
 // ========================================================
 
 class MenuCredits {
 public:
-
-  // ========================================================
-  // Constructor (sin parámetros de servicios: usa los globales
-  // Display, Buttons y Sound — Globals.h)
-  // ========================================================
-
+  // Funciones
   MenuCredits();
-
-  // ========================================================
-  // Inicialización
-  //
-  // fromGame = true  -> se llegó desde Game (música de pirata y
-  //                     tarjeta final THANKS). El Engine lo pasará
-  //                     al integrar Game; hoy (entrada por el menú)
-  //                     siempre es false.
-  // fromGame = false -> desde el menú: música Dragon Ball y tarjeta
-  //                     NAME/VERSION/RELEASE_DATE.
-  // ========================================================
-
-  void begin(bool fromGame = false, bool winner = false);
-
-  // ========================================================
-  // Actualizar (consume los eventos de botones leídos en loop())
-  // ========================================================
-
+  void begin(bool fromGame, bool winner);
   void update();
-
-  // ========================================================
-  // Dibujar
-  // ========================================================
-
   void print();
-  void firstPrint(bool forceRedraw = false);
-
-  // ========================================================
-  // Estado
-  // ========================================================
-
-  bool done() const;     // salir con ACTION_UP: el Engine vuelve al Menu
-  // bool rolling() const;  // true mientras el roll corre (el reposo no aplica)
+  void firstPrint(bool forceRedraw);
+  bool done() const;
+  bool card() const;
 
 private:
-
-  // ========================================================
-  // Geometría del roll
-  // ========================================================
-
+  // Variables comunes de las ventanas
   static constexpr int16_t HEIGHT = Config::Screen::HEIGHT;
-  // static constexpr int16_t WIDTH = Config::Screen::WIDTH;
   static constexpr int16_t HEADER_TOP = Config::Screen::HEADER_TOP;
   static constexpr int16_t BODY_TOP = Config::Screen::BODY_TOP;
   static constexpr int16_t BODY_H = Config::Screen::BODY_H;
-  static constexpr int16_t CHAR_H = Config::Screen::CHAR_H;
-  // static constexpr int16_t LINE_H = CHAR_H + 2;    // alto de fila (8 px de letra + 2 de aire)
+  static constexpr int16_t LINE_H = Config::Screen::CHAR_H + 2;   // alto de fila de un bloque
 
-  static constexpr uint32_t PAUSE_MS = Config::Credits::PAUSE_MS;  // pausa con el bloque centrado
+  // Constantes
+  // Pausa al terminar cada bloque de créditos, en milisegundos.
+  static constexpr uint32_t PAUSE_MS = 4 * 1000;
 
-  // static constexpr uint8_t MAX_BLOCKS = 8;
+  // Líneas del rol (cadena vacía = separador de bloque).
+  static constexpr const char* CREDITS[] = {
+    Config::Version::NAME,
+    Config::Version::VERSION,
+    Config::Version::RELEASE_DATE,
+    "",
+    "Programmer",
+    "OpenCode.AI",
+    "YAIM0425",
+    "",
+    "Reviewer",
+    "Claude.AI",
+    "ChatGPT.com",
+    "YAIM0425",
+    "",
+    "Director",
+    "YAIM0425",
+    "",
+    "Producer",
+    "YAIM0425",
+    "",
+    "Graphics",
+    "YAIM0425",
+    "OpenCode.AI",
+    "",
+    "Sound Effects",
+    "OpenCode.AI",
+    "",
+    "License",
+    "Polyform",
+    "Noncommercial 1.0.0",
+    "Copyright(c) 2026"
+  };
+  static constexpr uint8_t COUNT = sizeof(CREDITS) / sizeof(CREDITS[0]);
 
-  // ========================================================
-  // Renombres de Config (el .cpp no referencia Config nunca):
-  //   CREDITS / COUNT      -> Config::Credits::CREDITS / COUNT
-  //   TITLE                -> texto del Header de la ventana
-  //   CARD_THANKS          -> Config::Credits::THANKS
-  //   CARD_NAME / VERSION  -> Config::Version::NAME / VERSION
-  //   CARD_DATE            -> Config::Version::RELEASE_DATE
-  // ========================================================
+  static constexpr const char* TITLE_CREDITS = "CREDITS";
+  static constexpr const char* TITLE_GAME_OVER = "GAME OVER";
+  static constexpr const char* TITLE_WINNER = "YOU WIN";
 
-  static constexpr auto& CREDITS = Config::Credits::CREDITS;
-  static constexpr uint8_t COUNT = Config::Credits::COUNT;
+  // Tarjeta final, al terminar el roll.
+  static constexpr const char* CARD_THANKS = "Thanks for playing!";
+  static constexpr const char* CARD_NAME = Config::Version::NAME;
+  static constexpr const char* CARD_VERSION = Config::Version::VERSION;
+  static constexpr const char* CARD_DATE = Config::Version::RELEASE_DATE;
 
-  static constexpr char* TITLE_CREDITS = "CREDITS";
-  static constexpr char* TITLE_GAME_OVER = "GAME OVER";
-  static constexpr char* TITLE_WINNER = "YOU WIN";
-
-  // static constexpr const char* CARD_THANKS = Config::Credits::THANKS;
-
-  // static constexpr const char* CARD_NAME = Config::Version::NAME;
-  // static constexpr const char* CARD_VERSION = Config::Version::VERSION;
-  // static constexpr const char* CARD_DATE = Config::Version::RELEASE_DATE;
-
-  // ========================================================
-  // Fases del roll
-  // ========================================================
-
-  // enum class Phase : uint8_t { ROLL, CARD };
-
-  // // Un bloque = filas no vacías consecutivas del array (start =
-  // // índice de la primera fila del bloque, count = cantidad).
-  // struct Block { int16_t start; int16_t count; };
-
-  // ========================================================
-  // Métodos internos
-  // ========================================================
-
-  // void computeBlocks();    // deriva los bloques de CREDITS
-  void startStay();  // compone el bloque actual en el Scroller y arranca su entrada
-  void startExit();  // 2º vuelo del bloque actual: desde el reposo hacia fuera
-  // void addBlockLines();    // apila las líneas del bloque actual (comunes a los dos vuelos)
+  // Funciones
+  void startStay();
+  void startExit();
+  void startCard();
+  void startBlock(uint8_t count);
   void drawRoll();
-  void drawCard();
 
-  // ========================================================
-  // Estado
-  // ========================================================
-
-  bool _fromGame;  // llegó desde Game (música pirata + THANKS)
+  // Variables
+  bool _fromGame;
   bool _winner;
-  bool _clear;  // primer frame tras begin(): clear() completo + header
-  bool _done;   // salir: el Engine vuelve al Menu
-
-  // Blink _blink;
-  // int16_t _yUp;
-  // int16_t _yMiddle;
-
-  // int16_t _blockStart;  // índice de la primera fila del bloque actual
-  int16_t _blockH;  // alto del bloque actual en px
-  int16_t _rest;    // fila de reposo del bloque actual (centro del Body)
-
-  // Phase _phase;       // ROLL (corre el roll) o CARD (tarjeta final)
+  bool _clear;
+  bool _done;
+  int16_t _blockH;
+  int16_t _rest;
   bool _stay;
   int8_t _line;
-
-  // Block _blocks[MAX_BLOCKS];
-  // uint8_t _blockCount;
-  // uint8_t _block;     // bloque actual (0.._blockCount-1)
-
-  Scroller _scroller;  // slide vertical del bloque actual
+  Scroller _scroller;
   bool _isScrolling;
-
-  Stopwatch _pause;  // pausa con el bloque centrado
-  bool _paused;      // true: la pausa del bloque actual ya está anclada
-  bool _exiting;     // true: el bloque actual está en el vuelo de salida
+  bool _card;
+  Stopwatch _pause;
 };
 
-
+// ========================================================
+// Fin
+// ========================================================
 
 #endif
-
-// ====================================================================================
-// Fin
-// ====================================================================================

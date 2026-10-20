@@ -1,161 +1,53 @@
 #ifndef BOOT_H
 #define BOOT_H
-
 #include "Config.h"
 #include "Sprite.h"
 #include "Timer.h"
 #include "Blink.h"
 
 // ========================================================
-// Boot — animación de arranque (franjas verticales)
-//
-// La pantalla se divide en dos bandas completas: TITULO
-// (filas 0..15) y CUERPO (filas 16..63). Cada banda se llena
-// con líneas verticales de 3 px de grosor, separadas 8 px,
-// que se desplazan:
-//   - TITULO: de izquierda a derecha.
-//   - CUERPO: de derecha a izquierda.
-//
-// Las líneas avanzan 1 px cada ANIM_TICK ms (con acumulador
-// por tiempo, igual que el menú). Al llegar al borde derecho,
-// la línea se parte en dos tramos (derecho + izquierdo) para
-// no cortarse en seco. La animación dura en total TOTAL_MS;
-// cualquier botón la termina antes. Al terminar, done() devuelve
-// true y Engine pasa al menú.
+// Boot — pantalla de arranque (logo y mensaje)
 // ========================================================
 
 class Boot {
 public:
-  // ========================================================
-  // Constructor (sin parámetros: usa los servicios globales
-  // Display y Buttons, declarados en Globals.h)
-  // ========================================================
-
+  // Funciones
   Boot();
-
-  // ========================================================
-  // Inicialización (al entrar en la ventana)
-  // ========================================================
-
   void begin();
-
-  // ========================================================
-  // Actualizar (consume eventos de botones ya leídos y avanza el desplazamiento)
-  // ========================================================
-
   void update();
-
-  // ========================================================
-  // Dibujar (bandas de líneas verticales)
-  // ========================================================
-
   void print();
-  void firstPrint(bool forceRedraw = false);
-
-  // ========================================================
-  // Repintado forzado (tras un diagnóstico del reposo: el próximo
-  // print() dibuja el frame completo, con clear() incluido)
-  // ========================================================
-
-  // void forceRedraw();
-
-  // ========================================================
-  // Salida (true = la animación terminó)
-  // ========================================================
-
+  void firstPrint(bool forceRedraw);
   bool done() const;
 
 private:
-  // ========================================================
-  // Geometría
-  // ========================================================
-
-  // Grosor de cada línea vertical
-  // static constexpr uint8_t BAR_W = 3;
-
-  // Separación entre líneas (el desplazamiento repite cada traslación)
-  // static constexpr uint8_t BAR_SPACING = 8;
-
-  // Bandas completas (regiones de la pantalla en Config::Screen):
-  // TITULO = Header (Config::Screen::HEADER_TOP/H), CUERPO = Body
-  // (Config::Screen::BODY_TOP/H).
-
-  // ========================================================
-  // Tiempo
-  // ========================================================
+  // Variables comunes de las ventanas
   static constexpr int16_t WIDTH = Config::Screen::WIDTH;
   static constexpr int16_t HEADER_TOP = Config::Screen::HEADER_TOP;
-
-  // static constexpr uint32_t HOLD = Config::DefaultTimer::HOLD;
-  // static constexpr uint32_t NEXT = Config::DefaultTimer::;
-  static constexpr uint32_t PERIOD = Config::DefaultTimer::PERIOD;
-  static constexpr uint8_t OFF = Config::DefaultTimer::OFF;
-
   static constexpr uint8_t BODY_H = Config::Screen::BODY_H;
   static constexpr uint8_t BODY_TOP = Config::Screen::BODY_TOP;
 
+  // Constantes
+  static constexpr uint32_t PERIOD = Blink::PERIOD;
+  static constexpr uint8_t OFF = Blink::OFF;
   static constexpr auto& LOGO = Logo::LOGO;
   static constexpr uint8_t LOGO_W = Logo::LOGO_W;
   static constexpr uint8_t LOGO_H = Logo::LOGO_H;
-
-  // Avance de 1 px cada ANIM_TICK ms
-  // static constexpr uint32_t ANIM_TICK = 30;
-
-  // Duración total de la animación
-  // static constexpr uint32_t TOTAL_MS = 4000;
-
-  // static constexpr char* MESSAGE = "Press any button to start";
   static constexpr int8_t MESSAGE_LINES = 2;
   static const char* const MESSAGE[MESSAGE_LINES];
 
-  // ========================================================
-  // Estado interno
-  // ========================================================
-
-  // uint8_t _step;      // desplazamiento actual (0..BAR_SPACING-1)
-  // uint8_t _prevStep;  // desplazamiento que se dibujó en pantalla
-  // Ticker _ticker;     // avance de 1 px cada ANIM_TICK ms (acumulador por tiempo)
-  Blink _blink;  // parpadeo del mensaje (ancla + fase + flanco)
-
-  // bool _holdMessage;     // true si el mensaje de "Press any button..." está visible
-
+  // Variables
+  Blink _blink;
   bool _done;
-  bool _clear;  // primer frame: clear() completo + dibujar todo
+  bool _clear;
 
-  // int16_t _x;
-  // int16_t _y;
-  // int16_t _bars;
-
-  // ========================================================
-  // Helpers
-  // ========================================================
-
-  // Dibuja una columna vertical de 1 px con el módulo normalizado a
-  // 0..ancho-1 (fillRect recorta en vez de envolver)
-  // void drawBar(int16_t x, uint8_t y, uint8_t height, bool black);
-
-  // Dibuja las franjas iniciales: las BAR_W-1 columnas de la cola de cada
-  // franja (la de cabeza la pone drawBars, que es la única columna nueva
-  // en cada avance de 1 px)
+  // Funciones
   void blinkMessage();
   void drawMessage(bool show);
 
-  // Dibuja todas las franjas (TITULO y CUERPO) en el desplazamiento actual:
-  // imprime la columna de cabeza de cada franja y borra en negro la que
-  // deja libre por la cola
-  // void drawBars();
-
-  // Borra SOLO las columnas de las franjas anteriores que no coinciden con
-  // las nuevas (las que coinciden se mantienen; el resto de la pantalla no
-  // se toca)
-  // void eraseOldBars();
-
-  // Borra 1 px de cada columna de la franja vieja que no está en la nueva
-  // void eraseBarDiff(int16_t oldX, int16_t newX, uint8_t top, uint8_t height, int16_t width);
 };
 
-#endif
-
-// ====================================================================================
+// ========================================================
 // Fin
-// ====================================================================================
+// ========================================================
+
+#endif

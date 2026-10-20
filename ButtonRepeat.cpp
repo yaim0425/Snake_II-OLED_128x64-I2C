@@ -1,8 +1,9 @@
 #include "ButtonRepeat.h"
 #include "Globals.h"
 
-ButtonRepeat::ButtonRepeat(uint32_t delay, uint32_t tick)
-  : _delay(delay), _tick(tick), _repeat(), _repeatTick() {}
+ButtonRepeat::ButtonRepeat()
+  : _repeat(),
+    _repeatTick() {}
 
 bool ButtonRepeat::step(uint8_t button) {
   if (buttons.pressed(button)) {
@@ -11,14 +12,10 @@ bool ButtonRepeat::step(uint8_t button) {
     return true;
   }
 
-  if (buttons.heldDown(button) && _repeat.expired(_delay) && _repeatTick.expired(_tick)) {
+  if (buttons.heldDown(button) && _repeat.expired(DELAY) && _repeatTick.expired(TICK)) {
     _repeatTick.start();
     return true;
   }
 
   return false;
 }
-
-// ====================================================================================
-// Fin
-// ====================================================================================

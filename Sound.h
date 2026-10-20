@@ -1,161 +1,75 @@
 #ifndef SOUND_H
 #define SOUND_H
-
 #include <Arduino.h>
 #include "Buzzer.h"
 
 // ========================================================
-// Sound — sonidos del juego (contenido)
-//
-// Compone los efectos de sonido de Snake II como secuencias
-// de tonos (Note) sobre la capa de hardware Buzzer, que
-// POSEE por valor: el Buzzer es detalle interno de Sound
-// (no es un servicio global) y solo se inicializa con
-// begin(). Todo es NO bloqueante: play() arranca el efecto y
-// update() (llamado desde loop()) lo avanza paso a paso a
-// medida que cada tono termina.
-//
-// Con el sonido desactivado (setEnabled(false)) play() no
-// hace nada, pensado para la opción "Sound" del menú.
+// Sound — efectos de sonido (secuencias SFX)
 // ========================================================
 
 class Sound {
 public:
-
-  // ========================================================
-  // Efectos del juego
-  // ========================================================
-
+  // Constantes
   enum Sfx : uint8_t {
     SFX_NONE = 0,
-    SFX_CLICK,      // navegar por el menú (opción / rombo)
-    SFX_CONFIRM,    // activar una opción del menú
-    SFX_BACK,       // volver al menú desde una ventana
-    SFX_EAT,        // comer el alimento (crece la serpiente)
-    SFX_START,      // GO! al iniciar la partida
-    SFX_LEVEL_UP,   // subir de nivel
-    SFX_GAME_OVER,  // muerte de la serpiente
-    SFX_TICK,       // conteo regresivo 3-2-1 (un pitido por dígito)
-    SFX_TURN,       // cambio de dirección de la serpiente
-    SFX_PAUSE,      // pausar la partida
-    SFX_RESUME,     // reanudar la partida
-    SFX_NEW_BEST,   // festejo de nuevo récord (suena en el letrero "THE BEST")
-    SFX_BOOT,       // fanfarria de arranque del programa (suena en Boot al encender)
-    SFX_PIRATES,    // canción "Pirates of the Caribbean" (He's a Pirate), completa
-    SFX_DRAGON_BALL, // tema de apertura de Dragon Ball (transcripción de Francisco Roco), en bucle
-    SFX_COUNT       // cantidad de efectos (tamaño de EFFECTS, tabla indexada por Sfx)
+    SFX_CLICK,
+    SFX_CONFIRM,
+    SFX_BACK,
+    SFX_EAT,
+    SFX_START,
+    SFX_TICK,
+    SFX_TURN,
+    SFX_PAUSE,
+    SFX_RESUME,
+    SFX_BOOT,
+    SFX_PIRATES,
+    SFX_DRAGON_BALL,
+    SFX_COUNT
   };
 
-  // ========================================================
-  // Constructor (pin del buzzer; la capa de hardware se
-  // construye aquí y se inicializa en begin())
-  // ========================================================
-
-  explicit Sound(uint8_t pin = Config::Pin::BUZZER);
-
-  // ========================================================
-  // Inicialización (adjunta el canal del buzzer, silencia y
-  // reinicia la secuencia)
-  // ========================================================
-
+  // Funciones
+  explicit Sound(uint8_t pin);
   void begin();
-
-  // ========================================================
-  // Sonido activado/desactivado (opción "Sound" del menú)
-  // ========================================================
-
-  void setEnabled(bool on);
-  bool enabled() const;
-
-  // ========================================================
-  // Reproducir un efecto (arranca la secuencia, no bloquea).
-  // loop = true lo repite en bucle (música de fondo, p. ej. los
-  // créditos) hasta que play() arranque otro efecto o stop()
-  // corte. Si suena otro efecto, se corta al empezar.
-  // ========================================================
-
-  void play(Sfx effect, bool loop = false);
-
-  // ========================================================
-  // Actualizar: avanza a la siguiente nota del efecto.
-  // Llamar una vez por loop().
-  // ========================================================
-
+  void play(Sfx effect, bool loop);
   void update();
-
-  // ========================================================
-  // Estado
-  // ========================================================
-
-  void stop();          // corta el efecto en curso
-  bool playing() const; // true mientras suena un efecto
+  void stop();
 
 private:
-
-  // ========================================================
-  // Una nota de la secuencia (0 = silencio/luego)
-  // ========================================================
-
+  // Constantes
   struct Note {
     uint16_t freq;
     uint16_t durMs;
   };
 
-  // ========================================================
-  // Un efecto: secuencia de notas + cantidad de notas
-  // ========================================================
-
   struct Seq {
     const Note* notes;
-    uint8_t len;
+    uint16_t len;
   };
-
-  // ========================================================
-  // Secuencias de notas de cada efecto (los tonos viven en
-  // Sound.cpp). Son detalle de la implementación: solo las
-  // usa la tabla EFFECTS de abajo, que las indexa con el
-  // mismo orden del enum Sfx.
-  // ========================================================
 
   static const Note SEQ_CLICK[];
   static const Note SEQ_CONFIRM[];
   static const Note SEQ_BACK[];
   static const Note SEQ_EAT[];
   static const Note SEQ_START[];
-  static const Note SEQ_LEVEL_UP[];
-  static const Note SEQ_GAME_OVER[];
   static const Note SEQ_TICK[];
   static const Note SEQ_TURN[];
   static const Note SEQ_PAUSE[];
   static const Note SEQ_RESUME[];
-  static const Note SEQ_NEW_BEST[];
   static const Note SEQ_BOOT[];
   static const Note SEQ_PIRATES[];
   static const Note SEQ_DRAGON_BALL[];
-
-  // ========================================================
-  // Tabla de efectos indexada por Sfx (definida en Sound.cpp):
-  // EFFECTS[SFX_NONE]..EFFECTS[SFX_DRAGON_BALL], en el mismo orden
-  // del enum. Reemplaza a las constantes LEN_*: el largo de
-  // cada secuencia se deriva con sizeof dentro de la tabla.
-  // ========================================================
-
   static const Seq EFFECTS[];
 
-  // ========================================================
-  // Estado
-  // ========================================================
-
-  Buzzer     _buzzer;   // capa de hardware (propia de Sound)
-  const Note* _seq;     // secuencia en curso (null = sin efecto)
-  uint16_t   _len;      // cantidad de notas de la secuencia (uint16: canciones largas)
-  uint16_t   _step;     // nota actual
-  bool       _loop;     // repetir la secuencia en bucle
-  bool       _enabled;  // sonido activado (menú "Sound")
+  // Variables
+  Buzzer _buzzer;
+  const Note* _seq;
+  uint16_t _len;
+  uint16_t _step;
+  bool _loop;
 };
 
-#endif
-
-// ====================================================================================
+// ========================================================
 // Fin
-// ====================================================================================
+// ========================================================
+
+#endif

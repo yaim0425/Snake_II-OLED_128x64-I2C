@@ -1,40 +1,33 @@
 #ifndef BUTTON_REPEAT_H
 #define BUTTON_REPEAT_H
-
 #include <Arduino.h>
-
-#include "Config.h"
 #include "Timer.h"
 
 // ========================================================
-// ButtonRepeat — repetición de un botón al mantenerlo
-//
-// Primer paso inmediato (evento pressed) y, manteniéndolo, un
-// paso cada `tick` ms tras `delay` ms de mantención. Encapsula
-// los dos Stopwatch que antes vivían sueltos en Menu y
-// MenuDifficulty (donde además habían divergido: hold vs state).
-// Los tiempos por defecto salen de Config::Button.
+// ButtonRepeat — repetición de un botón al mantenerlo presionado
 // ========================================================
 
 class ButtonRepeat {
 public:
+  // Constantes
+  // Retardo antes de la primera repetición y cadencia de las siguientes.
+  static constexpr uint8_t DELAY = 400;
+  static constexpr uint8_t TICK = 100;
 
-  explicit ButtonRepeat(uint32_t delay = Config::Button::DELAY,
-                        uint32_t tick  = Config::Button::TICK);
-
-  // ¿Toca aplicar un paso del botón en este frame?
+  // Funciones
+  explicit ButtonRepeat();
   bool step(uint8_t button);
 
 private:
-
-  uint32_t _delay;
+  // Variables
   uint32_t _tick;
-  Stopwatch _repeat;      // inicio de la mantención (retardo)
-  Stopwatch _repeatTick;  // último paso de la repetición (cadencia)
+  uint32_t _delay;
+  Stopwatch _repeat;
+  Stopwatch _repeatTick;
 };
 
-#endif
-
-// ====================================================================================
+// ========================================================
 // Fin
-// ====================================================================================
+// ========================================================
+
+#endif

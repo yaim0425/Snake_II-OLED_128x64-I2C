@@ -1,194 +1,70 @@
 #ifndef DISPLAY_H
 #define DISPLAY_H
-
+#include <Adafruit_SSD1306.h>
 #include "Config.h"
 
-#include <Adafruit_SSD1306.h>
+enum TextSize { TEXT_6x8 = 1, TEXT_12x16 = 2 };
 
 // ========================================================
-// Regiones de la pantalla
+// Display — Pantalla OLED: bus I2C y regiones
 // ========================================================
-//
-// Header  : (0,0)   - (128,15)
-// Body    : (0,16)  - (128,64)
-// Full    : (0,0)   - (128,64)
-
-// enum Region {
-//   REGION_FULL = 0,
-//   REGION_HEADER,
-//   REGION_BODY
-// };
-
-enum TextSize {
-  TEXT_6x8 = 1,
-  TEXT_12x16 = 2,
-  TEXT_18x24 = 3
-};
-
-// enum TextAlign {
-//   LEFT_UP,
-//   CENTER_UP,
-//   RIGHT_UP,
-//   CENTER_LEFT,
-//   CENTER,
-//   CENTER_RIGHT,
-//   LEFT_DOWN,
-//   CENTER_DOWN,
-//   RIGHT_DOWN
-// };
-
-// struct TextPos {
-//   int16_t x;
-//   int16_t y;
-// };
 
 class Display {
 public:
-  // ========================================================
-  // Constructor
-  // ========================================================
-
-  // Los valores por defecto (pines I2C, dirección y geometría) vienen
-  // de Config (Pin/Screen); se puede sobreescribir cualquier parámetro.
-  Display(
-    uint8_t sda = Config::Pin::OLED_SDA,
-    uint8_t scl = Config::Pin::OLED_SCL,
-    uint8_t address = Config::Screen::ADDRESS);
-    // uint8_t width = Config::Screen::WIDTH,
-    // uint8_t height = Config::Screen::HEIGHT,
-    // uint8_t cellSize = Config::Screen::CELL);
-
-
-  // ========================================================
-  // Inicialización
-  // ========================================================
-
-  void begin();
-
-
-  // ========================================================
-  // Pantalla
-  // ========================================================
-
-  void clear();
-  void show();
-
-  // Enciende/apaga el panel OLED (SSD1306 0xAF/0xAE): apagado para
-  // ahorrar energía (el framebuffer se conserva en RAM y al volver
-  // a encender se restaura la misma imagen).
-  void power(bool on);
-
-  void drawPixel(
-    int16_t x, int16_t y,
-    bool white = false);
-
-  // Rectángulo relleno: misma firma que Adafruit_SSD1306::fillRect
-  // (reenvío directo a la pantalla)
-  void fillRect(
-    int16_t x, int16_t y,
-    uint16_t width, uint16_t height,
-    bool white = false);
-
-  // Triángulo relleno por sus tres vértices. No existe en
-  // Adafruit_GFX (solo el contorno, drawTriangle), así que se
-  // rasteriza aquí: recorre las filas de y entre el vértice más
-  // alto y el más bajo y pinta en cada una la línea horizontal
-  // entre los dos puntos donde esa altura corta los lados
-  void fillTriangle(
-    int16_t x0, int16_t y0,
-    int16_t x1, int16_t y1,
-    int16_t x2, int16_t y2,
-    bool white = false);
-
-  // ========================================================
-  // Texto
-  // ========================================================
-
-  // // Posición de la esquina sup-izquierda del texto según alineación y región
-  // TextPos getTextPos(const char* text, TextAlign align, uint8_t size = 1,
-  //                    Region region = REGION_FULL) const;
-
-  // Imprimir texto en una posición píxel exacta
-  void drawText(
-    const char* text,
-    int16_t x, int16_t y,
-    uint8_t size = 1,
-    bool tColor = SSD1306_WHITE, bool bgColor = SSD1306_BLACK);
-
-  void drawBitmap(
-    int16_t x, int16_t y,
-    const uint8_t *bitmap, int16_t w, int16_t h,
-    bool color = SSD1306_BLACK, bool bgColor = SSD1306_WHITE);
-
-  // // Imprimir texto invertido (negro) en una posición píxel exacta
-  // void drawTextInverted(const char* text, int16_t x, int16_t y, uint8_t size = 1);
-
-  // // Imprimir texto según alineación dentro de la región indicada
-  // void drawTextAligned(const char* text, TextAlign align, uint8_t size = 1,
-  //                      Region region = REGION_FULL);
-
-  // // Texto resaltado (cuadro blanco + texto invertido) en posición exacta
-  // // El cuadro rebasa al texto: +2*size px en X, +1 px en Y
-  // void drawHighlight(const char* text, int16_t x, int16_t y, uint8_t size = 1);
-
-  // // Texto resaltado según alineación dentro de la región indicada
-  // void drawHighlightAligned(const char* text, TextAlign align, uint8_t size = 1,
-  //                           Region region = REGION_FULL);
-
-  // uint8_t getTextWidth(const char* text, uint8_t size = 1) const;
-  // uint8_t getTextHeight(uint8_t size = 1) const;
-
-  // ========================================================
-  // Información de pantalla
-  // ========================================================
-
-  // uint8_t getWidth() const;
-  // uint8_t getHeight() const;
-
-  // uint8_t getCellSize() const;
-
-  // uint8_t getColumns() const;
-  // uint8_t getRows() const;
-
-  // ========================================================
-  // Acceso al OLED
-  // ========================================================
-
-  // Devuelve el objeto OLED. Precondición: begin() ya se llamó.
-  // Si begin() falló, devuelve un fallback seguro (OLED "mudo"
-  // en RAM) en lugar de desreferenciar nullptr; comprobar isReady()
-  // para saber si hay pantalla real.
-  // Adafruit_SSD1306& screen();
-
-  // true si la pantalla quedó operativa (el OLED respondió en begin());
-  // false si la inicialización falló (pantalla ausente por I2C)
-  // bool isReady() const;
-  int16_t centerX(const char* text, int8_t size) const;
-
-private:
-  Adafruit_SSD1306* _screen;
+  // Constantes comunes de las ventanas
+  static constexpr uint8_t WIDTH = Config::Screen::WIDTH;
+  static constexpr uint8_t HEIGHT = Config::Screen::HEIGHT;
 
   static constexpr uint8_t CHAR_W = Config::Screen::CHAR_W;
   static constexpr uint8_t CHAR_H = Config::Screen::CHAR_H;
 
-  static constexpr int16_t WIDTH = Config::Screen::WIDTH;
-  static constexpr int16_t HEIGHT = Config::Screen::HEIGHT;
+  static constexpr uint8_t HEADER_TOP = Config::Screen::HEADER_TOP;
 
+  static constexpr uint8_t BODY_TOP = Config::Screen::BODY_TOP;
+  static constexpr uint8_t BODY_H = Config::Screen::BODY_H;
+  static constexpr uint8_t BODY_MIDDLE = Config::Screen::BODY_MIDDLE;
+
+  static constexpr uint8_t FOOT_H = Config::Screen::FOOT_H;
+  static constexpr uint8_t FOOT_TOP = Config::Screen::FOOT_TOP;
+
+  static constexpr uint32_t CLOCK_HZ = 400 * 1000;
+
+  // Funciones
+  Display(uint8_t sda, uint8_t scl, uint8_t address);
+
+  void begin();
+  void clear();
+  void show();
+  void power(bool on);
+  void drawPixel(uint8_t x, uint8_t y, bool white);
+  void fillRect(
+    uint8_t x, uint8_t y,
+    uint16_t width, uint16_t height,
+    bool white);
+  void fillTriangle(
+    uint8_t x0, uint8_t y0,
+    uint8_t x1, uint8_t y1,
+    uint8_t x2, uint8_t y2,
+    bool white);
+  void drawText(
+    const char* text, uint8_t x, uint8_t y, uint8_t size,
+    bool tColor, bool bgColor);
+  void drawBitmap(
+    uint8_t x, uint8_t y, const uint8_t* bitmap,
+    uint8_t w, uint8_t h, bool color, bool bgColor);
+
+  uint8_t centerX(const char* text, uint8_t size) const;
+
+private:
+  // Variables
+  Adafruit_SSD1306* _screen;
   uint8_t _sda;
   uint8_t _scl;
   uint8_t _address;
-
-  // uint8_t _width;
-  // uint8_t _height;
-
-  // uint8_t _cellSize;
-
-  // uint8_t _columns;
-  // uint8_t _rows;
 };
 
-#endif
-
-// ====================================================================================
+// ========================================================
 // Fin
-// ====================================================================================
+// ========================================================
+
+#endif

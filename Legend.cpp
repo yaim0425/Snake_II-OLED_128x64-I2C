@@ -1,14 +1,7 @@
 #include "Legend.h"
 #include "Globals.h"
 #include "Draw.h"
-
-#include <Adafruit_GFX.h>
-#include <stdio.h>
 #include <string.h>
-
-// ========================================================
-// Textos del pie (identificador y función de cada rombo)
-// ========================================================
 
 const char* const Legend::BTN_FUNC[4] = {
   "Btn1 / Back",
@@ -16,15 +9,6 @@ const char* const Legend::BTN_FUNC[4] = {
   "Btn3 / None",
   "Btn4 / None"
 };
-
-// const char* const Legend::BTN_NAME[4] = { "Btn1", "Btn2", "Btn3", "Btn4" };
-// const char* const Legend::BTN_XXX[4] = {
-//   "Back", "Select / Pause", "None", "None"
-// };
-
-// ========================================================
-// Constructor
-// ========================================================
 
 Legend::Legend()
   : _btn(0),
@@ -34,10 +18,6 @@ Legend::Legend()
     _lastScroll(true),
     _done(false),
     _clear(true) {}
-
-// ========================================================
-// Inicialización (al entrar en la ventana)
-// ========================================================
 
 void Legend::begin() {
   _btn = 0;
@@ -49,38 +29,21 @@ void Legend::begin() {
   _clear = true;
 }
 
-// ========================================================
-// Repintado forzado (tras un diagnóstico del reposo)
-// ========================================================
-
-// void Legend::forceRedraw() {
-//   _clear = true;
-// }
-
-// ========================================================
-// Actualizar (consume eventos de botones ya leídos, reproduce
-// sonido según el botón y avanza el ciclo de parpadeo)
-// ========================================================
-
 void Legend::update() {
-  // Cualquier botón cierra la ventana. El sonido depende del
-  // botón presionado (prioridad si se pulsan varios a la vez):
-  // MOVE = SFX_CLICK, ACTION_UP (Back) = SFX_BACK,
-  // ACTION_RIGHT (Select / Pause) = SFX_CONFIRM,
-  // ACTION_DOWN/ACTION_LEFT (None) = SFX_CLICK
   bool exit = false;
 
-  if (buttons.pressed(Buttons::MOVE_UP) || buttons.pressed(Buttons::MOVE_RIGHT) || buttons.pressed(Buttons::MOVE_DOWN) || buttons.pressed(Buttons::MOVE_LEFT)) {
-    sound.play(Sound::SFX_CLICK);
+  if (buttons.pressed(Buttons::MOVE_UP) || buttons.pressed(Buttons::MOVE_RIGHT) ||
+    buttons.pressed(Buttons::MOVE_DOWN) || buttons.pressed(Buttons::MOVE_LEFT)) {
+    sound.play(Sound::SFX_CLICK, false);
     exit = true;
   } else if (buttons.pressed(Buttons::ACTION_UP)) {
-    sound.play(Sound::SFX_BACK);
+    sound.play(Sound::SFX_BACK, false);
     exit = true;
   } else if (buttons.pressed(Buttons::ACTION_RIGHT)) {
-    sound.play(Sound::SFX_CONFIRM);
+    sound.play(Sound::SFX_CONFIRM, false);
     exit = true;
   } else if (buttons.pressed(Buttons::ACTION_DOWN) || buttons.pressed(Buttons::ACTION_LEFT)) {
-    sound.play(Sound::SFX_CLICK);
+    sound.play(Sound::SFX_CLICK, false);
     exit = true;
   }
 
@@ -91,248 +54,80 @@ void Legend::update() {
 
   if (_lastScroll) {
     if (_scroller.update()) return;
+
     _lastScroll = false;
     _ticker.start();
     _blink.start();
   };
 
-  // El rombo activo cambia cada DWELL_MS (avance lento)
   uint32_t steps = _ticker.consume();
+
   if (steps) _btn = (_btn + steps) % 4;
 }
 
-// ========================================================
-// Dibujar (pad MOVE + rombos de ACTION + texto del pie)
-//
-// Solo se limpia lo necesario: en el primer frame se hace un
-// clear() completo y se dibujan los rótulos, los pads y los 4
-// rombos fijos (estáticos). Después solo se borra/redibuja:
-//   - el texto del pie, cuando cambia el rombo activo;
-//   - la zona del rombo activo (parpadeo).
-// El resto de la pantalla se mantiene intacto.
-// ========================================================
-
 void Legend::print() {
-  firstPrint();
+  firstPrint(false);
   nextBtn();
   _scroller.print();
   blinkDiamond();
-  // if (true) return;
-
-  // if (_prevBtn != _btn) {
-  //   // El rombo que dejó de ser activo debe quedar completo. Si el cambio lo
-  //   // pilló en su fase oculta del parpadeo, su zona quedó borrada y nadie la
-  //   // volvería a dibujar: se restaura el rombo completo como estático.
-  //   int16_t acx, acy;
-  //   diamondCenter(_btn, acx, acy);
-  //   dDiamond(acx, acy, false);
-
-  //   // Texto del pie: función del rombo activo
-  //   display.fillRect(0, Config::Screen::FOOT_TOP, display.getWidth(), 8, true);
-  //   display.drawText(BTN_FUNC[_btn], (Config::Screen::WIDTH - strlen(BTN_FUNC[_btn]) * 6) / 2, Config::Screen::FOOT_TOP, TEXT_6x8);
-  //   _prevBtn = _btn;
-  //   _timer.start();  // reinicia el ciclo de parpadeo del rombo activo
-  // }
-
-  // // Rombo activo: se borra solo su zona y se redibuja según el parpadeo;
-  // // los inactivos ya están fijos en pantalla
-  // if (_timer.expired(HOLD)) {
-  //   bool visibleDiamond = _timer.blinkOn(PERIOD, OFF);
-  //   if ((visibleDiamond && !_visibleDiamond) || (!visibleDiamond && _visibleDiamond)) {
-  //     int16_t acx, acy;
-  //     diamondCenter(_btn, acx, acy);
-  //     dDiamond(acx, acy, _visibleDiamond);
-  //     _visibleDiamond = !_visibleDiamond;
-  //   }
-  // }
 }
-
-// ========================================================
-// Primer frame: clear() completo + dibujar todo (estáticos)
-// ========================================================
 
 void Legend::firstPrint(bool forceRedraw) {
   if (!_clear && !forceRedraw) return;
+
   display.clear();
   _clear = false;
-
-  // ------------------------------------------------------
-
   _ticker.start();
   _blink.start();
-
-  // ------------------------------------------------------
-
-  char* text = "Move / Action";
-  // int16_t centerX = 0;
-  // int16_t centerY = 0;
-
+  const char* text = "Move / Action";
   const int16_t middleX = WIDTH / 2;
   int16_t textX = 0;
-
-  // ------------------------------------------------------
-
   display.fillRect(0, TEXT_Y - 1, WIDTH, 8 + 1, true);
-
-  // ------------------------------------------------------
-
   text = "Move";
   textX = (middleX - strlen(text) * 6) / 2;
   display.drawText(text, textX, TEXT_Y, TEXT_6x8, false, true);
-  Draw::triangle(Draw::DIR_UP, PAD_LEFT_X, PAD_Y - PAD_RADIO);     // Arriba (↑)
-  Draw::triangle(Draw::DIR_RIGHT, PAD_LEFT_X + PAD_RADIO, PAD_Y);  // Derecha (→)
-  Draw::triangle(Draw::DIR_DOWN, PAD_LEFT_X, PAD_Y + PAD_RADIO);   // Abajo (↓)
-  Draw::triangle(Draw::DIR_LEFT, PAD_LEFT_X - PAD_RADIO, PAD_Y);   // Izquierda (←)
-
-
-
-  // Arriba (↑)
-  // toggleTriangle(1, PAD_LEFT_X, PAD_Y - PAD_RADIO, SSD1306_WHITE);
-  // centerX = PAD_LEFT_X;
-  // centerY = PAD_Y - PAD_RADIO;
-  // toggleTriangle(1, centerX, centerY, SSD1306_WHITE);
-  // display.fillTriangle(
-  //   centerX - SIZE, centerY,
-  //   centerX, centerY - SIZE,
-  //   centerX + SIZE, centerY,
-  //   SSD1306_WHITE);
-
-  // Derecha (→)
-  // toggleTriangle(2, PAD_LEFT_X + PAD_RADIO, PAD_Y, SSD1306_WHITE);
-  // centerX = PAD_LEFT_X + PAD_RADIO;
-  // centerY = PAD_Y;
-  // toggleTriangle(2, centerX, centerY, SSD1306_WHITE);
-  // display.fillTriangle(
-  //   centerX, centerY - SIZE,
-  //   centerX + SIZE, centerY,
-  //   centerX, centerY + SIZE,
-  //   SSD1306_WHITE);
-
-  // Abajo (↓)
-  // toggleTriangle(3, PAD_LEFT_X, PAD_Y + PAD_RADIO, SSD1306_WHITE);
-  // centerX = PAD_LEFT_X;
-  // centerY = PAD_Y + PAD_RADIO;
-  // toggleTriangle(3, centerX, centerY, SSD1306_WHITE);
-  // display.fillTriangle(
-  //   centerX - SIZE, centerY,
-  //   centerX, centerY + SIZE,
-  //   centerX + SIZE, centerY,
-  //   SSD1306_WHITE);
-
-  // Izquierda (←)
-  // toggleTriangle(4, PAD_LEFT_X - PAD_RADIO, PAD_Y, SSD1306_WHITE);
-  // centerX = PAD_LEFT_X - PAD_RADIO;
-  // centerY = PAD_Y;
-  // toggleTriangle(4, centerX, centerY, SSD1306_WHITE);
-  // display.fillTriangle(
-  //   centerX, centerY - SIZE,
-  //   centerX - SIZE, centerY,
-  //   centerX, centerY + SIZE,
-  //   SSD1306_WHITE);
-
-  // ------------------------------------------------------
-
-  // Rótulo y rombos de ACTION (derecha): las posiciones de un pad
+  Draw::triangle(Draw::DIR_UP, PAD_LEFT_X, PAD_Y - PAD_RADIO, true);
+  Draw::triangle(Draw::DIR_RIGHT, PAD_LEFT_X + PAD_RADIO, PAD_Y, true);
+  Draw::triangle(Draw::DIR_DOWN, PAD_LEFT_X, PAD_Y + PAD_RADIO, true);
+  Draw::triangle(Draw::DIR_LEFT, PAD_LEFT_X - PAD_RADIO, PAD_Y, true);
   text = "Action";
   textX = (middleX + (middleX - strlen(text) * 6) / 2);
   display.drawText(text, textX, TEXT_Y, TEXT_6x8, false, true);
 
-  for (int8_t i = 0; i < 4; i++)
-    toggleDiamond(i, true);
-
-  // for (uint8_t step = 0; step < 4; step++) {
-  //   int16_t cx, cy;
-  //   diamondCenter(step, cx, cy);
-  //   drawDiamond(cx, cy, false);
-  // }
-
-  // ------------------------------------------------------
-
+  for (int8_t i = 0; i < 4; i++) toggleDiamond(i, true);
   const char* pieText = BTN_FUNC[_btn];
   display.fillRect(0, FOOT_TOP - 1, WIDTH, FOOT_H + 1, true);
   display.drawText(pieText, display.centerX(pieText, TEXT_6x8), FOOT_TOP, TEXT_6x8, false, true);
 }
 
 void Legend::blinkDiamond() {
-  if (!_scroller.done()) return;
-  else if (_lastBtn != _btn) return;
-  else if (!_blink.changed(PERIOD, OFF)) return;
+  if (!_scroller.done())
+    return;
+  else if (_lastBtn != _btn)
+    return;
+  else if (!_blink.changed(PERIOD, OFF))
+    return;
   toggleDiamond(_btn, _blink.isVisible(PERIOD, OFF));
-
-  // int16_t centerX = 0;
-  // int16_t centerY = 0;
-
-  // switch (_btn) {
-  //   case 0:  // Btn1 (Arriba)
-  //     centerX = PAD_RIGHT_X;
-  //     centerY = PAD_Y - PAD_RADIO;
-  //     break;
-
-  //   case 1:  // Btn2 (Derecha)
-  //     centerX = PAD_RIGHT_X + PAD_RADIO;
-  //     centerY = PAD_Y;
-  //     break;
-
-  //   case 2:  // Btn3 (Abajo)
-  //     centerX = PAD_RIGHT_X;
-  //     centerY = PAD_Y + PAD_RADIO;
-  //     break;
-
-  //   case 3:  // Btn4 (Izquierda)
-  //     centerX = PAD_RIGHT_X - PAD_RADIO;
-  //     centerY = PAD_Y;
-  //     break;
-  // }
-
-  // switch (_btn) {
-  //   case 0:
-  //   case 2:
-  //     display.fillTriangle(
-  //       centerX - SIZE, centerY,
-  //       centerX, centerY - SIZE,
-  //       centerX + SIZE, centerY,
-  //       _showDiamond ? SSD1306_BLACK : SSD1306_WHITE);
-  //     display.fillTriangle(
-  //       centerX - SIZE, centerY,
-  //       centerX, centerY + SIZE,
-  //       centerX + SIZE, centerY,
-  //       _showDiamond ? SSD1306_BLACK : SSD1306_WHITE);
-  //     break;
-
-  //   case 1:
-  //   case 3:
-  //     display.fillTriangle(
-  //       centerX, centerY - SIZE,
-  //       centerX - SIZE, centerY,
-  //       centerX, centerY + SIZE,
-  //       _showDiamond ? SSD1306_BLACK : SSD1306_WHITE);
-  //     display.fillTriangle(
-  //       centerX, centerY - SIZE,
-  //       centerX + SIZE, centerY,
-  //       centerX, centerY + SIZE,
-  //       _showDiamond ? SSD1306_BLACK : SSD1306_WHITE);
-  //     break;
-  // }
 }
 
 void Legend::diamondCenter(int8_t diamond, int16_t& centerX, int16_t& centerY) {
   switch (diamond) {
-    case 0:  // Btn1 (Arriba)
+    case 0:
       centerX = PAD_RIGHT_X;
       centerY = PAD_Y - PAD_RADIO;
       break;
 
-    case 1:  // Btn2 (Derecha)
+    case 1:
       centerX = PAD_RIGHT_X + PAD_RADIO;
       centerY = PAD_Y;
       break;
 
-    case 2:  // Btn3 (Abajo)
+    case 2:
       centerX = PAD_RIGHT_X;
       centerY = PAD_Y + PAD_RADIO;
       break;
 
-    case 3:  // Btn4 (Izquierda)
+    case 3:
       centerX = PAD_RIGHT_X - PAD_RADIO;
       centerY = PAD_Y;
       break;
@@ -346,15 +141,6 @@ void Legend::toggleDiamond(int8_t diamond, bool show) {
   Draw::diamond(centerX, centerY, show);
 }
 
-// ========================================================
-// Texto del pie: compone el del rombo nuevo y lo mete en vuelo
-//
-// El sentido del vuelo sigue al ciclo de los rombos: al avanzar
-// de Btn1 → Btn4 la franja entra por la derecha y en sentido
-// contrario al retroceder. El texto nuevo tapará al anterior al
-// medida que entra (print() rellena la banda antes de volcar).
-// ========================================================
-
 void Legend::nextBtn() {
   if (_lastBtn == _btn) return;
 
@@ -363,105 +149,12 @@ void Legend::nextBtn() {
   _scroller.setRow(FOOT_TOP - 1);
   _scroller.startSlide();
   _lastScroll = true;
-
   toggleDiamond(_lastBtn, true);
   toggleDiamond(_btn, true);
   _ticker.start();
   _lastBtn = _btn;
 }
 
-// ========================================================
-// Posición del rombo i (centro), según el pad direccional
-// ========================================================
-
-// void Legend::diamondCenter(uint8_t i, int16_t& cx, int16_t& cy) const {
-//   switch (i) {
-//     case 0:
-//       cx = PAD_RADIO;
-//       cy = CY - PAD_RADIO;
-//       break;  // ↑ Btn1
-//     case 1:
-//       cx = PAD_RADIO + PAD_RADIO;
-//       cy = CY;
-//       break;  // → Btn2
-//     case 2:
-//       cx = PAD_RADIO;
-//       cy = CY + PAD_RADIO;
-//       break;  // ↓ Btn3
-//     default:
-//       cx = PAD_RADIO - PAD_RADIO;
-//       cy = CY;
-//       break;  // ← Btn4
-//   }
-// }
-
-// ========================================================
-// Rombo de 4 flechas centrado en (cx, cy)
-// ========================================================
-
-// void Legend::drawPad(int16_t cx) {
-//   drawArrow(0, cx, CY - PAD_RADIO);  // ↑
-//   drawArrow(1, cx + PAD_RADIO, CY);  // →
-//   drawArrow(2, cx, CY + PAD_RADIO);  // ↓
-//   drawArrow(3, cx - PAD_RADIO, CY);  // ←
-// }
-
-// ========================================================
-// Flecha sólida (punta hacia afuera del rombo)
-// ========================================================
-
-// void Legend::drawArrow(uint8_t dir, int16_t cx, int16_t cy) {
-//   const int16_t T = 4;  // altura de la punta
-//   const int16_t B = 5;  // media base
-
-//   switch (dir) {
-//     case 0:  // ↑: punta arriba
-//       display.fillTriangle(cx, cy - T, cx - B, cy + (T - 1), cx + B, cy + (T - 1), false);
-//       break;
-//     case 1:  // →: punta a la derecha
-//       display.fillTriangle(cx + T, cy, cx - (T - 1), cy - B, cx - (T - 1), cy + B, false);
-//       break;
-//     case 2:  // ↓: punta abajo
-//       display.fillTriangle(cx, cy + T, cx - B, cy - (T - 1), cx + B, cy - (T - 1), false);
-//       break;
-//     case 3:  // ←: punta a la izquierda
-//       display.fillTriangle(cx - T, cy, cx + (T - 1), cy - B, cx + (T - 1), cy + B, false);
-//       break;
-//   }
-// }
-
-// ========================================================
-// Rombo completo de DIA_SIZE centrado en (cx, cy)
-// ========================================================
-
-// void Legend::dDiamond(int16_t cx, int16_t cy, bool black) {
-//   const int16_t h = SIZE / 2;  // media altura / ancho medio
-
-//   display.fillTriangle(cx, cy - h, cx + h, cy, cx, cy + h, black);
-//   display.fillTriangle(cx, cy - h, cx - h, cy, cx, cy + h, black);
-// }
-
-// ========================================================
-// ¿El rombo activo está visible? (fijo HOLD_MS, luego parpadeo MUY rápido)
-// ========================================================
-
-// bool Legend::blinkVisible() const {
-//   // Fijo (visible) mientras se mantiene el rombo: primero HOLD_MS
-//   if (!_timer.expired(HOLD)) return true;
-
-//   // Luego parpadea MUY rápido: oculto durante el OFF_PCT inicial de cada
-//   // BLINK_PERIOD (anclado al _timer: sin salto de fase con el reloj 64 bits)
-//   return _timer.blinkOn(PERIOD, OFF);
-// }
-
-// ========================================================
-// Salida (true = se pidió ir al menú)
-// ========================================================
-
 bool Legend::done() const {
   return _done;
 }
-
-// ====================================================================================
-// Fin
-// ====================================================================================
