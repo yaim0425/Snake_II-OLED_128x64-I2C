@@ -1,6 +1,6 @@
-#include "Globals.h"
-#include "Engine.h"
-#include "SleepManager.h"
+#include "src/Globals.h"
+#include "src/core/Engine.h"
+#include "src/core/SleepManager.h"
 #include <Arduino.h>
 
 
@@ -11,9 +11,9 @@
 // Declaración de las variables
 // ========================================================
 
-Display display(Config::Pin::OLED_SDA, Config::Pin::OLED_SCL, Config::Screen::ADDRESS);
+Display display;
 Buttons buttons(Buttons::PINS, 30);
-Sound sound(Buzzer::PIN);
+Sound sound;
 Storage storage;
 Engine engine;
 SleepManager sleepManager(engine);
