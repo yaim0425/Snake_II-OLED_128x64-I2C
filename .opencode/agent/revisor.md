@@ -1,6 +1,6 @@
 ---
 description: Revisor de código en SOLO LECTURA del firmware ESP32-S3 (Snake_II-OLED_128x64-I2C). Audita .cpp/.h, busca bugs, UB, límites de arrays y problemas de memoria, y reporta hallazgos proponiendo parches (diffs) SIN aplicarlos. Úsalo para revisar cambios recientes, auditar una clase/ventana o buscar errores antes de commitear.
-mode: all
+mode: primary
 model: opencode/big-pickle
 permission:
   edit: deny
