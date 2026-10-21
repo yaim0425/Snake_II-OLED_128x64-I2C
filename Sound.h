@@ -219,7 +219,7 @@ private:
     { SEQ_DRAGON_BALL,  sizeof(SEQ_DRAGON_BALL) / sizeof(Sound::Note) }
   };
 
-  // Variables comunes de las ventanas
+  // Variables locales
   Buzzer _buzzer;
   const Note* _seq;
   uint16_t _len;

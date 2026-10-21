@@ -9,17 +9,17 @@
 // ========================================================
 
 Menu::Menu()
-  : _lastScroll(true),
-    _showContinue(false),
+  : _isScrolling(true),
     _selected(OPT_NEW),
     _lastSelected(OPT_NEW),
     _blink(),
     _repeat(),
     _scroller(),
-    _space(WIDTH / OPT_COUNT),
-    _confirm(false),
     _done(false),
-    _clear(true) {}
+    _clear(true),
+    _showContinue(false),
+    _space(WIDTH / OPT_COUNT),
+    _confirm(false) {}
 
 void Menu::begin(bool showContinue) {
   buttons.ignoreUntilRelease();
@@ -27,7 +27,7 @@ void Menu::begin(bool showContinue) {
   _scroller.begin(Draw::DIR_LEFT, Scroller::EndMode::STAY);
   _space = WIDTH / (OPT_COUNT + (showContinue ? 1 : 0));
   _showContinue = showContinue;
-  _lastScroll = true;
+  _isScrolling = true;
   _confirm = false;
   _done = false;
   _blink.start();
@@ -52,10 +52,10 @@ void Menu::update() {
   navigate();
   action();
 
-  if (_lastScroll) {
+  if (_isScrolling) {
     if (_scroller.update()) return;
 
-    _lastScroll = false;
+    _isScrolling = false;
     _blink.start();
   }
 }
@@ -132,7 +132,7 @@ void Menu::nextOption() {
   _scroller.addText(OPTION[_selected], TEXT_12x16, false, true);
   _scroller.setRow(BOX_TOP - 1);
   _scroller.startSlide();
-  _lastScroll = true;
+  _isScrolling = true;
   _lastSelected = _selected;
 }
 

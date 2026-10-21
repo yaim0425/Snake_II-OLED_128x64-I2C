@@ -59,7 +59,7 @@ public:
     bool tColor, bool bgColor);
 
 private:
-  // Variables comunes de las ventanas
+  // Variables locales
   Adafruit_SSD1306* _screen;
   uint8_t _sda;
   uint8_t _scl;

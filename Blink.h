@@ -21,7 +21,7 @@ public:
   bool changed(uint32_t period, uint8_t offPct);
 
 private:
-  // Variables comunes de las ventanas
+  // Variables locales
   bool _last;
   Stopwatch _timer;
 };

@@ -61,17 +61,19 @@ private:
   static constexpr uint8_t OFF = Blink::OFF;
 
   // Variables comunes de las ventanas
-  bool _lastScroll;
-  bool _showContinue;
+  bool _isScrolling;
   int8_t _selected;
   int8_t _lastSelected;
   Blink _blink;
   ButtonRepeat _repeat;
   Scroller _scroller;
-  int8_t _space;
-  bool _confirm;
   bool _done;
   bool _clear;
+
+  // Variables locales
+  bool _showContinue;
+  int8_t _space;
+  bool _confirm;
 
   // Funciones comunes de las ventanas
   void blinkOption();

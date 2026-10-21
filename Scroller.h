@@ -55,6 +55,9 @@ private:
   static constexpr uint8_t ANIM_V = 12;
 
   // Variables comunes de las ventanas
+  bool _done;
+
+  // Variables locales
   uint8_t _strip[ROW_BYTES][WIDTH];
   Line _lines[MAX_LINES];
   uint8_t _lineCount;
@@ -71,7 +74,6 @@ private:
   int8_t _step;
   int16_t _lastPosX;
   int16_t _lastPosY;
-  bool _done;
   Ticker _timerH;
   Ticker _timerV;
 

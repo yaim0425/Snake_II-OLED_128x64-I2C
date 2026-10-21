@@ -24,7 +24,7 @@ public:
   bool busy() const;
 
 private:
-  // Variables comunes de las ventanas
+  // Variables locales
   uint8_t _pin;
   bool _attached;
   bool _busy;

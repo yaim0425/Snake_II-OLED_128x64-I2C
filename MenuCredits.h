@@ -81,18 +81,20 @@ private:
   static constexpr const char* CARD_THANKS = "Thanks for playing!";
 
   // Variables comunes de las ventanas
-  bool _fromGame;
-  bool _winner;
   bool _clear;
   bool _done;
-  int16_t _blockH;
-  int16_t _rest;
-  bool _stay;
-  int8_t _line;
   Scroller _scroller;
   bool _isScrolling;
   bool _card;
   Stopwatch _pause;
+
+  // Variables locales
+  bool _fromGame;
+  bool _winner;
+  int16_t _blockH;
+  int16_t _rest;
+  bool _stay;
+  int8_t _line;
 
   // Funciones locales
   void startStay();

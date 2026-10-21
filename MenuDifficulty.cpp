@@ -97,5 +97,5 @@ void MenuDifficulty::nextOption(bool show) {
 }
 
 // ========================================================
-// Fin
+// Fin — Funciones comunes de las ventanas
 // ========================================================

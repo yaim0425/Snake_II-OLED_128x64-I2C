@@ -43,6 +43,8 @@ private:
   bool _lastSelected;
   Blink _blink;
   bool _clear;
+
+  // Variables locales
   int16_t _onStartX;
   int16_t _onEndX;
   int16_t _offStartX;

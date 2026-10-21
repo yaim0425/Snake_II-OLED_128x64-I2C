@@ -7,18 +7,18 @@
 // ========================================================
 
 MenuCredits::MenuCredits()
-  : _fromGame(false),
-    _winner(false),
-    _clear(true),
+  : _clear(true),
     _done(true),
-    _blockH(0),
-    _rest(0),
-    _stay(true),
-    _line(0),
     _scroller(),
     _isScrolling(false),
     _card(false),
-    _pause() {}
+    _pause(),
+    _fromGame(false),
+    _winner(false),
+    _blockH(0),
+    _rest(0),
+    _stay(true),
+    _line(0) {}
 
 void MenuCredits::begin(bool fromGame, bool winner) {
   _fromGame = fromGame;

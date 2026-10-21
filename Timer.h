@@ -20,7 +20,7 @@ public:
   bool blinkOn(uint16_t period, uint8_t offPct) const;
 
 private:
-  // Variables comunes de las ventanas
+  // Variables locales
   uint64_t _start = 0;
 };
 
@@ -46,7 +46,7 @@ public:
   uint8_t consume();
 
 private:
-  // Variables comunes de las ventanas
+  // Variables locales
   uint16_t _period;
   uint64_t _last = 0;
   uint16_t _accum = 0;

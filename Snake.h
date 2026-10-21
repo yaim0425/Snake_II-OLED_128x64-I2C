@@ -59,7 +59,7 @@ private:
   static constexpr uint8_t START_LENGTH = 4;
   static constexpr uint8_t START_DIR = 2;
 
-  // Variables comunes de las ventanas
+  // Variables locales
   Seg _body[MAX_LENGTH];
   uint8_t _headIndex;
   uint8_t _tailIndex;

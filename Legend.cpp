@@ -8,20 +8,21 @@
 // ========================================================
 
 Legend::Legend()
-  : _btn(0),
-    _lastBtn(0),
-    _ticker(NEXT),
+  : _selected(0),
+    _lastSelected(0),
+    _scroller(),
     _blink(),
-    _lastScroll(true),
+    _isScrolling(true),
     _done(false),
-    _clear(true) {}
+    _clear(true),
+    _ticker(NEXT) {}
 
 void Legend::begin() {
-  _btn = 0;
-  _lastBtn = 0;
+  _selected = 0;
+  _lastSelected = 0;
   _ticker.start();
   _blink.start();
-  _lastScroll = true;
+  _isScrolling = true;
   _done = false;
   _clear = true;
 }
@@ -48,17 +49,17 @@ void Legend::update() {
     return;
   }
 
-  if (_lastScroll) {
+  if (_isScrolling) {
     if (_scroller.update()) return;
 
-    _lastScroll = false;
+    _isScrolling = false;
     _ticker.start();
     _blink.start();
   };
 
   uint32_t steps = _ticker.consume();
 
-  if (steps) _btn = (_btn + steps) % 4;
+  if (steps) _selected = (_selected + steps) % 4;
 }
 
 void Legend::print() {
@@ -91,7 +92,7 @@ void Legend::firstPrint(bool forceRedraw) {
   display.drawText(text, textX, TEXT_Y, TEXT_6x8, false, true);
 
   for (int8_t i = 0; i < 4; i++) toggleDiamond(i, true);
-  const char* pieText = BTN_FUNC[_btn];
+  const char* pieText = BTN_FUNC[_selected];
   display.fillRect(0, FOOT_TOP - 1, WIDTH, FOOT_H + 1, true);
   display.drawText(pieText, display.centerX(pieText, TEXT_6x8), FOOT_TOP, TEXT_6x8, false, true);
 }
@@ -146,25 +147,25 @@ void Legend::diamondCenter(int8_t diamond, int16_t& centerX, int16_t& centerY) {
 void Legend::blinkDiamond() {
   if (!_scroller.done())
     return;
-  else if (_lastBtn != _btn)
+  else if (_lastSelected != _selected)
     return;
   else if (!_blink.changed(PERIOD, OFF))
     return;
-  toggleDiamond(_btn, _blink.isVisible(PERIOD, OFF));
+  toggleDiamond(_selected, _blink.isVisible(PERIOD, OFF));
 }
 
 void Legend::nextBtn() {
-  if (_lastBtn == _btn) return;
+  if (_lastSelected == _selected) return;
 
   _scroller.begin(Draw::DIR_LEFT, Scroller::EndMode::STAY);
-  _scroller.addText(BTN_FUNC[_btn], TEXT_6x8, false, true);
+  _scroller.addText(BTN_FUNC[_selected], TEXT_6x8, false, true);
   _scroller.setRow(FOOT_TOP - 1);
   _scroller.startSlide();
-  _lastScroll = true;
-  toggleDiamond(_lastBtn, true);
-  toggleDiamond(_btn, true);
+  _isScrolling = true;
+  toggleDiamond(_lastSelected, true);
+  toggleDiamond(_selected, true);
   _ticker.start();
-  _lastBtn = _btn;
+  _lastSelected = _selected;
 }
 
 // ========================================================

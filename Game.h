@@ -54,13 +54,15 @@ private:
   static constexpr int8_t FOOD_COUNT = 10;
 
   // Variables comunes de las ventanas
-  State _state;
-  bool _win;
   bool _done;
   bool _clear;
+  Blink _blink;
+
+  // Variables locales
+  State _state;
+  bool _win;
   uint16_t _score;
   Ticker _timer;
-  Blink _blink;
   int8_t _countdown;
   bool _blinkChanged;
   bool _moveSnake;

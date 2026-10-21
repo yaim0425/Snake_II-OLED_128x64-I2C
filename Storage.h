@@ -26,7 +26,7 @@ public:
   void setDifficulty(uint8_t level);
 
 private:
-  // Variables comunes de las ventanas
+  // Variables locales
   uint16_t _bestScore;
   bool _soundEnabled;
   uint8_t _difficulty;

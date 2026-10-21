@@ -8,7 +8,8 @@
 // ========================================================
 
 Scroller::Scroller()
-  : _lineCount(0),
+  : _done(true),
+    _lineCount(0),
     _dir(0),
     _horizontal(false),
     _endMode(EndMode::STAY),
@@ -22,7 +23,6 @@ Scroller::Scroller()
     _step(1),
     _lastPosX(0),
     _lastPosY(0),
-    _done(true),
     _timerH(ANIM_H),
     _timerV(ANIM_V) {}
 

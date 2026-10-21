@@ -47,6 +47,11 @@ Si el cambio necesita más de un commit, seguir este procedimiento:
 - El nombre de las variables dentro de las funciones y los parámetros debe ser completo, en vez de `cx` usar `centerX`.
 - Las constantes se declaran en `Config.h` y cada clase/API las reexpone con un alias en su `.h`; así el valor se corrige en un único lugar y no hay que recorrer todos los `.h`.
 - Al trabajar en una clase/API, modificar solo la que se está trabajando, a menos que se indique lo contrario de forma directa.
+- Los miembros de cada clase se agrupan en secciones rotuladas: `// Constantes de Config`, `// Constantes`, `// Variables comunes de las ventanas` y `// Variables locales` (y, en `.cpp`, `// Funciones comunes de las ventanas` / `// Funciones locales`).
+  - **Variables comunes de las ventanas:** las que comparten nombre y función entre las clases ventana (`_done`, `_clear`, `_blink`, `_selected`, `_lastSelected`, `_lastScroll`, `_scroller`, `_repeat`, `_isScrolling`, `_card`, `_pause`). Van primero.
+  - **Variables locales:** las propias de la clase; van después de las comunes y ordenadas por uso.
+  - El orden de declaración del `.h` manda: la lista de inicialización del constructor en el `.cpp` debe respetar ese orden.
+  - Los bloques se separan con un separador de 3 líneas (`// ===`, rótulo, `// ===`) y 5 líneas vacías entre el cierre (`// Fin — <rótulo>`) y la apertura del siguiente.
 
 ### Ciclo de sesión
 

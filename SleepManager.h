@@ -25,7 +25,7 @@ private:
     AWAKE,
     SLEEPING };
 
-  // Variables comunes de las ventanas
+  // Variables locales
   State _state;
   Stopwatch _timer;
   Engine& _engine;

@@ -19,7 +19,7 @@ public:
   bool step(uint8_t button);
 
 private:
-  // Variables comunes de las ventanas
+  // Variables locales
   uint32_t _tick;
   uint32_t _delay;
   Stopwatch _repeat;

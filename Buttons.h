@@ -42,7 +42,7 @@ public:
   void ignoreUntilRelease();
 
 private:
-  // Variables comunes de las ventanas
+  // Variables locales
   int8_t _pins[MAX_BUTTONS];
   uint8_t _rawButtons;
   uint8_t _buttons;

@@ -38,7 +38,7 @@ private:
     MENU_CREDITS
   };
 
-  // Variables comunes de las ventanas
+  // Variables locales
   State _state;
   Boot _boot;
   Legend _legend;

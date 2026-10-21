@@ -12,13 +12,13 @@
 // ========================================================
 
 Game::Game()
-  : _state(State::START),
-    _win(false),
-    _done(false),
+  : _done(false),
     _clear(true),
+    _blink(),
+    _state(State::START),
+    _win(false),
     _score(0),
     _timer(10 * 1000),
-    _blink(),
     _countdown(COUNT),
     _blinkChanged(false),
     _moveSnake(false),

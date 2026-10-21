@@ -109,5 +109,5 @@ void MenuSound::nextOption(bool show) {
 }
 
 // ========================================================
-// Fin
+// Fin — Funciones comunes de las ventanas
 // ========================================================

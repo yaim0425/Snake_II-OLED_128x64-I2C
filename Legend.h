@@ -46,14 +46,16 @@ private:
   static constexpr uint8_t OFF = 50;
 
   // Variables comunes de las ventanas
-  uint8_t _btn;
-  uint8_t _lastBtn;
+  uint8_t _selected;
+  uint8_t _lastSelected;
   Scroller _scroller;
-  Ticker _ticker;
   Blink _blink;
-  bool _lastScroll;
+  bool _isScrolling;
   bool _done;
   bool _clear;
+
+  // Variables locales
+  Ticker _ticker;
 
   // Funciones comunes de las ventanas
   void toggleDiamond(int8_t diamond, bool show);

@@ -45,7 +45,7 @@ private:
   static constexpr uint8_t SPECIAL_FOOD_W = Special::SPECIAL_FOOD_W;
   static constexpr uint8_t SPECIAL_FOOD_H = Special::SPECIAL_FOOD_H;
 
-  // Variables comunes de las ventanas
+  // Variables locales
   Type _type;
   int16_t _x;
   int16_t _y;
