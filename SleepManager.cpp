@@ -5,6 +5,10 @@
 #include "driver/gpio.h"
 #include "esp_sleep.h"
 
+// ========================================================
+// Funciones comunes de las ventanas
+// ========================================================
+
 SleepManager::SleepManager(Engine& engine)
   : _state(State::AWAKE),
     _timer(),
@@ -25,6 +29,18 @@ bool SleepManager::update() {
 
   return true;
 }
+
+// ========================================================
+// Fin — Funciones comunes de las ventanas
+// ========================================================
+
+
+
+
+
+// ========================================================
+// Funciones locales
+// ========================================================
 
 bool SleepManager::updateAwake() {
   if (buttons.anyPhysical()) _timer.start();
@@ -67,3 +83,7 @@ void SleepManager::wake() {
   _timer.start();
   _state = State::AWAKE;
 }
+
+// ========================================================
+// Fin — Funciones locales
+// ========================================================

@@ -11,19 +11,21 @@ uint64_t nowMs();
 
 class Stopwatch {
 public:
-  // Funciones
+  // Funciones comunes de las ventanas
   void start();
+
+  // Funciones locales
   uint64_t elapsed() const;
   bool expired(uint16_t ms) const;
   bool blinkOn(uint16_t period, uint8_t offPct) const;
 
 private:
-  // Variables
+  // Variables comunes de las ventanas
   uint64_t _start = 0;
 };
 
 // ========================================================
-// Fin
+// Fin — Stopwatch
 // ========================================================
 
 
@@ -36,20 +38,22 @@ private:
 
 class Ticker {
 public:
-  // Funciones
+  // Funciones comunes de las ventanas
   explicit Ticker(uint16_t period);
   void start();
+
+  // Funciones locales
   uint8_t consume();
 
 private:
-  // Variables
+  // Variables comunes de las ventanas
   uint16_t _period;
   uint64_t _last = 0;
   uint16_t _accum = 0;
 };
 
 // ========================================================
-// Fin
+// Fin — Ticker
 // ========================================================
 
 #endif

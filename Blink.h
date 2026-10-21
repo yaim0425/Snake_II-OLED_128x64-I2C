@@ -13,13 +13,15 @@ public:
   static constexpr uint32_t PERIOD = 500;
   static constexpr uint8_t OFF = 20;
 
-  // Funciones
+  // Funciones comunes de las ventanas
   void start();
+
+  // Funciones locales
   bool isVisible(uint32_t period, uint8_t offPct) const;
   bool changed(uint32_t period, uint8_t offPct);
 
 private:
-  // Variables
+  // Variables comunes de las ventanas
   bool _last;
   Stopwatch _timer;
 };

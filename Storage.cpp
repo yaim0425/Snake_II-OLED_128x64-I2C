@@ -1,9 +1,25 @@
 #include "Storage.h"
 
+// ========================================================
+// Funciones comunes de las ventanas
+// ========================================================
+
 Storage::Storage()
   : _bestScore(0),
     _soundEnabled(true),
     _difficulty(DEFAULT_LEVEL) {}
+
+// ========================================================
+// Fin — Funciones comunes de las ventanas
+// ========================================================
+
+
+
+
+
+// ========================================================
+// Funciones locales
+// ========================================================
 
 uint16_t Storage::bestScore() const {
   return _bestScore;
@@ -32,3 +48,7 @@ void Storage::setDifficulty(uint8_t level) {
     level = MAX_LEVEL;
   _difficulty = level;
 }
+
+// ========================================================
+// Fin — Funciones locales
+// ========================================================

@@ -1,6 +1,10 @@
 #include "Draw.h"
 #include "Globals.h"
 
+// ========================================================
+// Funciones locales
+// ========================================================
+
 namespace Draw {
 void triangle(int8_t dir, int16_t centerX, int16_t centerY, bool show) {
   switch (dir) {
@@ -27,3 +31,7 @@ void diamond(int16_t centerX, int16_t centerY, bool show) {
   triangle(DIR_DOWN, centerX, centerY, show);
 }
 }
+
+// ========================================================
+// Fin
+// ========================================================

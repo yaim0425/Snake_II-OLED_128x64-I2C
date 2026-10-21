@@ -11,29 +11,30 @@ class Engine;
 
 class SleepManager {
 public:
-  // Funciones
+  // Funciones comunes de las ventanas
   SleepManager(Engine& engine);
   void begin();
   bool update();
 
 private:
   // Constantes
-  // Gestión de energía: inactividad y light sleep hasta que se pulse un botón.
+  // Tiempo de inactividad antes de suspender.
   static constexpr uint32_t IDLE_TIMEOUT_MS = Config::Screen::SLEEP_MIN * 60 * 1000;
 
-  enum class State : uint8_t { AWAKE,
-                               SLEEPING };
+  enum class State : uint8_t {
+    AWAKE,
+    SLEEPING };
 
-  // Funciones
+  // Variables comunes de las ventanas
+  State _state;
+  Stopwatch _timer;
+  Engine& _engine;
+
+  // Funciones locales
   bool updateAwake();
   bool updateSleeping();
   void enterSleep();
   void wake();
-
-  // Variables
-  State _state;
-  Stopwatch _timer;
-  Engine& _engine;
 };
 
 // ========================================================

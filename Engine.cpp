@@ -1,5 +1,9 @@
 #include "Engine.h"
 
+// ========================================================
+// Funciones comunes de las ventanas
+// ========================================================
+
 Engine::Engine()
   : _state(State::BOOT) {}
 
@@ -114,6 +118,18 @@ void Engine::print() {
   }
 }
 
+// ========================================================
+// Fin — Funciones comunes de las ventanas
+// ========================================================
+
+
+
+
+
+// ========================================================
+// Funciones locales
+// ========================================================
+
 bool Engine::inGame() const {
   return (_state == State::NEW || _state == State::CONTINUE) && _game.state() == Game::State::PLAY;
 }
@@ -168,3 +184,7 @@ void Engine::changeState(State newState) {
   }
   _state = newState;
 }
+
+// ========================================================
+// Fin — Funciones locales
+// ========================================================

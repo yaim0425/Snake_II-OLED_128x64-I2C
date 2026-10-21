@@ -14,11 +14,13 @@
 
 class Engine {
 public:
-  // Funciones
+  // Funciones comunes de las ventanas
   Engine();
   void begin();
   void update();
   void print();
+
+  // Funciones locales
   bool inGame() const;
   bool inCredits() const;
   bool sleepBlocked() const;
@@ -36,10 +38,7 @@ private:
     MENU_CREDITS
   };
 
-  // Funciones
-  void changeState(State newState);
-
-  // Variables
+  // Variables comunes de las ventanas
   State _state;
   Boot _boot;
   Legend _legend;
@@ -48,6 +47,9 @@ private:
   MenuCredits _menuCredits;
   MenuDifficulty _menuDifficulty;
   Game _game;
+
+  // Funciones locales
+  void changeState(State newState);
 };
 
 // ========================================================

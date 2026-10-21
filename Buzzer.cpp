@@ -1,6 +1,10 @@
 #include "Buzzer.h"
 #include "Timer.h"
 
+// ========================================================
+// Funciones comunes de las ventanas
+// ========================================================
+
 Buzzer::Buzzer(uint8_t pin)
   : _pin(pin),
     _attached(false),
@@ -24,6 +28,26 @@ void Buzzer::update() {
   stop();
 }
 
+void Buzzer::stop() {
+  if (_attached) ledcWriteTone(_pin, 0);
+
+  _startMs = 0;
+  _durationMs = 0;
+  _busy = false;
+}
+
+// ========================================================
+// Fin — Funciones comunes de las ventanas
+// ========================================================
+
+
+
+
+
+// ========================================================
+// Funciones locales
+// ========================================================
+
 void Buzzer::tone(uint16_t frequency, uint32_t durationMs) {
   if (_attached) {
     if (frequency == 0)
@@ -37,14 +61,10 @@ void Buzzer::tone(uint16_t frequency, uint32_t durationMs) {
   _busy = true;
 }
 
-void Buzzer::stop() {
-  if (_attached) ledcWriteTone(_pin, 0);
-
-  _startMs = 0;
-  _durationMs = 0;
-  _busy = false;
-}
-
 bool Buzzer::busy() const {
   return _busy;
 }
+
+// ========================================================
+// Fin — Funciones locales
+// ========================================================

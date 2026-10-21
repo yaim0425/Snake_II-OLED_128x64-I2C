@@ -52,12 +52,12 @@ namespace Config {
     constexpr uint8_t WIDTH   = 128;  // px de ancho
     constexpr uint8_t HEIGHT  = 64;   // px de alto
 
-    // Tamaño del texto minimo
+    // Tamaño minimo del texto
     constexpr uint8_t CHAR_W = 6;
     constexpr uint8_t CHAR_H = 8;
 
     // Altura del titulo
-    constexpr uint8_t HEADER_TOP  = 0;
+    constexpr uint8_t HEADER_TOP = 0;
 
     // Espacio del cuerpo, sin pie
     constexpr uint8_t BODY_TOP    = 16;
@@ -90,16 +90,16 @@ namespace Config {
     constexpr uint8_t BODY_MIDDLE = Screen::BODY_TOP + Z;
 
     // Espacio para las opcines
-    constexpr uint8_t BOX_HEIGHT  = 16;
-    constexpr uint8_t BOX_TOP     = BODY_MIDDLE - BOX_HEIGHT / 2;
+    constexpr uint8_t BOX_HEIGHT = 16;
+    constexpr uint8_t BOX_TOP    = BODY_MIDDLE - BOX_HEIGHT / 2;
 
     // Espacio para valores, diamantes y triangulos
-    constexpr uint8_t VALUE_TOP   = BODY_MIDDLE + BOX_HEIGHT / 2 + 2;
+    constexpr uint8_t VALUE_TOP    = BODY_MIDDLE + BOX_HEIGHT / 2 + 2;
     constexpr uint8_t VALUE_HEIGHT = (Screen::FOOT_TOP - 2) - VALUE_TOP + 1;
 
     // Altura de referencia para diamantes y triangulos
-    constexpr uint8_t DIAMOND_Y   = VALUE_TOP + (uint8_t)(VALUE_HEIGHT / 2);
-    constexpr uint8_t TRIANGLE_Y  = Screen::FOOT_TOP - 3;
+    constexpr uint8_t DIAMOND_Y  = VALUE_TOP + (uint8_t)(VALUE_HEIGHT / 2);
+    constexpr uint8_t TRIANGLE_Y = Screen::FOOT_TOP - 3;
   }
 
 }

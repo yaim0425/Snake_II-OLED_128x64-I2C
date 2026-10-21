@@ -11,24 +11,30 @@
 
 class MenuCredits {
 public:
-  // Funciones
+  // Funciones comunes de las ventanas
   MenuCredits();
   void begin(bool fromGame, bool winner);
   void update();
   void print();
   void firstPrint(bool forceRedraw);
   bool done() const;
+
+  // Funciones locales
   bool card() const;
 
 private:
-  // Variables comunes de las ventanas
+  // Constantes de Config
   static constexpr int16_t HEIGHT = Config::Screen::HEIGHT;
   static constexpr int16_t HEADER_TOP = Config::Screen::HEADER_TOP;
   static constexpr int16_t BODY_TOP = Config::Screen::BODY_TOP;
   static constexpr int16_t BODY_H = Config::Screen::BODY_H;
-  static constexpr int16_t LINE_H = Config::Screen::CHAR_H + 2;  // alto de fila de un bloque
+  static constexpr const char* CARD_NAME = Config::Version::NAME;
+  static constexpr const char* CARD_VERSION = Config::Version::VERSION;
+  static constexpr const char* CARD_DATE = Config::Version::RELEASE_DATE;
 
   // Constantes
+  static constexpr int16_t LINE_H = Config::Screen::CHAR_H + 2;  // alto de fila de un bloque
+
   // Pausa al terminar cada bloque de créditos, en milisegundos.
   static constexpr uint32_t PAUSE_MS = 4 * 1000;
 
@@ -73,18 +79,8 @@ private:
 
   // Tarjeta final, al terminar el roll.
   static constexpr const char* CARD_THANKS = "Thanks for playing!";
-  static constexpr const char* CARD_NAME = Config::Version::NAME;
-  static constexpr const char* CARD_VERSION = Config::Version::VERSION;
-  static constexpr const char* CARD_DATE = Config::Version::RELEASE_DATE;
 
-  // Funciones
-  void startStay();
-  void startExit();
-  void startCard();
-  void startBlock(uint8_t count);
-  void drawRoll();
-
-  // Variables
+  // Variables comunes de las ventanas
   bool _fromGame;
   bool _winner;
   bool _clear;
@@ -97,6 +93,13 @@ private:
   bool _isScrolling;
   bool _card;
   Stopwatch _pause;
+
+  // Funciones locales
+  void startStay();
+  void startExit();
+  void startCard();
+  void startBlock(uint8_t count);
+  void drawRoll();
 };
 
 // ========================================================

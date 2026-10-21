@@ -3,6 +3,10 @@
 #include "Draw.h"
 #include <stdio.h>
 
+// ========================================================
+// Funciones comunes de las ventanas
+// ========================================================
+
 MenuDifficulty::MenuDifficulty()
   : _selected(DEFAULT_LEVEL),
     _lastSelected(DEFAULT_LEVEL),
@@ -46,8 +50,32 @@ void MenuDifficulty::print() {
   blinkOption();
 }
 
+void MenuDifficulty::firstPrint(bool forceRedraw) {
+  if (!_clear && !forceRedraw) return;
+
+  clear();
+  _clear = false;
+  nextOption(true);
+}
+
 void MenuDifficulty::clear() {
   display.fillRect(0, VALUE_TOP, WIDTH, VALUE_HEIGHT, false);
+}
+
+bool MenuDifficulty::done() const {
+  return _done;
+}
+
+void MenuDifficulty::blinkOption() {
+  if (!_blink.changed(PERIOD, OFF)) return;
+
+  const bool visible = _blink.isVisible(PERIOD, OFF);
+  const bool leftHeld = buttons.heldDown(Buttons::MOVE_LEFT) && _selected > MIN_LEVEL;
+  const bool rightHeld = buttons.heldDown(Buttons::MOVE_RIGHT) && _selected < MAX_LEVEL;
+
+  if (_selected > MIN_LEVEL && !rightHeld) Draw::triangle(Draw::DIR_LEFT, TRIANGLE_L, DIAMOND_Y, leftHeld || visible);
+
+  if (_selected < MAX_LEVEL && !leftHeld) Draw::triangle(Draw::DIR_RIGHT, TRIANGLE_R, DIAMOND_Y, rightHeld || visible);
 }
 
 void MenuDifficulty::nextOption(bool show) {
@@ -68,26 +96,6 @@ void MenuDifficulty::nextOption(bool show) {
   _blink.start();
 }
 
-void MenuDifficulty::blinkOption() {
-  if (!_blink.changed(PERIOD, OFF)) return;
-
-  const bool visible = _blink.isVisible(PERIOD, OFF);
-  const bool leftHeld = buttons.heldDown(Buttons::MOVE_LEFT) && _selected > MIN_LEVEL;
-  const bool rightHeld = buttons.heldDown(Buttons::MOVE_RIGHT) && _selected < MAX_LEVEL;
-
-  if (_selected > MIN_LEVEL && !rightHeld) Draw::triangle(Draw::DIR_LEFT, TRIANGLE_L, DIAMOND_Y, leftHeld || visible);
-
-  if (_selected < MAX_LEVEL && !leftHeld) Draw::triangle(Draw::DIR_RIGHT, TRIANGLE_R, DIAMOND_Y, rightHeld || visible);
-}
-
-void MenuDifficulty::firstPrint(bool forceRedraw) {
-  if (!_clear && !forceRedraw) return;
-
-  clear();
-  _clear = false;
-  nextOption(true);
-}
-
-bool MenuDifficulty::done() const {
-  return _done;
-}
+// ========================================================
+// Fin
+// ========================================================

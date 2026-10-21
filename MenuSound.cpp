@@ -3,6 +3,10 @@
 #include "Draw.h"
 #include <string.h>
 
+// ========================================================
+// Funciones comunes de las ventanas
+// ========================================================
+
 MenuSound::MenuSound()
   : _done(false),
     _selected(true),
@@ -61,8 +65,22 @@ void MenuSound::print() {
   blinkOption();
 }
 
+void MenuSound::firstPrint(bool forceRedraw) {
+  if (!_clear && !forceRedraw) return;
+
+  clear();
+  _clear = false;
+  display.drawText("ON", _onStartX, DIAMOND_Y - 3, TEXT_6x8, true, false);
+  display.drawText("OFF", _offStartX, DIAMOND_Y - 3, TEXT_6x8, true, false);
+  nextOption(true);
+}
+
 void MenuSound::clear() {
   display.fillRect(0, VALUE_TOP, WIDTH, VALUE_HEIGHT, false);
+}
+
+bool MenuSound::done() const {
+  return _done;
 }
 
 void MenuSound::blinkOption() {
@@ -90,16 +108,6 @@ void MenuSound::nextOption(bool show) {
   _blink.start();
 }
 
-void MenuSound::firstPrint(bool forceRedraw) {
-  if (!_clear && !forceRedraw) return;
-
-  clear();
-  _clear = false;
-  display.drawText("ON", _onStartX, DIAMOND_Y - 3, TEXT_6x8, true, false);
-  display.drawText("OFF", _offStartX, DIAMOND_Y - 3, TEXT_6x8, true, false);
-  nextOption(true);
-}
-
-bool MenuSound::done() const {
-  return _done;
-}
+// ========================================================
+// Fin
+// ========================================================

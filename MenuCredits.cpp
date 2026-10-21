@@ -2,6 +2,10 @@
 #include "Globals.h"
 #include "Draw.h"
 
+// ========================================================
+// Funciones comunes de las ventanas
+// ========================================================
+
 MenuCredits::MenuCredits()
   : _fromGame(false),
     _winner(false),
@@ -107,6 +111,18 @@ bool MenuCredits::done() const {
   return _done;
 }
 
+// ========================================================
+// Fin — Funciones comunes de las ventanas
+// ========================================================
+
+
+
+
+
+// ========================================================
+// Funciones locales
+// ========================================================
+
 bool MenuCredits::card() const {
   return _card;
 }
@@ -168,3 +184,7 @@ void MenuCredits::startBlock(uint8_t count) {
 void MenuCredits::drawRoll() {
   _scroller.print();
 }
+
+// ========================================================
+// Fin — Funciones locales
+// ========================================================
