@@ -29,9 +29,11 @@ public:
     Config::Pin::ACTION_UP, Config::Pin::ACTION_RIGHT, Config::Pin::ACTION_DOWN, Config::Pin::ACTION_LEFT
   };
 
-  // Funciones
+  // Funciones comunes de las ventanas
   Buttons(const int8_t* pins, uint32_t buttonDelay);
   void begin();
+
+  // Funciones locales
   void read();
   bool heldDown(uint8_t index) const;
   bool pressed(uint8_t index) const;
@@ -40,14 +42,7 @@ public:
   void ignoreUntilRelease();
 
 private:
-  // Constantes
-  static constexpr uint8_t MOVE_MASK =
-    (uint8_t)((1u << MOVE_UP) | (1u << MOVE_RIGHT) | (1u << MOVE_DOWN) | (1u << MOVE_LEFT));
-
-  // Funciones
-  static bool isSet(uint8_t states, uint8_t botton);
-
-  // Variables
+  // Variables comunes de las ventanas
   int8_t _pins[MAX_BUTTONS];
   uint8_t _rawButtons;
   uint8_t _buttons;
@@ -56,6 +51,9 @@ private:
   bool _ignore;
   uint64_t _buttonLast[MAX_BUTTONS];
   uint32_t _buttonDelay;
+
+  // Funciones locales
+  static bool isSet(uint8_t states, uint8_t botton);
 };
 
 // ========================================================

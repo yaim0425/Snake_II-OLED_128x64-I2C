@@ -4,13 +4,9 @@
 #include <stdio.h>
 #include <string.h>
 
-const char* const Menu::OPTION[OPT_COUNT] = {
-  "New",
-  "Continue",
-  "Difficulty",
-  "Sound",
-  "Credits"
-};
+// ========================================================
+// Funciones comunes de las ventanas
+// ========================================================
 
 Menu::Menu()
   : _lastScroll(true),
@@ -64,39 +60,6 @@ void Menu::update() {
   }
 }
 
-void Menu::navigate() {
-  bool moved = false;
-
-  if (_repeat.step(Buttons::MOVE_LEFT) && _selected > 0) {
-    _selected--;
-
-    if (!_showContinue && _selected == OPT_CONTINUE) _selected--;
-
-    moved = true;
-  } else if (_repeat.step(Buttons::MOVE_RIGHT) && _selected < OPT_COUNT - 1) {
-    _selected++;
-
-    if (!_showContinue && _selected == OPT_CONTINUE) _selected++;
-
-    moved = true;
-  }
-
-  if (moved) sound.play(Sound::SFX_CLICK, false);
-}
-
-void Menu::action() {
-  if (buttons.pressed(Buttons::ACTION_UP)) {
-    _selected = _showContinue ? OPT_CONTINUE : OPT_NEW;
-
-    if (_lastSelected == _selected) return;
-
-    sound.play(Sound::SFX_BACK, false);
-  } else if (buttons.pressed(Buttons::ACTION_RIGHT)) {
-    sound.play(Sound::SFX_CONFIRM, false);
-    _confirm = true;
-  }
-}
-
 void Menu::print() {
   if (_done) return;
 
@@ -123,10 +86,6 @@ void Menu::firstPrint(bool forceRedraw) {
   display.drawText(label, 1, FOOT_TOP, TEXT_6x8, false, true);
   display.drawText(bestScore, 1 + strlen(label) * 6, FOOT_TOP, TEXT_6x8, false, true);
   display.drawText(VERSION, WIDTH - strlen(VERSION) * 6, FOOT_TOP, TEXT_6x8, false, true);
-}
-
-int8_t Menu::selected() const {
-  return _selected;
 }
 
 bool Menu::done() const {
@@ -186,21 +145,17 @@ void Menu::toggleDiamond(int8_t diamond, bool show) {
   Draw::diamond(centerX, DIAMOND_Y, show);
 }
 
-void Menu::toggleTriangle(int8_t triangle, bool show) {
-  if (triangle >= OPT_COUNT) return;
+// ========================================================
+// Fin — Funciones comunes de las ventanas
+// ========================================================
 
-  int16_t centerX = triangle + 1;
 
-  if (!_showContinue && triangle >= OPT_CONTINUE) centerX--;
 
-  centerX *= _space;
-  Draw::triangle(Draw::DIR_UP, centerX, TRIANGLE_Y, show);
-}
 
-void Menu::toggleText(bool show) {
-  const char* text = OPTION[_selected];
-  display.drawText(text, display.centerX(text, TEXT_12x16), BOX_TOP, TEXT_12x16, !show, true);
-}
+
+// ========================================================
+// Funciones locales
+// ========================================================
 
 void Menu::showOptions() {
   display.fillRect(0, VALUE_TOP, WIDTH, VALUE_HEIGHT, false);
@@ -213,3 +168,60 @@ void Menu::showOptions() {
 
   toggleDiamond(_selected, true);
 }
+
+int8_t Menu::selected() const {
+  return _selected;
+}
+
+void Menu::action() {
+  if (buttons.pressed(Buttons::ACTION_UP)) {
+    _selected = _showContinue ? OPT_CONTINUE : OPT_NEW;
+
+    if (_lastSelected == _selected) return;
+
+    sound.play(Sound::SFX_BACK, false);
+  } else if (buttons.pressed(Buttons::ACTION_RIGHT)) {
+    sound.play(Sound::SFX_CONFIRM, false);
+    _confirm = true;
+  }
+}
+
+void Menu::toggleText(bool show) {
+  const char* text = OPTION[_selected];
+  display.drawText(text, display.centerX(text, TEXT_12x16), BOX_TOP, TEXT_12x16, !show, true);
+}
+
+void Menu::navigate() {
+  bool moved = false;
+
+  if (_repeat.step(Buttons::MOVE_LEFT) && _selected > 0) {
+    _selected--;
+
+    if (!_showContinue && _selected == OPT_CONTINUE) _selected--;
+
+    moved = true;
+  } else if (_repeat.step(Buttons::MOVE_RIGHT) && _selected < OPT_COUNT - 1) {
+    _selected++;
+
+    if (!_showContinue && _selected == OPT_CONTINUE) _selected++;
+
+    moved = true;
+  }
+
+  if (moved) sound.play(Sound::SFX_CLICK, false);
+}
+
+void Menu::toggleTriangle(int8_t triangle, bool show) {
+  if (triangle >= OPT_COUNT) return;
+
+  int16_t centerX = triangle + 1;
+
+  if (!_showContinue && triangle >= OPT_CONTINUE) centerX--;
+
+  centerX *= _space;
+  Draw::triangle(Draw::DIR_UP, centerX, TRIANGLE_Y, show);
+}
+
+// ========================================================
+// Fin — Funciones locales
+// ========================================================

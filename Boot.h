@@ -11,7 +11,7 @@
 
 class Boot {
 public:
-  // Funciones
+  // Funciones comunes de las ventanas
   Boot();
   void begin();
   void update();
@@ -20,7 +20,7 @@ public:
   bool done() const;
 
 private:
-  // Variables comunes de las ventanas
+  // Constantes de Config
   static constexpr int16_t WIDTH = Config::Screen::WIDTH;
   static constexpr int16_t HEADER_TOP = Config::Screen::HEADER_TOP;
   static constexpr uint8_t BODY_H = Config::Screen::BODY_H;
@@ -33,14 +33,14 @@ private:
   static constexpr uint8_t LOGO_W = Logo::LOGO_W;
   static constexpr uint8_t LOGO_H = Logo::LOGO_H;
   static constexpr int8_t MESSAGE_LINES = 2;
-  static const char* const MESSAGE[MESSAGE_LINES];
+  static constexpr const char* MESSAGE[MESSAGE_LINES] = {"Press any button", "to start"};
 
-  // Variables
+  // Variables comunes de las ventanas
   Blink _blink;
   bool _done;
   bool _clear;
 
-  // Funciones
+  // Funciones locales
   void blinkMessage();
   void drawMessage(bool show);
 };

@@ -1,6 +1,10 @@
 #include "Buttons.h"
 #include "Timer.h"
 
+// ========================================================
+// Funciones comunes de las ventanas
+// ========================================================
+
 Buttons::Buttons(const int8_t* pins, uint32_t buttonDelay)
   : _buttonDelay(buttonDelay) {
   _rawButtons = 0;
@@ -23,12 +27,23 @@ void Buttons::begin() {
 
   _buttons = 0;
 
-  for (uint8_t i = 0; i < MAX_BUTTONS; i++) {
+  for (uint8_t i = 0; i < MAX_BUTTONS; i++)
     if (digitalRead(_pins[i]) == HIGH) _buttons |= (uint8_t)(1 << i);
-  }
 
   _rawButtons = _buttons;
 }
+
+// ========================================================
+// Fin — Funciones comunes de las ventanas
+// ========================================================
+
+
+
+
+
+// ========================================================
+// Funciones locales
+// ========================================================
 
 void Buttons::read() {
   uint64_t now = nowMs();
@@ -36,9 +51,8 @@ void Buttons::read() {
   _released = 0;
   uint8_t raw = 0;
 
-  for (uint8_t i = 0; i < MAX_BUTTONS; i++) {
+  for (uint8_t i = 0; i < MAX_BUTTONS; i++)
     if (digitalRead(_pins[i]) == HIGH) raw |= (uint8_t)(1 << i);
-  }
 
   uint8_t changed = raw ^ _rawButtons;
   _rawButtons = raw;
@@ -55,23 +69,11 @@ void Buttons::read() {
 
     if (cur == state) continue;
 
-    if (state)
-      _buttons |= bit;
-    else
-      _buttons &= (uint8_t)~bit;
+    if (state) _buttons |= bit;
+    else _buttons &= (uint8_t)~bit;
 
-    if (state && !cur)
-      _pressed |= bit;
-    else
-      _released |= bit;
-  }
-
-  const uint8_t moves = _buttons & MOVE_MASK;
-
-  if (moves & (moves - 1)) {
-    _buttons &= (uint8_t)~MOVE_MASK;
-    _pressed &= (uint8_t)~MOVE_MASK;
-    _released &= (uint8_t)~MOVE_MASK;
+    if (state && !cur) _pressed |= bit;
+    else _released |= bit;
   }
 
   if (_ignore) {
@@ -81,10 +83,6 @@ void Buttons::read() {
 
     if (raw == 0) _ignore = false;
   }
-}
-
-bool Buttons::isSet(uint8_t states, uint8_t botton) {
-  return (states & (1 << botton)) != 0;
 }
 
 bool Buttons::heldDown(uint8_t index) const {
@@ -109,3 +107,11 @@ void Buttons::ignoreUntilRelease() {
   _pressed = 0;
   _released = 0;
 }
+
+bool Buttons::isSet(uint8_t states, uint8_t botton) {
+  return (states & (1 << botton)) != 0;
+}
+
+// ========================================================
+// Fin — Funciones locales
+// ========================================================

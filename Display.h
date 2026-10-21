@@ -12,7 +12,7 @@ enum TextSize { TEXT_6x8 = 1,
 
 class Display {
 public:
-  // Constantes comunes de las ventanas
+  // Constantes de Config
   static constexpr uint8_t WIDTH = Config::Screen::WIDTH;
   static constexpr uint8_t HEIGHT = Config::Screen::HEIGHT;
 
@@ -28,16 +28,19 @@ public:
   static constexpr uint8_t FOOT_H = Config::Screen::FOOT_H;
   static constexpr uint8_t FOOT_TOP = Config::Screen::FOOT_TOP;
 
+  // Constantes
   static constexpr uint32_t CLOCK_HZ = 400 * 1000;
 
-  // Funciones
+  // Funciones comunes de las ventanas
   Display(uint8_t sda, uint8_t scl, uint8_t address);
-
   void begin();
   void clear();
+
+  // Funciones locales
   void show();
   void power(bool on);
   void drawPixel(int16_t x, int16_t y, bool white);
+  int16_t centerX(const char* text, uint8_t size) const;
   void fillRect(
     int16_t x, int16_t y,
     uint16_t width, uint16_t height,
@@ -51,13 +54,12 @@ public:
     const char* text, int16_t x, int16_t y, uint8_t size,
     bool tColor, bool bgColor);
   void drawBitmap(
-    int16_t x, int16_t y, const uint8_t* bitmap,
-    int16_t w, int16_t h, bool color, bool bgColor);
-
-  uint8_t centerX(const char* text, uint8_t size) const;
+    int16_t x, int16_t y,
+    const uint8_t* bitmap, int16_t width, int16_t height,
+    bool tColor, bool bgColor);
 
 private:
-  // Variables
+  // Variables comunes de las ventanas
   Adafruit_SSD1306* _screen;
   uint8_t _sda;
   uint8_t _scl;

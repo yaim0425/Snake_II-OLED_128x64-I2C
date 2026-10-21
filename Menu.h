@@ -20,30 +20,20 @@ public:
                           OPT_CREDITS,
                           OPT_COUNT };
 
-  // Funciones
+  // Funciones comunes de las ventanas
   Menu();
   void begin(bool showContinue);
   void update();
   void print();
-  void showOptions();
   void firstPrint(bool forceRedraw);
   bool done() const;
+
+  // Funciones locales
+  void showOptions();
   int8_t selected() const;
 
 private:
-  // Funciones
-  void action();
-  void blinkOption();
-  void nextOption();
-  void toggleText(bool show);
-  void navigate();
-  void toggleDiamond(int8_t diamond, bool show);
-  void toggleTriangle(int8_t triangle, bool show);
-
-  // Constantes
-  static const char* const OPTION[OPT_COUNT];
-
-  // Variables comunes de las ventanas
+  // Constantes de Config
   static constexpr int16_t WIDTH = Config::Screen::WIDTH;
   static constexpr int16_t FOOT_TOP = Config::Screen::FOOT_TOP;
   static constexpr uint8_t HEADER_TOP = Config::Screen::HEADER_TOP;
@@ -57,11 +47,20 @@ private:
   static constexpr const char* NAME = Config::Version::NAME;
   static constexpr const char* VERSION = Config::Version::VERSION;
 
+  // Constantes
+  static constexpr const char* OPTION[OPT_COUNT] = {
+    "New",
+    "Continue",
+    "Difficulty",
+    "Sound",
+    "Credits"
+  };
+
   // Parpadeo estándar de la interfaz (Blink).
   static constexpr uint32_t PERIOD = Blink::PERIOD;
   static constexpr uint8_t OFF = Blink::OFF;
 
-  // Variables
+  // Variables comunes de las ventanas
   bool _lastScroll;
   bool _showContinue;
   int8_t _selected;
@@ -73,6 +72,17 @@ private:
   bool _confirm;
   bool _done;
   bool _clear;
+
+  // Funciones comunes de las ventanas
+  void blinkOption();
+  void nextOption();
+  void toggleDiamond(int8_t diamond, bool show);
+
+  // Funciones locales
+  void action();
+  void toggleText(bool show);
+  void navigate();
+  void toggleTriangle(int8_t triangle, bool show);
 };
 
 // ========================================================

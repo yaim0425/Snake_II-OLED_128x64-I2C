@@ -2,10 +2,9 @@
 #include "Globals.h"
 #include "Sprite.h"
 
-const char* const Boot::MESSAGE[MESSAGE_LINES] = {
-  "Press any button",
-  "to start"
-};
+// ========================================================
+// Funciones comunes de las ventanas
+// ========================================================
 
 Boot::Boot()
   : _blink(),
@@ -58,6 +57,22 @@ void Boot::firstPrint(bool forceRedraw) {
   display.drawBitmap((WIDTH - LOGO_W) / 2, BODY_TOP, LOGO, LOGO_W, LOGO_H, true, false);
 }
 
+bool Boot::done() const {
+  return _done;
+}
+
+// ========================================================
+// Fin — Funciones comunes de las ventanas
+// ========================================================
+
+
+
+
+
+// ========================================================
+// Funciones locales
+// ========================================================
+
 void Boot::blinkMessage() {
   if (!_blink.changed(PERIOD, OFF)) return;
 
@@ -67,14 +82,14 @@ void Boot::blinkMessage() {
 void Boot::drawMessage(bool show) {
   for (int8_t i = 0; i < MESSAGE_LINES; i++) {
     const char* message = MESSAGE[i];
-    const uint8_t x = display.centerX(message, TEXT_6x8);
-    const uint8_t y = HEADER_TOP + i * 9;
+    const int16_t x = display.centerX(message, TEXT_6x8);
+    const int16_t y = HEADER_TOP + i * 9;
     display.drawText(message, x, y, TEXT_6x8, show, false);
   }
 
   display.fillRect(0, BODY_TOP, WIDTH, 1, true);
 }
 
-bool Boot::done() const {
-  return _done;
-}
+// ========================================================
+// Fin — Funciones locales
+// ========================================================

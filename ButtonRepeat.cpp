@@ -1,14 +1,18 @@
 #include "ButtonRepeat.h"
 #include "Globals.h"
 
+// ========================================================
+// Funciones comunes de las ventanas
+// ========================================================
+
 ButtonRepeat::ButtonRepeat()
   : _repeat(),
     _repeatTick() {}
 
 bool ButtonRepeat::step(uint8_t button) {
   if (buttons.pressed(button)) {
-    _repeat.start();
     _repeatTick.start();
+    _repeat.start();
     return true;
   }
 
@@ -19,3 +23,7 @@ bool ButtonRepeat::step(uint8_t button) {
 
   return false;
 }
+
+// ========================================================
+// Fin — Funciones comunes de las ventanas
+// ========================================================

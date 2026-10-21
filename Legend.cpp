@@ -3,12 +3,9 @@
 #include "Draw.h"
 #include <string.h>
 
-const char* const Legend::BTN_FUNC[4] = {
-  "Btn1 / Back",
-  "Btn2 / Select / Pause",
-  "Btn3 / None",
-  "Btn4 / None"
-};
+// ========================================================
+// Funciones comunes de las ventanas
+// ========================================================
 
 Legend::Legend()
   : _btn(0),
@@ -99,15 +96,28 @@ void Legend::firstPrint(bool forceRedraw) {
   display.drawText(pieText, display.centerX(pieText, TEXT_6x8), FOOT_TOP, TEXT_6x8, false, true);
 }
 
-void Legend::blinkDiamond() {
-  if (!_scroller.done())
-    return;
-  else if (_lastBtn != _btn)
-    return;
-  else if (!_blink.changed(PERIOD, OFF))
-    return;
-  toggleDiamond(_btn, _blink.isVisible(PERIOD, OFF));
+bool Legend::done() const {
+  return _done;
 }
+
+void Legend::toggleDiamond(int8_t diamond, bool show) {
+  int16_t centerX = 0;
+  int16_t centerY = 0;
+  diamondCenter(diamond, centerX, centerY);
+  Draw::diamond(centerX, centerY, show);
+}
+
+// ========================================================
+// Fin — Funciones comunes de las ventanas
+// ========================================================
+
+
+
+
+
+// ========================================================
+// Funciones locales
+// ========================================================
 
 void Legend::diamondCenter(int8_t diamond, int16_t& centerX, int16_t& centerY) {
   switch (diamond) {
@@ -133,11 +143,14 @@ void Legend::diamondCenter(int8_t diamond, int16_t& centerX, int16_t& centerY) {
   }
 }
 
-void Legend::toggleDiamond(int8_t diamond, bool show) {
-  int16_t centerX = 0;
-  int16_t centerY = 0;
-  diamondCenter(diamond, centerX, centerY);
-  Draw::diamond(centerX, centerY, show);
+void Legend::blinkDiamond() {
+  if (!_scroller.done())
+    return;
+  else if (_lastBtn != _btn)
+    return;
+  else if (!_blink.changed(PERIOD, OFF))
+    return;
+  toggleDiamond(_btn, _blink.isVisible(PERIOD, OFF));
 }
 
 void Legend::nextBtn() {
@@ -154,6 +167,6 @@ void Legend::nextBtn() {
   _lastBtn = _btn;
 }
 
-bool Legend::done() const {
-  return _done;
-}
+// ========================================================
+// Fin — Funciones locales
+// ========================================================

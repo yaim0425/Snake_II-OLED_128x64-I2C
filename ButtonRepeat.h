@@ -11,15 +11,15 @@ class ButtonRepeat {
 public:
   // Constantes
   // Retardo antes de la primera repetición y cadencia de las siguientes.
-  static constexpr uint8_t DELAY = 400;
+  static constexpr uint16_t DELAY = 400;
   static constexpr uint8_t TICK = 100;
 
-  // Funciones
+  // Funciones comunes de las ventanas
   explicit ButtonRepeat();
   bool step(uint8_t button);
 
 private:
-  // Variables
+  // Variables comunes de las ventanas
   uint32_t _tick;
   uint32_t _delay;
   Stopwatch _repeat;

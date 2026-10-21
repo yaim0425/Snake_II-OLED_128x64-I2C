@@ -1,6 +1,10 @@
 #include "Display.h"
 #include <string.h>
 
+// ========================================================
+// Funciones comunes de las ventanas
+// ========================================================
+
 Display::Display(uint8_t sda, uint8_t scl, uint8_t address)
   : _screen(nullptr),
     _sda(sda),
@@ -17,8 +21,7 @@ void Display::begin() {
     Serial.println("");
     Serial.println("ERROR: No se encontró la pantalla");
 
-    for (;;)
-      ;
+    for (;;);
   }
 
   Wire.setClock(CLOCK_HZ);
@@ -30,6 +33,18 @@ void Display::begin() {
 void Display::clear() {
   _screen->clearDisplay();
 }
+
+// ========================================================
+// Fin — Funciones comunes de las ventanas
+// ========================================================
+
+
+
+
+
+// ========================================================
+// Funciones locales
+// ========================================================
 
 void Display::show() {
   _screen->display();
@@ -46,25 +61,41 @@ void Display::drawPixel(int16_t x, int16_t y, bool white) {
   _screen->drawPixel(x, y, white);
 }
 
-void Display::fillRect(int16_t x, int16_t y, uint16_t width, uint16_t height, bool white) {
+int16_t Display::centerX(const char* text, uint8_t size) const {
+  return (WIDTH - strlen(text) * CHAR_W * size) / 2;
+}
+
+void Display::fillRect(
+  int16_t x, int16_t y,
+  uint16_t width, uint16_t height,
+  bool white) {
   _screen->fillRect(x, y, width, height, white);
 }
 
-void Display::fillTriangle(int16_t x0, int16_t y0, int16_t x1, int16_t y1, int16_t x2, int16_t y2, bool white) {
+void Display::fillTriangle(
+  int16_t x0, int16_t y0,
+  int16_t x1, int16_t y1,
+  int16_t x2, int16_t y2,
+  bool white) {
   _screen->fillTriangle(x0, y0, x1, y1, x2, y2, white);
 }
 
-void Display::drawText(const char* text, int16_t x, int16_t y, uint8_t size, bool tColor, bool bgColor) {
+void Display::drawText(
+  const char* text, int16_t x, int16_t y, uint8_t size,
+  bool tColor, bool bgColor) {
   _screen->setTextSize(size);
   _screen->setTextColor(tColor, bgColor);
   _screen->setCursor(x, y);
   _screen->print(text);
 }
 
-void Display::drawBitmap(int16_t x, int16_t y, const uint8_t* bitmap, int16_t width, int16_t height, bool tColor, bool bgColor) {
+void Display::drawBitmap(
+  int16_t x, int16_t y,
+  const uint8_t* bitmap, int16_t width, int16_t height,
+  bool tColor, bool bgColor) {
   _screen->drawBitmap(x, y, bitmap, width, height, tColor, bgColor);
 }
 
-uint8_t Display::centerX(const char* text, uint8_t size) const {
-  return (WIDTH - strlen(text) * CHAR_W * size) / 2;
-}
+// ========================================================
+// Fin — Funciones locales
+// ========================================================

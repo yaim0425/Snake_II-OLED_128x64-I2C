@@ -80,7 +80,7 @@ En desarrollo. `.ino` = wiring: define los globales (`Display`, `Buttons`, `Soun
 
 **Clases extraídas de `Game`:** `Food` (alimento normal/especial), `Snake` (lógica + dibujo propio `print`), `Sprite.h` (namespaces `Sprite`/`Special`/`Logo`), `Timer.h` (reloj 64 bits; migración desde `millis()`).
 
-**Características:** dificultad vía `Storage` (`Game::begin` usa `speedFor(storage.difficulty())`); puntaje = nivel de dificultad (comida normal) o ×10 (comida especial), `uint16_t`; al llenar el tablero se sube de nivel (`spawnFood` escribe `storage.setBestScore(storage.difficulty() + 1)` — intencional, no corregir) o muere si ya está en el máximo; al morir, `die()` marca `_win = _score > storage.bestScore()`, guarda el récord y termina (`_done=true`), y el `Engine` entra en `MENU_CREDITS` (tarjeta final `THANKS`/puntaje).
+**Características:** dificultad vía `Storage` (`Game::begin` usa `speedFor(storage.difficulty())`); puntaje = nivel de dificultad (comida normal) o ×10 (comida especial), `uint16_t`; al llenar el tablero se sube de nivel (`spawnFood` escribe `storage.setDifficulty(storage.difficulty() + 1)`) o muere si ya está en el máximo; al morir, `die()` marca `_win = _score > storage.bestScore()`, guarda el récord y termina (`_done=true`), y el `Engine` entra en `MENU_CREDITS` (tarjeta final `THANKS`/puntaje).
 
 ---
 
@@ -228,7 +228,7 @@ size=3 -> texto 18x24 -> cuadro 24x26
 ## 6. Decisiones de diseño
 
 - **`char*` en lugar de `String`** en `Display` (evita fragmentación del heap). Impresión con cadenas NULL-terminated.
-- **Retornos `uint8_t`** para anchos/altos (clamp 255).
+- **Retornos `uint8_t`** para anchos/altos (clamp 255). `Display::centerX()` devuelve **`int16_t`** (centrado horizontal; antes `uint8_t`).
 - **Ancho de texto = `strlen` (bytes):** con UTF-8 (á, é, ñ) sería incorrecto; hoy solo ASCII.
 - **Posición de texto devuelta:** siempre esquina superior-izquierda.
 - **`Display` encapsula el OLED** (el `.ino` usaba `Adafruit_SSD1306` directo).
@@ -270,8 +270,8 @@ enum Button : uint8_t {
 - `bool isSet(uint8_t states, uint8_t boton)` → `states & (1 << boton)`: **declarado en `Buttons.h`** (`static bool`, **sin `inline`**) y **definido en `Buttons.cpp`** (quitar el `inline` resolvió el *undefined reference*).
 - Cambio físico por bit (`raw ^ _rawButtons`); instante por botón; estado nuevo tras `_buttonDelay` ms estables. Almacenamiento: 4 bytes (antes 4 `bool[8]` + 1 byte).
 
-### Anticonflicto MOVE
-Con 2+ bits MOVE (`MOVE_MASK`, bots 0..3) confirmados a la vez, se anulan todos (al final de `read()`, sobre `_buttons`/`_pressed`/`_released`). ACTION no participa. Al liberar, si queda uno solo, se reactiva solo.
+### Anticonflicto MOVE (eliminado)
+El antiguo bloque `MOVE_MASK` (con 2+ bits MOVE confirmados a la vez se anulaban todos) se **eliminó** de `read()`, junto con la constante `MOVE_MASK` de `Buttons.h`: hoy los MOVE simultáneos se tratan como cualquier otro botón (cada uno confirma su propio bit).
 
 ---
 
@@ -409,7 +409,7 @@ Buzzer(uint8_t pin = Config::Pin::BUZZER);   // pin 14
 
 `Sound.h/.cpp`. Efectos = **secuencias de tonos** (`Note` = `{freq, durMs}`, `0` = silencio) sobre su **`Buzzer` interno** (por valor, inicializado en `begin()`). No bloqueante: `play()` arranca y `update()` avanza nota a nota. Desactivado, `play()` no hace nada (`setEnabled(false)`).
 
-Las secuencias `SEQ_*` son **miembros estáticos privados** (`Sound.h`, definidos en `Sound.cpp`) indexadas por una **única tabla `EFFECTS[]` de `{const Note* notes, uint16_t len}`** (`uint16_t`: canciones largas; antes `uint8_t`, tope 255 notas) — orden = enum `Sfx`, `SFX_NONE` incluido con secuencia vacía: reemplaza a las constantes `LEN_*` (largo por `sizeof`) y al `switch` de `play()`, que ahora lee `EFFECTS[effect]`. Detalle de implementación: la API pública no expone `Note`, `Seq` ni tablas.
+Las secuencias `SEQ_*` son **miembros estáticos** de la clase, ahora **`static constexpr` e inline en `Sound.h`** (antes `static const` declarados en `Sound.h` y definidos en `Sound.cpp`), indexadas por una **única tabla `EFFECTS[]` de `{const Note* notes, uint16_t len}`** (`uint16_t`: canciones largas; antes `uint8_t`, tope 255 notas) — orden = enum `Sfx`, `SFX_NONE` incluido con secuencia vacía: reemplaza a las constantes `LEN_*` (largo por `sizeof`) y al `switch` de `play()`, que ahora lee `EFFECTS[effect]`. `EFFECTS[]` también es `static constexpr` en el header. Detalle de implementación: la API pública no expone `Note`, `Seq` ni tablas.
 
 ### Constructor
 ```cpp
@@ -729,8 +729,9 @@ La panza recta comparte sprite por par de direcciones: `BELLY_TO_RIGHT` = `BELLY
 | Miembro | Contenido |
 |---------|-----------|
 | `SPECIAL_FOOD_W`/`SPECIAL_FOOD_H` | Ancho (8) y alto (4) en px del sprite de la comida especial. |
-| `SPECIAL_FOOD[SPECIAL_FOOD_H]` | Sprite 1 bit de la **comida especial** (8×4) **empaquetado por fila** (literal de 8 px por fila, px `(0,0)` = bit 7) = 4 bytes, tabla aparte por no encajar en los 4×4. |
-| `specialPixel(x, y)` | `constexpr`: píxel de la comida especial. |
+| `COUNT` | Número de sprites de la tabla (2: el sprite y el vacío). Sustituye al antiguo `SPECIAL_FOOD_MAX`. |
+| `SPECIAL_FOOD[COUNT]` | Sprite 1 bit de la **comida especial** (8×4) **empaquetado por fila** (literal de 8 px por fila, px `(0,0)` = bit 7) = 4 bytes, tabla aparte por no encajar en los 4×4. |
+| `specialPixel(x, y)` | `constexpr`: píxel de la comida especial. El índice se **acota** (`if (sprite >= COUNT) sprite = COUNT;`) en vez de devolver `false` fuera de rango; como `COUNT` es el sprite vacío, el resultado es equivalente. |
 
 Lo consume `Food` (alias `SPECIAL_FOOD*` en `Food.h`, §17).
 
@@ -772,7 +773,7 @@ Los tiempos se miden con `Timer.h` (§21): `Ticker _timer` (intervalo entre paso
 | `void setDifficulty(uint8_t level)` | **No-op** (cuerpo comentado). El `Engine` aún lo llama con `_menuDifficulty.difficulty()`, pero la dificultad real la fija `storage.difficulty()` en `begin()`; `MenuDifficulty` no escribe en `Storage`. **Pendiente conocida.** |
 | `void update()` | `START`: `ACTION_RIGHT` → `SFX_START` + `startPlay()`; si no, `Blink` con `PERIOD`/`OFF`: al pasar a oculto, si `_countdown==1` → `SFX_START` + `startPlay()`, si no `_countdown--`. `PLAY`: gira con MOVE (inline, no `handleTurn()`, que está vacío; `SFX_TURN` si `turn()` aceptó), `ACTION_RIGHT` → `SFX_PAUSE` + `PAUSE`, `_moveSnake = _timer.consume() > 0` y `step()` si toca. `PAUSE`: `ACTION_RIGHT` → `SFX_RESUME` + `startPlay()`. `GAME_OVER`: `anyHeld()` → `_done=true` (raramente alcanzable: `die()` ya puso `_done`). Tras el `switch`: `ACTION_UP` sale en cualquier estado salvo `GAME_OVER` (la partida NO se pierde). |
 | `void step()` | `result = _snake.step(_food, _specialFood)`; `DIED` → `die()`; si no, `_specialFood.lessTime()` (deciende el contador de la especial **cada paso**); `SFX_EAT` si comió; si `ATE_FOOT`: `_score += _food.score()`, `_food.clear()`, `spawnFood(_food)`, `_countFood++` y al llegar a `FOOD_COUNT` (10) `spawnFood(_specialFood)` + `_countFood=0`; si `ATE_SPECIAL`: `_score += _specialFood.score()`, `_specialFood.clear()`. |
-| `void spawnFood(Food&)` | `food.spawn(food.type(), *this)`; si no hay celdas libres: `_snake.reset()` y, si `storage.difficulty() < MAX_LEVEL`, `storage.setBestScore(storage.difficulty() + 1)` (**intencional**, no corregir: es el "subir de nivel" al llenar el tablero) + `_clear=true` y respawn; si ya está en el máximo, `die()`. |
+| `void spawnFood(Food&)` | `food.spawn(food.type(), *this)`; si no hay celdas libres: `_snake.reset()` y, si `storage.difficulty() < MAX_LEVEL`, `storage.setDifficulty(storage.difficulty() + 1)` (el "subir de nivel" al llenar el tablero) + `_clear=true` y respawn; si ya está en el máximo, `die()`. |
 | `void die()` | `GAME_OVER`; `_win = _score > storage.bestScore()`; si `_win`, `storage.setBestScore(_score)`; **`_done = true`** (el `Engine` entra en `MENU_CREDITS` en vez de mostrar un panel de GAME OVER). El festejo de récord quedó comentado. |
 | `void print()` | `firstPrint()`; `_food.print()` y `_specialFood.print()` cada frame; `printScore()` al comer (`_ateFood`/`_ateSpecialFood`); `_snake.print(_food, _specialFood)` al mover (`_moveSnake`); overlay del estado (ver §13). |
 | `void printScore()` | Puntaje `TEXT_12x16` en `(0,0)`. |
@@ -784,14 +785,14 @@ Los tiempos se miden con `Timer.h` (§21): `Ticker _timer` (intervalo entre paso
 | `State state()` | Estado actual (`START`/`PLAY`/`PAUSE`/`GAME_OVER`); lo consulta `Engine::inGame()` (solo cuenta con reposo bloqueado en `PLAY`). |
 | `bool win()` | `_win`: la última muerte superó el récord (para el título "YOU WIN" de los créditos). |
 | `void speedFor(uint8_t level)` | **Público.** `_moveDelay = 1000 - (nivel-1)*101 - (nivel+1)/3` ms/paso (secuencia 1000, 898, 797, 696, 594, 493, 392, 290, 189, 88; ver fórmula en el código). |
-| `bool occupied(uint8_t x, uint8_t y)` | ¿Celda ocupada por la serpiente **o por cualquiera de las dos comidas**? Lo consulta `Food::spawn`. |
+| `bool occupied(int16_t x, int16_t y)` | ¿Celda ocupada por la serpiente **o por cualquiera de las dos comidas**? Lo consulta `Food::spawn`. |
 
 ### Reglas del juego (qué coordina Game)
 - **Movimiento:** la cabeza avanza 1 celda por paso con **wrap en X e Y**. Velocidad (`_moveDelay` ms/paso) lineal con la dificultad con **pasos alternados de 101/102 ms** (102 en niveles 1, 4 y 7): `1000 - (nivel-1)*101 - (nivel+1)/3`. Los 9 saltos suman 912 ms, de **1000 ms (nivel 1) a 88 ms (nivel 10)** (secuencia 1000, 898, 797, 696, 594, 493, 392, 290, 189, 88; 101,33 ms/nivel no es entero → 6 saltos de 101 y 3 de 102). Fórmula en `Game::speedFor`.
 - **Paso (`step`):** llama `snake.step(_food, _specialFood)` (`Snake::step` recibe los dos `Food`). `Result`: `MOVED` → solo `_moveSnake` marca que se debe repintar la serpiente; `ATE_FOOT` → `_score += _food.score()` (nivel actual), `SFX_EAT`, `_food.clear()`, `spawnFood(_food)`, `_countFood++` y si llega a `FOOD_COUNT` (10) `spawnFood(_specialFood)` + `_countFood=0`; `ATE_SPECIAL` → `_score += _specialFood.score()`, `_specialFood.clear()`, `SFX_EAT`; `DIED` → `die()`.
 - **Comer/crecer, colisión, giro, sprites:** `Snake` (§18). Al morir, `die()` guarda el récord solo si `_score > storage.bestScore()`, marca `_win` y pone `_done=true` → el `Engine` pasa directamente a `MENU_CREDITS`.
 - **Doble comida:** `_food` (normal) y `_specialFood` (especial). La especial se **genera** cada 10 comidas normales y se **borra** al ser comida o cuando `lessTime()` la hace expirar en `step()` (cada paso se decrementa el tiempo de la especial).
-- **Tablero lleno:** en `spawnFood`, si no hay celdas libres, `_snake.reset()`, si `storage.difficulty() < MAX_LEVEL` → `storage.setBestScore(storage.difficulty() + 1)` (**intencional, no corregir**), `_clear=true`, vuelve a `spawnFood`; si ya está en el máximo → `die()`.
+- **Tablero lleno:** en `spawnFood`, si no hay celdas libres, `_snake.reset()`, si `storage.difficulty() < MAX_LEVEL` → `storage.setDifficulty(storage.difficulty() + 1)`, `_clear=true`, vuelve a `spawnFood`; si ya está en el máximo → `die()`.
 - **Comer/crecer, colisión, giro, sprites:** los resuelve `Snake` (§18); `Game` solo consume el resultado y repinta.
 - **Alimento:** rombo simétrico centrado en la celda (`Draw::diamond`), como el del menú; lo dibuja `Food` (§17). La **semilla aleatoria** se fija en `Game::reset()` con `randomSeed(esp_random() ^ (uint32_t)nowMs())` (`esp_random()` = RNG de hardware, entropía real) y se consume en `Food::spawn`.
 - **Colisión con el cuerpo:** la celda destino es ilegal si coincide con el cuerpo **salvo la cola cuando NO come** (la cola se libera ese paso; bloqueante solo al comer); la resuelve `Snake::step`. Si colisiona: `GAME_OVER` (`SFX_GAME_OVER`) e informa `SFX_BACK` al volver. **El récord (`storage.bestScore()`, §22) se verifica/actualiza solo aquí, en GAME OVER** (o al llenar el tablero, que también pasa por `die()`): partidas abandonadas con `ACTION_UP` no cuentan. Si supera el récord → **festejo de nuevo récord**: "GAME OVER" → "BUT" → "YOU ARE" → "THE BEST" en ciclo (`NEW_BEST_SIGN_MS` por letrero; `_newBest`, `_celeSfx` y el `Stopwatch _cele` que arranca en `die()`) hasta pulsar un botón; `SFX_NEW_BEST` suena solo la primera vez que aparece "THE BEST" (YOU ARE ya no la dispara).
@@ -831,7 +832,7 @@ static constexpr uint8_t SPECIAL_TIME = Config::Food::SPECIAL_TIME;   // segundo
 | `void clear()` | Quita el alimento. |
 | `bool has()` | `true` si hay alimento. |
 | `Type type()` | Tipo del alimento actual. |
-| `uint8_t x()` / `y()` | Columna (0..`COLS`-1) / fila (0..`ROWS`-1). |
+| `uint8_t x()` / `y()` | Columna (0..`COLS`-1) / fila (0..`ROWS`-1). Internamente `_x`/`_y` son **`int16_t`** (antes `uint8_t`). |
 | `uint8_t specialTime()` | Segundos restantes de la comida especial. |
 | `void setSpecialTime(uint8_t s)` | Actualiza el temporizador de la especial. |
 | `void draw() const` | Dibuja según tipo: `NORMAL` → rombo (`drawNormal` → `Draw::diamond`); `SPECIAL` → sprite (`drawSpecial` → `Display::drawBitmap`, 1 px por bit). Si no hay alimento, no dibuja. |
@@ -870,7 +871,7 @@ Deja la serpiente en su estado inicial tras construcción: `_dir = Dir::RIGHT`; 
 | `void clearPending()` | Descarta el giro pendiente (`_nextDir = NONE`). Lo llama `Game::begin()` al entrar (START) para no reanudar con un giro acumulado del menú. |
 | `bool turn(Dir direction)` | **Único giro pendiente, sin buffer ni reversa directa**. Se evalúa **siempre** desde la dirección actual de la cabeza (`_dir`, la COMMITIDA): seguir, girar a izquierda o derecha; la contraria (180°) se **ignora**. Devuelve `true` si el giro quedó pendiente (el último válido pisa al anterior) para que `Game` toque `SFX_TURN` solo al aceptar. Así no se genera un GAME OVER espurio por una reversa falsa del último MOVE. |
 | `Result step(Food food, Food specialFood)` | **Avanza un paso** (aplica el giro pendiente si lo hay). Pasa los dos `Food` (por valor). Devuelve `Result` (`MOVED`/`ATE_FOOT`/`ATE_SPECIAL`/`DIED`); `Game` interpreta: al comer, crece (la cola NO avanza ese paso), `DIED` → no se mueve. |
-| `bool occupied(uint8_t cellX, uint8_t cellY)` | `true` si la celda `(cellX,cellY)` está ocupada. Lo consulta `Food` (al colocar alimento) vía `Game::occupied`, que delega aquí. |
+| `bool occupied(int16_t cellX, int16_t cellY)` | `true` si la celda `(cellX,cellY)` está ocupada. Lo consulta `Food` (al colocar alimento) vía `Game::occupied`, que delega aquí. |
 | `uint8_t length()` | Longitud actual. |
 | `const Seg& segment(uint8_t segmentIndex)` | Segmento `segmentIndex` (0 = cola, `length()-1` = cabeza) para que `Game` lo dibuje. |
 | `Sprite::Part headPart(Food food, Food specialFood)` | Sprite de la cabeza según la dirección commitida: `HEAD_<dir>_OPEN` **una casilla antes** de llegar a **cualquiera de las dos comidas** (la comida está en la próxima celda según `_dir`) y `HEAD_<dir>_CLOSE` al colisionar con ella. Lo usa `print`. |
@@ -881,7 +882,7 @@ Deja la serpiente en su estado inicial tras construcción: `_dir = Dir::RIGHT`; 
 enum class Dir : uint8_t { NONE = 0, UP = 1, RIGHT, DOWN, LEFT };
 enum class Result : uint8_t { MOVED, ATE_FOOT, ATE_SPECIAL, DIED };
   struct Seg {
-    uint8_t col, row;
+    int16_t col, row;
     Dir dir;            // hacia el segmento siguiente (más cerca de la cabeza)
     Sprite::Part part;  // sprite persistente
   };
@@ -893,7 +894,7 @@ enum class Result : uint8_t { MOVED, ATE_FOOT, ATE_SPECIAL, DIED };
   Seg _droppedSeg;            // esa cola (celda + sprite con el que estaba pintada)
   Sprite::Part bodyPartFor(Dir inDir, Dir outDir);
   Sprite::Part bellyPartFor(Dir inDir, Dir outDir);
-  void drawSprite(Sprite::Part part, uint8_t col, uint8_t row, bool white);
+  void drawSprite(Sprite::Part part, int16_t col, int16_t row, bool white);
 ```
 
 - **Ring buffer:** cola en `_tailIx`, cabeza en `_headIx`. Cada paso **agrega una parte nueva** (la cabeza) y **elimina la última** (la cola) salvo al comer (la cola NO avanza). El nuevo segmento se escribe en `slot()` = `_headIx+1` módulo `MAX_LENGTH`; la cabeza nueva apunta a ese slot.

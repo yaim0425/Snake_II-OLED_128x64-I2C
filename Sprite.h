@@ -62,22 +62,24 @@ namespace Sprite {
 namespace Special {
   static constexpr const uint8_t SPECIAL_FOOD_W = 8;
   static constexpr const uint8_t SPECIAL_FOOD_H = 4;
-  static constexpr const uint8_t SPECIAL_FOOD_MAX = 2;
 
-  static constexpr const uint32_t SPECIAL_FOOD[SPECIAL_FOOD_MAX] = {
+  static constexpr const uint8_t COUNT = 2;
+
+  static constexpr const uint32_t SPECIAL_FOOD[COUNT] = {
     0b0101'0100'1011'1110'1111'1111'0010'0100, // Sprite 0
     0b0000'0000'0000'0000'0000'0000'0000'0000  // Empty
   };
 
   static constexpr const bool specialPixel(uint8_t sprite, uint8_t x, uint8_t y) {
-    if (sprite < SPECIAL_FOOD_MAX) return (SPECIAL_FOOD[sprite] & (0x8000'0000UL >> (y * SPECIAL_FOOD_W + x))) != 0;
-    return false;
+    if (sprite >= COUNT) sprite = COUNT;
+    return (SPECIAL_FOOD[sprite] & (0x8000'0000UL >> (y * SPECIAL_FOOD_W + x))) != 0;
   }
 }
 
 namespace Logo {
   static constexpr const uint8_t LOGO_W = 80;
   static constexpr const uint8_t LOGO_H = 48;
+
   static constexpr const uint8_t LOGO[LOGO_H * (LOGO_W / 8)] = {
     0b1111'1111, 0b1111'1111, 0b1111'1111, 0b1111'1111, 0b1111'1111, 0b1111'1111, 0b1111'1111, 0b1111'1111, 0b1111'1111, 0b1111'1111,
     0b1111'1111, 0b1100'0011, 0b1111'1111, 0b1110'0011, 0b1110'0111, 0b1100'0111, 0b1111'1110, 0b0001'1111, 0b1111'1111, 0b0000'1111,

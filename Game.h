@@ -20,22 +20,24 @@ public:
     GAME_OVER
   };
 
-  // Funciones
+  // Funciones comunes de las ventanas
   Game();
   void begin(bool newGame);
   void update();
   void print();
   void firstPrint(bool forceRedraw);
   bool done() const;
+  bool occupied(int16_t x, int16_t y) const;
+
+  // Funciones locales
   bool showContinue() const;
   bool isGameOver() const;
-  bool occupied(uint8_t x, uint8_t y) const;
   State state() const;
   bool win() const;
   void speedFor(uint8_t level);
 
 private:
-  // Variables comunes de las ventanas
+  // Constantes de Config
   static constexpr int16_t BODY_MIDDLE = Config::Screen::BODY_MIDDLE;
   static constexpr uint8_t CHAR_H = Config::Screen::CHAR_H;
   static constexpr uint8_t CHAR_W = Config::Screen::CHAR_W;
@@ -51,15 +53,7 @@ private:
   // Comidas normales requeridas antes de soltar una especial.
   static constexpr int8_t FOOD_COUNT = 10;
 
-  // Funciones
-  void startPlay();
-  void step();
-  void die();
-  void drawOverlay(const char* title, bool fullWidth, bool show);
-  void spawnFood(Food& food);
-  void printScore();
-
-  // Variables
+  // Variables comunes de las ventanas
   State _state;
   bool _win;
   bool _done;
@@ -76,6 +70,16 @@ private:
   Food _food;
   Food _specialFood;
   int8_t _countFood;
+
+  // Funciones comunes de las ventanas
+  void step();
+
+  // Funciones locales
+  void startPlay();
+  void die();
+  void drawOverlay(const char* title, bool fullWidth, bool show);
+  void spawnFood(Food& food);
+  void printScore();
 };
 
 // ========================================================

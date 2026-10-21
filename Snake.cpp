@@ -2,6 +2,10 @@
 #include "Food.h"
 #include "Globals.h"
 
+// ========================================================
+// Funciones comunes de las ventanas
+// ========================================================
+
 Snake::Snake()
   : _headIndex(0),
     _tailIndex(0),
@@ -11,32 +15,6 @@ Snake::Snake()
     _bellyPending(false),
     _tailDropped(false),
     _droppedSeg{ 0, 0, Draw::DIR_NONE, Sprite::EMPTY } {}
-
-void Snake::reset() {
-  _length = START_LENGTH;
-  _tailIndex = 0;
-  _headIndex = START_LENGTH - 1;
-  _dir = (Draw::Direction)START_DIR;
-  _nextDir = Draw::DIR_NONE;
-  _bellyPending = false;
-  _tailDropped = false;
-
-  _body[0] = { START_COL + 1, START_ROW, Draw::DIR_RIGHT, Sprite::TAIL_TO_RIGHT };
-  _body[1] = { START_COL + 2, START_ROW, Draw::DIR_RIGHT, Sprite::BODY_TO_RIGHT };
-  _body[2] = { START_COL + 3, START_ROW, Draw::DIR_RIGHT, Sprite::BODY_TO_RIGHT };
-  _body[3] = { START_COL + 4, START_ROW, Draw::DIR_RIGHT, Sprite::HEAD_RIGHT_CLOSE };
-}
-
-void Snake::clearPending() {
-  _nextDir = Draw::DIR_NONE;
-}
-
-bool Snake::turn(Draw::Direction direction) {
-  if (direction == Draw::DIR_NONE || direction == _dir || direction == _nextDir) return false;
-  if (_dir == opposite(direction)) return false;
-  _nextDir = direction;
-  return true;
-}
 
 Snake::Result Snake::step(const Food& food, const Food& specialFood) {
   _tailDropped = false;
@@ -48,8 +26,8 @@ Snake::Result Snake::step(const Food& food, const Food& specialFood) {
   }
 
   const Seg& headSegment = _body[_headIndex];
-  uint8_t nextX = headSegment.col;
-  uint8_t nextY = headSegment.row;
+  int16_t nextX = headSegment.col;
+  int16_t nextY = headSegment.row;
 
   switch (stepDir) {
     case Draw::DIR_UP: nextY = nextY == 0 ? ROWS - 1 : nextY - 1; break;
@@ -103,35 +81,12 @@ Snake::Result Snake::step(const Food& food, const Food& specialFood) {
   return Result::MOVED;
 }
 
-bool Snake::occupied(uint8_t cellX, uint8_t cellY) const {
+bool Snake::occupied(int16_t cellX, int16_t cellY) const {
   for (uint8_t segmentIndex = 0; segmentIndex < _length; segmentIndex++) {
     const Seg& currentSegment = _body[slot(segmentIndex)];
     if (currentSegment.col == cellX && currentSegment.row == cellY) return true;
   }
   return false;
-}
-
-uint8_t Snake::length() const {
-  return _length;
-}
-
-Sprite::Part Snake::headPart(const Food& food, const Food& specialFood) const {
-  uint8_t offset = (uint8_t)_dir - 1;
-  const Seg& head = _body[_headIndex];
-  uint8_t nextX = head.col;
-  uint8_t nextY = head.row;
-
-  switch (_dir) {
-    case Draw::DIR_UP: nextY = nextY == 0 ? ROWS - 1 : nextY - 1; break;
-    case Draw::DIR_RIGHT: nextX = (nextX + 1) % COLS; break;
-    case Draw::DIR_DOWN: nextY = nextY == ROWS - 1 ? 0 : nextY + 1; break;
-    case Draw::DIR_LEFT: nextX = nextX == 0 ? COLS - 1 : nextX - 1; break;
-    default: break;
-  }
-
-  bool aboutToEat = food.occupied(nextX, nextY) || specialFood.occupied(nextX, nextY);
-  uint8_t basePart = aboutToEat ? Sprite::HEAD_UP_OPEN : Sprite::HEAD_UP_CLOSE;
-  return (Sprite::Part)(basePart + offset);
 }
 
 void Snake::print(const Food& food, const Food& specialFood) {
@@ -147,15 +102,65 @@ void Snake::print(const Food& food, const Food& specialFood) {
   }
 }
 
-void Snake::drawSprite(Sprite::Part part, uint8_t col, uint8_t row, bool white) {
-  int16_t baseX = col * CELL;
-  int16_t baseY = BODY_TOP + row * CELL;
+// ========================================================
+// Fin — Funciones comunes de las ventanas
+// ========================================================
 
-  for (uint8_t i = 0; i < SIZE; i++)
-    for (uint8_t j = 0; j < SIZE; j++)
-      display.fillRect(
-        baseX + SCALE * j, baseY + SCALE * i,
-        SCALE, SCALE, white && Sprite::pixel(part, j, i));
+
+
+
+
+// ========================================================
+// Funciones locales
+// ========================================================
+
+void Snake::reset() {
+  _length = START_LENGTH;
+  _tailIndex = 0;
+  _headIndex = START_LENGTH - 1;
+  _dir = (Draw::Direction)START_DIR;
+  _nextDir = Draw::DIR_NONE;
+  _bellyPending = false;
+  _tailDropped = false;
+
+  _body[0] = { START_COL + 1, START_ROW, Draw::DIR_RIGHT, Sprite::TAIL_TO_RIGHT };
+  _body[1] = { START_COL + 2, START_ROW, Draw::DIR_RIGHT, Sprite::BODY_TO_RIGHT };
+  _body[2] = { START_COL + 3, START_ROW, Draw::DIR_RIGHT, Sprite::BODY_TO_RIGHT };
+  _body[3] = { START_COL + 4, START_ROW, Draw::DIR_RIGHT, Sprite::HEAD_RIGHT_CLOSE };
+}
+
+void Snake::clearPending() {
+  _nextDir = Draw::DIR_NONE;
+}
+
+bool Snake::turn(Draw::Direction direction) {
+  if (direction == Draw::DIR_NONE || direction == _dir || direction == _nextDir) return false;
+  if (_dir == opposite(direction)) return false;
+  _nextDir = direction;
+  return true;
+}
+
+uint8_t Snake::length() const {
+  return _length;
+}
+
+Sprite::Part Snake::headPart(const Food& food, const Food& specialFood) const {
+  uint8_t offset = (uint8_t)_dir - 1;
+  const Seg& head = _body[_headIndex];
+  int16_t nextX = head.col;
+  int16_t nextY = head.row;
+
+  switch (_dir) {
+    case Draw::DIR_UP: nextY = nextY == 0 ? ROWS - 1 : nextY - 1; break;
+    case Draw::DIR_RIGHT: nextX = (nextX + 1) % COLS; break;
+    case Draw::DIR_DOWN: nextY = nextY == ROWS - 1 ? 0 : nextY + 1; break;
+    case Draw::DIR_LEFT: nextX = nextX == 0 ? COLS - 1 : nextX - 1; break;
+    default: break;
+  }
+
+  bool aboutToEat = food.occupied(nextX, nextY) || specialFood.occupied(nextX, nextY);
+  uint8_t basePart = aboutToEat ? Sprite::HEAD_UP_OPEN : Sprite::HEAD_UP_CLOSE;
+  return (Sprite::Part)(basePart + offset);
 }
 
 uint8_t Snake::slot(uint8_t slotIndex) const {
@@ -200,3 +205,18 @@ Sprite::Part Snake::bellyPartFor(Draw::Direction inDir, Draw::Direction outDir) 
   else basePart += (vertical == Draw::DIR_UP) ? 2 : 3;
   return (Sprite::Part)basePart;
 }
+
+void Snake::drawSprite(Sprite::Part part, int16_t col, int16_t row, bool white) {
+  int16_t baseX = col * CELL;
+  int16_t baseY = BODY_TOP + row * CELL;
+
+  for (uint8_t i = 0; i < SIZE; i++)
+    for (uint8_t j = 0; j < SIZE; j++)
+      display.fillRect(
+        baseX + SCALE * j, baseY + SCALE * i,
+        SCALE, SCALE, white && Sprite::pixel(part, j, i));
+}
+
+// ========================================================
+// Fin — Funciones locales
+// ========================================================
