@@ -93,19 +93,15 @@ bool Menu::done() const {
 }
 
 void Menu::blinkOption() {
+  if (!_confirm)
+    if (!_scroller.done()) return;
+    else if (_lastSelected != _selected) return;
+    else if (!_blink.changed(PERIOD, OFF)) return;
+
   if (_confirm) {
     _done = true;
     _confirm = false;
-  } else if (!_scroller.done())
-    return;
-  else if (_lastSelected != _selected)
-    return;
-  else if (!_blink.changed(PERIOD, OFF))
-    return;
-
-  if (_done && !_scroller.done()) {
     display.fillRect(0, BOX_TOP - 1, WIDTH, BOX_HEIGHT + 2, true);
-    _scroller.begin(Draw::DIR_RIGHT, Scroller::EndMode::STAY);
   }
 
   const bool visible = _done || _blink.isVisible(PERIOD, OFF);
