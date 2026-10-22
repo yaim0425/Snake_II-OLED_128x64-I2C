@@ -136,8 +136,9 @@ uint8_t Food::score() const {
 }
 
 void Food::printNormal(bool show) const {
-  int16_t baseX = BOARD_LEFT + _x * CELL + SCALE;
-  int16_t baseY = BOARD_TOP + _y * CELL + SCALE;
+  // El arte de la comida ocupa 3x3 de los 4x4 del sprite: se centra en la celda.
+  int16_t baseX = BOARD_LEFT + _x * CELL + SCALE / 2;
+  int16_t baseY = BOARD_TOP + _y * CELL + SCALE / 2;
 
   for (uint8_t y = 0; y < SIZE; y++)
     for (uint8_t x = 0; x < SIZE; x++)

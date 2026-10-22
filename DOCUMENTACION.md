@@ -643,7 +643,7 @@ Para cambiar el tamaño de celda del tablero:
   - Comida especial: `Special::SPECIAL_FOOD[]` (8x4), `Special::specialPixel(...)`.
   - Logo: `Logo::LOGO[]` (80x48, 1 bit/px, polaridad invertida: 1 = fondo).
 - **Dibujado:** serpiente y comida especial escalan cada bit del sprite a un
-  cuadrado `SCALE`x`SCALE` px. La comida normal se dibuja con el sprite `Sprite::FOOD` (4x4).
+  cuadrado `SCALE`x`SCALE` px. La comida normal se dibuja con el sprite `Sprite::FOOD` (4x4, arte 3x3 centrado en la celda con `SCALE/2`).
 - **Animaciones:** parpadeo (`Blink`), vuelos de texto (`Scroller`, con cortina)
   y el conteo del juego (`Blink` + overlays).
 - **Cómo agregar/modificar un sprite:**
