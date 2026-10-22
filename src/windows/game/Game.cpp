@@ -304,10 +304,10 @@ void Game::printScore() {
 }
 
 void Game::printPerimeter() const {
-  display.fillRect(FRAME_LEFT, FRAME_TOP, FRAME_W, 1, true);
-  display.fillRect(FRAME_LEFT, FRAME_TOP + FRAME_H - 1, FRAME_W, 1, true);
-  display.fillRect(FRAME_LEFT, FRAME_TOP, 1, FRAME_H, true);
-  display.fillRect(FRAME_LEFT + FRAME_W - 1, FRAME_TOP, 1, FRAME_H, true);
+  display.fillRect(0, BODY_TOP, WIDTH, 1, true);
+  display.fillRect(0, BODY_TOP + BODY_H - 1, WIDTH, 1, true);
+  display.fillRect(0, BODY_TOP, 1, BODY_H, true);
+  display.fillRect(WIDTH - 1, BODY_TOP, 1, BODY_H, true);
 }
 
 // ========================================================
