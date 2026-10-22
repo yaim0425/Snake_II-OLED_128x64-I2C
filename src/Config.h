@@ -29,7 +29,7 @@ namespace Config {
   namespace Version {
     constexpr const char* NAME         = "Snake II";
     constexpr const char* VERSION      = "v1.0.0";
-    constexpr const char* RELEASE_DATE = "2026 12 31";
+    constexpr const char* RELEASE_DATE = "2026 10 21";
   }
 
   // Niveles de dificultad admitidos (rango persistible).
