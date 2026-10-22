@@ -136,8 +136,8 @@ uint8_t Food::score() const {
 }
 
 void Food::printNormal(bool show) const {
-  int16_t baseX = _x * CELL + SCALE;
-  int16_t baseY = _y * CELL + BODY_TOP + SCALE;
+  int16_t baseX = BOARD_LEFT + _x * CELL + SCALE;
+  int16_t baseY = BOARD_TOP + _y * CELL + SCALE;
 
   for (uint8_t y = 0; y < SIZE; y++)
     for (uint8_t x = 0; x < SIZE; x++)
@@ -146,8 +146,8 @@ void Food::printNormal(bool show) const {
 }
 
 void Food::printSpecial(bool show) const {
-  int16_t baseX = _x * CELL;
-  int16_t baseY = _y * CELL + BODY_TOP;
+  int16_t baseX = BOARD_LEFT + _x * CELL;
+  int16_t baseY = BOARD_TOP + _y * CELL;
 
   for (int8_t y = 0; y < SPECIAL_FOOD_H; y++)
     for (int8_t x = 0; x < SPECIAL_FOOD_W; x++)

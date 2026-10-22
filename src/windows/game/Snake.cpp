@@ -207,8 +207,8 @@ Sprite::Part Snake::bellyPartFor(Draw::Direction inDir, Draw::Direction outDir) 
 }
 
 void Snake::drawSprite(Sprite::Part part, int16_t col, int16_t row, bool white) {
-  int16_t baseX = col * CELL;
-  int16_t baseY = BODY_TOP + row * CELL;
+  int16_t baseX = BOARD_LEFT + col * CELL;
+  int16_t baseY = BOARD_TOP + row * CELL;
 
   for (uint8_t i = 0; i < SIZE; i++)
     for (uint8_t j = 0; j < SIZE; j++)

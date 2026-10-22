@@ -72,13 +72,17 @@ namespace Config {
   // Rejilla del tablero de juego (compartida por Snake y Food).
   namespace Board {
     // Valores de referencia
-    constexpr uint8_t CELL  = 8;  // px por celda (8x8)
-    constexpr uint8_t SCALE = 2;  // "píxel" de dibujo dentro de la celda (2x2)
+    constexpr uint8_t CELL  = 4;  // px por celda (8x8)
+    constexpr uint8_t SCALE = CELL / 4;  // "píxel" de dibujo dentro de la celda (2x2)
 
-    // Tamaño del tablero
-    constexpr uint8_t COLS = Screen::WIDTH / CELL;
-    constexpr uint8_t ROWS = Screen::BODY_H / CELL;
+    // Tamaño del tablero (deja sitio al marco perimetral del Body)
+    constexpr uint8_t COLS = 15;
+    constexpr uint8_t ROWS = 5;
     constexpr uint8_t MAX_LENGTH = COLS * ROWS;
+
+    // Posición del tablero dentro del Body (centrado)
+    constexpr int16_t LEFT = (Screen::WIDTH - COLS * CELL) / 2;
+    constexpr int16_t TOP  = Screen::BODY_TOP + (Screen::BODY_H - ROWS * CELL) / 2;
   }
 
   // Banda central compartida por los menús: caja de la opción y zona de valores, diamantes y triangulos.
