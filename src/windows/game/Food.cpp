@@ -1,7 +1,6 @@
 #include "Food.h"
 #include "Game.h"
 #include "src/Globals.h"
-#include "src/graphics/Draw.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -137,9 +136,13 @@ uint8_t Food::score() const {
 }
 
 void Food::printNormal(bool show) const {
-  int16_t centerX = _x * CELL + CELL / 2;
-  int16_t centerY = _y * CELL + CELL / 2 + BODY_TOP;
-  Draw::diamond(centerX, centerY, show);
+  int16_t baseX = _x * CELL + SCALE;
+  int16_t baseY = _y * CELL + BODY_TOP + SCALE;
+
+  for (uint8_t y = 0; y < SIZE; y++)
+    for (uint8_t x = 0; x < SIZE; x++)
+      if (Sprite::pixel(Sprite::FOOD, x, y))
+        display.fillRect(baseX + x * SCALE, baseY + y * SCALE, SCALE, SCALE, show);
 }
 
 void Food::printSpecial(bool show) const {

@@ -639,16 +639,17 @@ Para cambiar el tamaño de celda del tablero:
 - **Sprites:**
   - Serpiente: `Sprite::SPRITES[]`, 4x4 empaquetado en un `uint16_t`;
     `Sprite::pixel(part, x, y)`.
+  - Comida normal: `Sprite::FOOD` (4x4, dentro de `SPRITES[]`).
   - Comida especial: `Special::SPECIAL_FOOD[]` (8x4), `Special::specialPixel(...)`.
   - Logo: `Logo::LOGO[]` (80x48, 1 bit/px, polaridad invertida: 1 = fondo).
 - **Dibujado:** serpiente y comida especial escalan cada bit del sprite a un
-  cuadrado `SCALE`x`SCALE` px. La comida normal es un rombo (`Draw::diamond`).
+  cuadrado `SCALE`x`SCALE` px. La comida normal se dibuja con el sprite `Sprite::FOOD` (4x4).
 - **Animaciones:** parpadeo (`Blink`), vuelos de texto (`Scroller`, con cortina)
   y el conteo del juego (`Blink` + overlays).
 - **Cómo agregar/modificar un sprite:**
   1. Añade/edita la tabla en `src/graphics/Sprite.h` (`SPRITES` + valor en `enum Part`, o
      `SPECIAL_FOOD`).
-  2. Respeta el tamaño (4x4 la serpiente, 8x4 la especial) y lee con
+  2. Respeta el tamaño (4x4 la serpiente y la comida normal, 8x4 la especial) y lee con
      `pixel()`/`specialPixel()`.
   3. Dibújalo con `display.fillRect(...)` por bit (ver `Snake::drawSprite` y
      `Food::printSpecial`).

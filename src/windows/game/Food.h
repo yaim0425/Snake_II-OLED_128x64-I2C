@@ -41,6 +41,7 @@ private:
   static constexpr int8_t BODY_TOP = Config::Screen::BODY_TOP;
 
   // Constantes
+  static constexpr uint8_t SIZE = Sprite::SIZE;
   static constexpr auto& SPECIAL_FOOD = Special::SPECIAL_FOOD;
   static constexpr uint8_t SPECIAL_FOOD_W = Special::SPECIAL_FOOD_W;
   static constexpr uint8_t SPECIAL_FOOD_H = Special::SPECIAL_FOOD_H;
