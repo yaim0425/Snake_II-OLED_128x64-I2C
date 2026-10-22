@@ -303,7 +303,7 @@ hace `display.clear()` solo cuando toca (normalmente en su primer frame tras
   (`Ticker`), `_blink`, `_countdown`, `_blinkChanged`, `_ateFood`,
   `_ateSpecialFood`, `_snake`, `_food`, `_specialFood`, `_countFood`.
 - **Públicos:** `Game()`, `begin(bool newGame)`, `update()`, `print()`,
-  `firstPrint(bool)`, `done()`, `occupied()`, `showContinue()`, `isGameOver()`,
+  `firstPrint()`, `done()`, `occupied()`, `showContinue()`, `isGameOver()`,
   `state()`, `win()`, `speedFor(uint8_t level)`.
 - **Privados:** `step()`, `startPlay()`, `die()`, `drawOverlay()`, `spawnFood()`,
   `printScore()`, `printPerimeter()`.

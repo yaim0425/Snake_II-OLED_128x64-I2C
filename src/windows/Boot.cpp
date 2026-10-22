@@ -42,12 +42,12 @@ void Boot::update() {
 }
 
 void Boot::print() {
-  firstPrint(false);
+  firstPrint();
   blinkMessage();
 }
 
-void Boot::firstPrint(bool forceRedraw) {
-  if (!_clear && !forceRedraw) return;
+void Boot::firstPrint() {
+  if (!_clear) return;
 
   display.clear();
   _clear = false;

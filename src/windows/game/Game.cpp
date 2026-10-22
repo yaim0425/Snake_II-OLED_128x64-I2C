@@ -124,7 +124,7 @@ void Game::print() {
 
   printPerimeter();
 
-  firstPrint(false);
+  firstPrint();
   _food.print();
   _specialFood.print();
 
@@ -144,7 +144,7 @@ void Game::print() {
         } else {
           drawOverlay(" ", false, false);
           _clear = true;
-          firstPrint(false);
+          firstPrint();
         }
       }
       break;
@@ -158,8 +158,8 @@ void Game::print() {
   }
 }
 
-void Game::firstPrint(bool forceRedraw) {
-  if (!_clear && !forceRedraw) return;
+void Game::firstPrint() {
+  if (!_clear) return;
 
   display.clear();
   _clear = false;
@@ -168,10 +168,6 @@ void Game::firstPrint(bool forceRedraw) {
   _food.print();
   _specialFood.print();
   _snake.print(_food, _specialFood);
-
-  if (_state == State::PAUSE || _state == State::START) {
-    if (forceRedraw) drawOverlay("PAUSA", false, true);
-  }
 }
 
 bool Game::done() const {

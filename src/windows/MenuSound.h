@@ -16,7 +16,7 @@ public:
   void begin();
   void update();
   void print();
-  void firstPrint(bool forceRedraw);
+  void firstPrint();
   void clear();
   bool done() const;
 

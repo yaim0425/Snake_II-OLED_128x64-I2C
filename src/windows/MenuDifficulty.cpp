@@ -45,13 +45,13 @@ void MenuDifficulty::update() {
 }
 
 void MenuDifficulty::print() {
-  firstPrint(false);
+  firstPrint();
   nextOption(false);
   blinkOption();
 }
 
-void MenuDifficulty::firstPrint(bool forceRedraw) {
-  if (!_clear && !forceRedraw) return;
+void MenuDifficulty::firstPrint() {
+  if (!_clear) return;
 
   clear();
   _clear = false;

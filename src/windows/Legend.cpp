@@ -63,14 +63,14 @@ void Legend::update() {
 }
 
 void Legend::print() {
-  firstPrint(false);
+  firstPrint();
   nextBtn();
   _scroller.print();
   blinkDiamond();
 }
 
-void Legend::firstPrint(bool forceRedraw) {
-  if (!_clear && !forceRedraw) return;
+void Legend::firstPrint() {
+  if (!_clear) return;
 
   display.clear();
   _clear = false;

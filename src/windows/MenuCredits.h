@@ -16,7 +16,7 @@ public:
   void begin(bool fromGame, bool winner);
   void update();
   void print();
-  void firstPrint(bool forceRedraw);
+  void firstPrint();
   bool done() const;
 
   // Funciones locales

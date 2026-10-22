@@ -87,12 +87,12 @@ void MenuCredits::update() {
 }
 
 void MenuCredits::print() {
-  firstPrint(false);
+  firstPrint();
   drawRoll();
 }
 
-void MenuCredits::firstPrint(bool forceRedraw) {
-  if (!_clear && !forceRedraw) return;
+void MenuCredits::firstPrint() {
+  if (!_clear) return;
 
   display.clear();
   _clear = false;

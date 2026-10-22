@@ -25,7 +25,7 @@ public:
   void begin(bool newGame);
   void update();
   void print();
-  void firstPrint(bool forceRedraw);
+  void firstPrint();
   bool done() const;
   bool occupied(int16_t x, int16_t y) const;
 

@@ -60,13 +60,13 @@ void MenuSound::update() {
 }
 
 void MenuSound::print() {
-  firstPrint(false);
+  firstPrint();
   nextOption(false);
   blinkOption();
 }
 
-void MenuSound::firstPrint(bool forceRedraw) {
-  if (!_clear && !forceRedraw) return;
+void MenuSound::firstPrint() {
+  if (!_clear) return;
 
   clear();
   _clear = false;

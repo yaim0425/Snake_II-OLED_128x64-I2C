@@ -63,14 +63,14 @@ void Menu::update() {
 void Menu::print() {
   if (_done) return;
 
-  firstPrint(false);
+  firstPrint();
   nextOption();
   _scroller.print();
   blinkOption();
 }
 
-void Menu::firstPrint(bool forceRedraw) {
-  if (!_clear && !forceRedraw) return;
+void Menu::firstPrint() {
+  if (!_clear) return;
 
   display.clear();
   _clear = false;

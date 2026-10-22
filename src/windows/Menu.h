@@ -25,7 +25,7 @@ public:
   void begin(bool showContinue);
   void update();
   void print();
-  void firstPrint(bool forceRedraw);
+  void firstPrint();
   bool done() const;
 
   // Funciones locales
