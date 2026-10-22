@@ -122,8 +122,6 @@ void Game::update() {
 void Game::print() {
   if (_done) return;
 
-  printPerimeter();
-
   firstPrint();
   _food.print();
   _specialFood.print();
@@ -163,7 +161,6 @@ void Game::firstPrint() {
 
   display.clear();
   _clear = false;
-  printPerimeter();
   printScore();
   _food.print();
   _specialFood.print();
@@ -301,13 +298,6 @@ void Game::printScore() {
   char score[8];
   snprintf(score, sizeof(score), "%u", (unsigned)_score);
   display.drawText(score, 0, 0, TEXT_12x16, true, false);
-}
-
-void Game::printPerimeter() const {
-  display.fillRect(0, BODY_TOP, WIDTH, 1, true);
-  display.fillRect(0, BODY_TOP + BODY_H - 1, WIDTH, 1, true);
-  display.fillRect(0, BODY_TOP, 1, BODY_H, true);
-  display.fillRect(WIDTH - 1, BODY_TOP, 1, BODY_H, true);
 }
 
 // ========================================================

@@ -38,8 +38,7 @@ private:
   static constexpr int8_t ROWS = Config::Board::ROWS;
   static constexpr uint8_t CHAR_W = Config::Screen::CHAR_W;
   static constexpr int16_t WIDTH = Config::Screen::WIDTH;
-  static constexpr int16_t BOARD_LEFT = Config::Board::LEFT;
-  static constexpr int16_t BOARD_TOP = Config::Board::TOP;
+  static constexpr int8_t BODY_TOP = Config::Screen::BODY_TOP;
 
   // Constantes
   static constexpr uint8_t SIZE = Sprite::SIZE;

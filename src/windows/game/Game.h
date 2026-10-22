@@ -38,8 +38,6 @@ public:
 
 private:
   // Constantes de Config
-  static constexpr int16_t BODY_TOP = Config::Screen::BODY_TOP;
-  static constexpr int16_t BODY_H = Config::Screen::BODY_H;
   static constexpr int16_t BODY_MIDDLE = Config::Screen::BODY_MIDDLE;
   static constexpr uint8_t CHAR_H = Config::Screen::CHAR_H;
   static constexpr uint8_t CHAR_W = Config::Screen::CHAR_W;
@@ -83,7 +81,6 @@ private:
   void drawOverlay(const char* title, bool fullWidth, bool show);
   void spawnFood(Food& food);
   void printScore();
-  void printPerimeter() const;
 };
 
 // ========================================================

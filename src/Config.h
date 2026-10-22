@@ -75,22 +75,10 @@ namespace Config {
     constexpr uint8_t CELL  = 8;  // px por celda (8x8) -> SCALE = 2
     constexpr uint8_t SCALE = CELL / 4;  // "píxel" de dibujo dentro de la celda (2x2)
 
-    // Tamaño del tablero en px (independiente de CELL: la celda siempre mide 4xSCALE)
-    constexpr uint8_t BOARD_W = 120;
-    constexpr uint8_t BOARD_H = 40;
-
-    // Tamaño del tablero en celdas (derivan de BOARD_W/BOARD_H y CELL)
-    constexpr uint8_t COLS = BOARD_W / CELL;
-    constexpr uint8_t ROWS = BOARD_H / CELL;
+    // Tamaño del tablero
+    constexpr uint8_t COLS = Screen::WIDTH / CELL;
+    constexpr uint8_t ROWS = Screen::BODY_H / CELL;
     constexpr uint8_t MAX_LENGTH = COLS * ROWS;
-
-    // Posición del tablero dentro del Body (centrado)
-    constexpr int16_t LEFT = (Screen::WIDTH - BOARD_W) / 2;
-    constexpr int16_t TOP  = Screen::BODY_TOP + (Screen::BODY_H - BOARD_H) / 2;
-
-    // El marco del Body (1 px) debe quedar separado del tablero.
-    static_assert(Screen::WIDTH - BOARD_W >= 4, "el tablero debe dejar 1 px libre del marco");
-    static_assert(Screen::BODY_H - BOARD_H >= 4, "el tablero debe dejar 1 px libre del marco");
   }
 
   // Banda central compartida por los menús: caja de la opción y zona de valores, diamantes y triangulos.
