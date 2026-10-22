@@ -83,6 +83,12 @@ namespace Config {
     // Posición del tablero dentro del Body (centrado)
     constexpr int16_t LEFT = (Screen::WIDTH - COLS * CELL) / 2;
     constexpr int16_t TOP  = Screen::BODY_TOP + (Screen::BODY_H - ROWS * CELL) / 2;
+
+    // Marco perimetral del tablero (1 px por fuera de la rejilla)
+    constexpr int16_t FRAME_LEFT = LEFT - 1;
+    constexpr int16_t FRAME_TOP  = TOP - 1;
+    constexpr int16_t FRAME_W    = COLS * CELL + 2;
+    constexpr int16_t FRAME_H    = ROWS * CELL + 2;
   }
 
   // Banda central compartida por los menús: caja de la opción y zona de valores, diamantes y triangulos.

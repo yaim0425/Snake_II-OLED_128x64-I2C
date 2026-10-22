@@ -529,7 +529,7 @@ Todo lo compartido se ajusta en **`Config.h`** (namespace `Config`).
 | Resolución / pantalla | `Config.h` | `Config::Screen::WIDTH`, `HEIGHT`, `ADDRESS` |
 | Tamaño de fuente base | `Config.h` | `Config::Screen::CHAR_W`, `CHAR_H` |
 | Regiones (cabecera/cuerpo/pie) | `Config.h` | `Config::Screen::HEADER_TOP`, `BODY_TOP`, `BODY_H`, `BODY_MIDDLE`, `FOOT_H`, `FOOT_TOP` |
-| Rejilla del tablero | `Config.h` | `Config::Board::CELL`, `SCALE`, `COLS`, `ROWS` (derivan `MAX_LENGTH`, `LEFT`, `TOP`) |
+| Rejilla del tablero | `Config.h` | `Config::Board::CELL`, `SCALE`, `COLS`, `ROWS` (derivan `MAX_LENGTH`, `LEFT`, `TOP` y el marco `FRAME_LEFT`, `FRAME_TOP`, `FRAME_W`, `FRAME_H`) |
 | Banda central de los menús | `Config.h` | `Config::MenuStrip::*` |
 | Pines (botones, buzzer, I2C) | `Config.h` | `Config::Pin::*` |
 | Rango de dificultad | `Config.h` | `Config::Difficulty::MIN_LEVEL`, `MAX_LEVEL`, `DEFAULT_LEVEL` |
@@ -632,7 +632,7 @@ Para cambiar el tamaño de celda del tablero:
 - **Pantalla:** SSD1306 monocroma 128x64 por I2C (`Config::Screen::ADDRESS`,
   `Config::Pin::OLED_SDA/SCL`). `Display` reenvía a la librería; el
   `display.show()` final vuelca el buffer completo.
-- **Regiones:** Header `0..15`, Body `16..63`, Foot `56..63`.
+- **Regiones:** Header `0..15`, Body `16..63`, Foot `56..63`. El marco perimetral de 1 px se dibuja **pegado al tablero** (`Config::Board::FRAME_*`), no en el borde del Body, para que las paredes coincidan con el wrap.
 - **Coordenadas:** origen arriba-izquierda; x a la derecha, y hacia abajo. Una
   celda del tablero = `(BOARD_LEFT + col*CELL, BOARD_TOP + row*CELL)` con `CELL` px por celda.
 - **Colores:** `true` = encendido (blanco), `false` = apagado.
@@ -718,7 +718,7 @@ Notas:
 - **Velocidad de la serpiente:** `Game::speedFor()` (`src/windows/game/Game.cpp`).
 - **Dificultad:** rango en `Config::Difficulty`; el nivel vivo en `Storage`.
 - **Tamaño del tablero:** `Config::Board::COLS`, `ROWS` (fijos) y `LEFT`, `TOP` (centrados). Ojo:
-  `MAX_LENGTH`, `LEFT` y `TOP` se derivan de la rejilla actual.
+  `MAX_LENGTH`, `LEFT`, `TOP` y el marco (`FRAME_*`) se derivan de la rejilla actual.
 - **Controles:** condiciones de cada ventana + enum `Buttons::Button`/`Config::Pin`.
 - **Sprite:** `src/graphics/Sprite.h` (§9).
 - **Agregar comida:** otra instancia `Food` en `Game` y llamarla en
