@@ -2,7 +2,6 @@
 #define MENU_SOUND_H
 #include "src/Config.h"
 #include "src/graphics/Draw.h"
-#include "src/devices/Timer.h"
 #include "src/devices/Blink.h"
 
 // ========================================================
@@ -29,11 +28,9 @@ private:
   static constexpr int16_t DIAMOND_Y = Config::MenuStrip::DIAMOND_Y;
 
   // Constantes
-  static constexpr int16_t PAD_LEFT_X = WIDTH * 0.25;
-  static constexpr int16_t PAD_RIGHT_X = WIDTH * 0.75;
   static constexpr uint8_t SIZE = Draw::SIZE;
 
-  static constexpr char* LABEL[] = {"ON", "OFF"};
+  static constexpr const char* LABEL[] = {"ON", "OFF"};
   static constexpr uint8_t COUNT = sizeof(LABEL) / sizeof(LABEL[0]);
   static constexpr uint8_t SPACE = WIDTH / (COUNT + 1);
 
@@ -44,7 +41,6 @@ private:
   // Variables comunes de las ventanas
   int16_t _startX[COUNT];
   int16_t _endX[COUNT];
-  int8_t _space;
 
   bool _done;
   bool _selected;

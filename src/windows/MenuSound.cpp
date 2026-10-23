@@ -1,6 +1,5 @@
 #include "MenuSound.h"
 #include "src/Globals.h"
-#include "src/graphics/Draw.h"
 #include <string.h>
 
 // ========================================================
@@ -12,9 +11,7 @@ MenuSound::MenuSound()
     _selected(true),
     _lastSelected(true),
     _blink(),
-    _clear(true) {
-
-}
+    _clear(true) {}
 
 void MenuSound::begin() {
   _clear = true;

@@ -368,7 +368,7 @@ serpiente.
   `nextOption(bool)` son públicos.
 - **`MenuSound`:** capa sobre `Menu`; ON/OFF con flechas. Datos comunes:
   `_done, _selected(bool), _lastSelected(bool), _blink, _clear`; locales:
-  `_onStartX, _onEndX, _offStartX, _offEndX`.
+  `_startX[], _endX[]`.
 - **`MenuScale`:** capa sobre `Menu`; escala del tablero (4 / 8 / 12 px por
   celda) con flechas y `ButtonRepeat`. Confirma con `ACTION_RIGHT` (fija la
   escala en `Storage` y marca `changed()` si difiere de la activa) y cancela con
