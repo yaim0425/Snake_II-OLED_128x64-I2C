@@ -4,6 +4,7 @@
 #include "src/Config.h"
 #include "Food.h"
 #include "src/graphics/Draw.h"
+#include "src/graphics/Playfield.h"
 #include "src/graphics/Sprite.h"
 
 // ========================================================
@@ -13,9 +14,7 @@
 class Snake {
 public:
   // Constantes de Config
-  static constexpr uint8_t COLS = Config::Board::COLS;
-  static constexpr uint8_t ROWS = Config::Board::ROWS;
-  static constexpr uint8_t MAX_LENGTH = Config::Board::MAX_LENGTH;
+  static constexpr uint16_t MAX_LENGTH = Config::Board::MAX_LENGTH;
 
   // Constantes
   enum class Result : uint8_t {
@@ -41,15 +40,10 @@ public:
   void reset();
   void clearPending();
   bool turn(Draw::Direction direction);
-  uint8_t length() const;
+  uint16_t length() const;
   Sprite::Part headPart(const Food& food, const Food& specialFood) const;
 
 private:
-  // Constantes de Config
-  static constexpr uint8_t CELL = Config::Board::CELL;
-  static constexpr uint8_t SCALE = Config::Board::SCALE;
-  static constexpr uint8_t BODY_TOP = Config::Screen::BODY_TOP;
-
   // Constantes
   static constexpr uint8_t SIZE = Sprite::SIZE;
 
@@ -61,9 +55,9 @@ private:
 
   // Variables locales
   Seg _body[MAX_LENGTH];
-  uint8_t _headIndex;
-  uint8_t _tailIndex;
-  uint8_t _length;
+  uint16_t _headIndex;
+  uint16_t _tailIndex;
+  uint16_t _length;
   Draw::Direction _dir;
   Draw::Direction _nextDir;
   bool _bellyPending;
@@ -71,7 +65,9 @@ private:
   Seg _droppedSeg;
 
   // Funciones locales
-  uint8_t slot(uint8_t slotIndex) const;
+  uint16_t slot(uint16_t slotIndex) const;
+  void advance(int16_t col, int16_t row, Draw::Direction dir,
+               int16_t& nextCol, int16_t& nextRow) const;
   Draw::Direction opposite(Draw::Direction direction) const;
   Sprite::Part bodyPartFor(Draw::Direction inDir, Draw::Direction outDir) const;
   Sprite::Part bellyPartFor(Draw::Direction inDir, Draw::Direction outDir) const;

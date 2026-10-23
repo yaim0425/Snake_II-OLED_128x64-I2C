@@ -22,7 +22,8 @@ alcanzan un nuevo récord.
   y puedes elegir nivel desde el menú.
 - **Tablero con bordes envolventes:** la serpiente reaparece por el lado opuesto y
   el reto está en el cuerpo, no en las paredes.
-- **Menús completos:** nueva partida, continuar, dificultad, sonido y créditos.
+- **Menús completos:** nueva partida, continuar, dificultad, sonido, escala del
+  tablero y créditos.
 - **Sonidos:** efectos para comer, girar, pausar, arrancar y más, además de música
   en los créditos.
 - **Animaciones cuidadas:** logo de arranque, transiciones deslizantes, parpadeos y

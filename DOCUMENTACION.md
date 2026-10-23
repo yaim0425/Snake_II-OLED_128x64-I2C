@@ -111,7 +111,7 @@ Snake_II-OLED_128x64-I2C/
 | `src/devices/Buttons.h/.cpp` | 8 botones con antirrebote; estados por flanco/continuo. |
 | `src/devices/Buzzer.h/.cpp` | Capa de hardware PWM (`ledc`): un tono no bloqueante. **No es global**: lo posee `Sound`. |
 | `src/devices/Sound.h/.cpp` | Reproductor de efectos (secuencias `{freq, durMs}`), con bucle y on/off. |
-| `src/devices/Storage.h/.cpp` | Estado compartido en RAM: récord, sonido on/off y dificultad. |
+| `src/devices/Storage.h/.cpp` | Estado compartido en RAM: récord, sonido on/off, dificultad y escala del tablero. |
 | `src/devices/Timer.h/.cpp` | `nowMs()` (reloj de 64 bits), `Stopwatch`, `Ticker`. |
 | `src/devices/Blink.h/.cpp` | Parpadeo con ancla y detección de flanco de visibilidad. |
 | `src/devices/ButtonRepeat.h/.cpp` | Repetición al mantener un botón. |
@@ -123,6 +123,7 @@ Snake_II-OLED_128x64-I2C/
 | `src/graphics/Draw.h/.cpp` | Namespace `Draw`: `triangle` y `diamond`. |
 | `src/graphics/Scroller.h/.cpp` | Desplazamiento de texto con "cortina" (horizontal/vertical). |
 | `src/graphics/Sprite.h` | Tablas de bits (namespaces `Sprite`, `Special`, `Logo`) y `pixel()`/`specialPixel()`. |
+| `src/graphics/Playfield.h/.cpp` | Namespace `Playfield`: geometría viva del área jugable (celda, columnas, filas y origen) según la escala activa. |
 
 ### `src/windows/` — pantallas y juego
 
@@ -130,9 +131,10 @@ Snake_II-OLED_128x64-I2C/
 |---------|-----------------|
 | `src/windows/Boot.h/.cpp` | Arranque: logo + mensaje "Press any button / to start" parpadeando. |
 | `src/windows/Legend.h/.cpp` | Ayuda: leyenda de botones (pad MOVE + 4 rombos ACTION). |
-| `src/windows/Menu.h/.cpp` | Menú principal (New / Continue / Difficulty / Sound / Credits). |
+| `src/windows/Menu.h/.cpp` | Menú principal (New / Continue / Difficulty / Sound / Scale / Credits). |
 | `src/windows/MenuDifficulty.h/.cpp` | Selector de dificultad (nivel 1..10); capa sobre `Menu`. |
 | `src/windows/MenuSound.h/.cpp` | Selector de sonido ON/OFF; capa sobre `Menu`. |
+| `src/windows/MenuScale.h/.cpp` | Selector de escala del tablero (4 / 8 / 12 px por celda); capa sobre `Menu`. |
 | `src/windows/MenuCredits.h/.cpp` | Roll vertical de créditos / GAME OVER / YOU WIN. |
 
 #### `src/windows/game/` — la partida
@@ -251,14 +253,20 @@ hace `display.clear()` solo cuando toca (normalmente en su primer frame tras
 
 ### 3.6 Sistema de estados
 
-- `Engine::State` (privado): `BOOT, LEGEND, MENU, MENU_SOUND, NEW, CONTINUE,
-  MENU_DIFFICULTY, MENU_CREDITS` (`BOOT = 0`).
+- `Engine::State` (privado): `BOOT, LEGEND, MENU, MENU_SOUND, MENU_SCALE, NEW,
+  CONTINUE, MENU_DIFFICULTY, MENU_CREDITS` (`BOOT = 0`).
 - `Game::State` (público): `START, PLAY, PAUSE, GAME_OVER`.
 - `SleepManager::State` (privado): `AWAKE, SLEEPING`.
 
 `changeState(s)` llama al `begin()` de la ventana destino **y después** guarda
 `_state = s`; así la ventana entrante puede leer el estado anterior (p. ej.
 `MENU_CREDITS` decide `fromGame` mirando si venía de `NEW`/`CONTINUE`).
+
+`MENU_SCALE` es la única transición que **reinicia la partida**: si la escala
+confirmada difiere de la activa (`MenuScale::changed()`) y había una partida
+continuable (`Game::showContinue()`), el `Engine` salta a `NEW` en lugar de
+volver a `MENU`, porque la rejilla nueva invalida el estado guardado de la
+serpiente.
 
 ### 3.7 Comunicación entre clases
 
@@ -286,7 +294,7 @@ hace `display.clear()` solo cuando toca (normalmente en su primer frame tras
 - **Responsabilidad:** máquina de estados; dueño de las ventanas; despacho de
   `update()`/`print()` y de las transiciones.
 - **Datos internos:** `_state` y una instancia por ventana (`_boot`, `_legend`,
-  `_menu`, `_menuSound`, `_menuCredits`, `_menuDifficulty`, `_game`).
+  `_menu`, `_menuSound`, `_menuScale`, `_menuCredits`, `_menuDifficulty`, `_game`).
 - **Públicos:** `Engine()`, `begin()`, `update()`, `print()`, `inGame()`,
   `inCredits()`, `sleepBlocked()`.
 - **Privados:** `changeState(State)`.
@@ -315,36 +323,42 @@ hace `display.clear()` solo cuando toca (normalmente en su primer frame tras
 
 - **Responsabilidad:** cuerpo (buffer circular), colisiones, giro y render.
 - **Datos internos:** `_body[MAX_LENGTH]` (`Seg`), `_headIndex`, `_tailIndex`,
-  `_length`, `_dir`, `_nextDir`, `_bellyPending`, `_tailDropped`, `_droppedSeg`.
+  `_length` (los tres `uint16_t`), `_dir`, `_nextDir`, `_bellyPending`,
+  `_tailDropped`, `_droppedSeg`.
 - **Públicos:** `Snake()`, `step(food, specialFood)` → `Result`, `occupied()`,
   `print()`, `reset()`, `clearPending()`, `turn(dir)` → `bool`, `length()`,
   `headPart(food, specialFood)` → `Sprite::Part`.
-- **Privados:** `slot()`, `opposite()`, `bodyPartFor()`, `bellyPartFor()`,
-  `drawSprite()`.
-- **Dependencias:** `Food`, `Draw` (`Direction`), `Sprite`, `Display`.
+- **Privados:** `slot()`, `advance()`, `opposite()`, `bodyPartFor()`,
+  `bellyPartFor()`, `drawSprite()`.
+- **Dependencias:** `Food`, `Draw` (`Direction`), `Sprite`, `Playfield`,
+  `Display`.
 - **Interacción:** `Game::step()` llama a `Snake::step()`; `Food::spawn` evita
   celdas ocupadas vía `Game::occupied` → `Snake::occupied`.
 - **`Result`:** `MOVED`, `ATE_FOOT` ("FOOD" con un typo histórico), `ATE_SPECIAL`,
   `DIED`.
+- **`advance()`** es el único punto donde se calcula el *wrap*: toma la celda y la
+  dirección y devuelve la celda siguiente, envolviendo en los bordes según las
+  columnas y filas vivas de `Playfield`.
 
 ### `Food` — comida
 
 - **Responsabilidad:** comida normal y especial (aparición aleatoria, cuenta
   atrás de la especial y dibujo).
-- **Datos internos:** `_type`, `_x`, `_y`, `_has`, `_time`, `_lastTime`, `_score`.
+- **Datos internos:** `_type`, `_x`, `_y`, `_has`, `_time`, `_lastTime`, `_score`
+  (`uint16_t`).
 - **Públicos:** `Food(Type)`, `clear()`, `print()`, `occupied()`, `lessTime()`,
   `spawn(const Game&)`, `printTime(bool)`, `score()`.
-- **Privados:** `printNormal(bool)`, `printSpecial(bool)`.
+- **Privados:** `specialTime()`, `printNormal(bool)`, `printSpecial(bool)`.
 - **Dependencias:** `Game` (celdas libres), `Storage` (puntuación), `Draw`,
-  `Special`, `Display`.
+  `Special`, `Playfield`, `Display`.
 - **Interacción:** `Game` tiene dos instancias (`_food` normal, `_specialFood`
   especial); `Snake::step` las consulta para comer.
 - **`Type`:** `NORMAL`, `SPECIAL`.
 
-### Ventanas del menú: `Menu`, `MenuDifficulty`, `MenuSound`, `MenuCredits`
+### Ventanas del menú: `Menu`, `MenuDifficulty`, `MenuSound`, `MenuScale`, `MenuCredits`
 
 - **`Menu`:** opciones en `Option` (`OPT_NEW, OPT_CONTINUE, OPT_DIFFICULTY,
-  OPT_SOUND, OPT_CREDITS, OPT_COUNT`). Navega con `ButtonRepeat`
+  OPT_SOUND, OPT_SCALE, OPT_CREDITS, OPT_COUNT`). Navega con `ButtonRepeat`
   (`MOVE_LEFT/RIGHT`); `ACTION_RIGHT` pone `_confirm` y `blinkOption()` lo
   convierte en `_done`. Públicos locales: `showOptions()`, `selected()`.
   Datos comunes: `_isScrolling, _selected, _lastSelected, _blink, _repeat,
@@ -355,6 +369,12 @@ hace `display.clear()` solo cuando toca (normalmente en su primer frame tras
 - **`MenuSound`:** capa sobre `Menu`; ON/OFF con flechas. Datos comunes:
   `_done, _selected(bool), _lastSelected(bool), _blink, _clear`; locales:
   `_onStartX, _onEndX, _offStartX, _offEndX`.
+- **`MenuScale`:** capa sobre `Menu`; escala del tablero (4 / 8 / 12 px por
+  celda) con flechas y `ButtonRepeat`. Confirma con `ACTION_RIGHT` (fija la
+  escala en `Storage` y marca `changed()` si difiere de la activa) y cancela con
+  `ACTION_UP` (deja la escala intacta). Datos comunes: `_done, _selected,
+  _lastSelected, _blink, _clear, _changed`; locales: `_startX[], _endX[],
+  _label[][], _repeat`.
 - **`MenuCredits`:** roll vertical; título según `fromGame`/`winner`
   (CREDITS / YOU WIN / GAME OVER), tarjeta final `Thanks for playing!` / datos de
   versión. Público local: `card()`. Datos comunes: `_clear, _done, _scroller,
@@ -388,12 +408,13 @@ hace `display.clear()` solo cuando toca (normalmente en su primer frame tras
 - **`Sound`:** reproductor de `Seq` (`EFFECTS[]`); posee el `Buzzer`, avanza
   notas en `update()`, soporta `loop`, respeta `storage.soundEnabled()`. Datos:
   `_buzzer, _seq, _len, _step, _loop`.
-- **`Storage`:** getters/setters de `_bestScore`, `_soundEnabled`, `_difficulty`
-  (con recorte a `MIN/MAX_LEVEL`). Sin persistencia: vive en RAM.
+- **`Storage`:** getters/setters de `_bestScore` (`uint32_t`), `_soundEnabled`,
+  `_difficulty` y `_scale` (con recorte a `MIN/MAX_LEVEL` y `MIN/MAX_CELL`, y
+  normalizado a múltiplos de `CELL_STEP`). Sin persistencia: vive en RAM.
 - **`SleepManager`:** ver §3.3 y §16. `update()` devuelve `bool`. En reposo,
   `esp_light_sleep_start()` bloquea hasta que un botón físico despierta.
 
-### Helpers: `Timer`, `Blink`, `ButtonRepeat`, `Draw`, `Scroller`
+### Helpers: `Timer`, `Blink`, `ButtonRepeat`, `Draw`, `Playfield`, `Scroller`
 
 - **`Stopwatch`/`Ticker`:** §10.
 - **`Blink`:** `start()` ancla; `isVisible(period, offPct)`; `changed(...)` da el
@@ -403,6 +424,12 @@ hace `display.clear()` solo cuando toca (normalmente en su primer frame tras
 - **`Draw`:** `triangle(dir, cx, cy, show)` y `diamond(cx, cy, show)` (rombo =
   triángulo arriba + abajo). `Direction`: `DIR_NONE, DIR_UP, DIR_RIGHT, DIR_DOWN,
   DIR_LEFT`.
+- **`Playfield`:** namespace sin estado; traduce la escala activa
+  (`storage.scale()`) a la geometría del área jugable: `cell()` (px por celda),
+  `pixel()` (px por punto de sprite = `cell()/4`), `cols()`, `rows()`,
+  `originX()` y `originY()` (esquina superior izquierda de la rejilla, centrada
+  en el cuerpo). La rejilla reserva `Config::Board::MARGIN` px por lado para el
+  perímetro.
 - **`Scroller`:** buffer de 1 bit (`_strip`) y vuelo con cortina; horizontal
   (texto) y vertical (bloques). §4.1.
 
@@ -473,6 +500,8 @@ hace `display.clear()` solo cuando toca (normalmente en su primer frame tras
 - `step(food, specialFood)` — siguiente celda (con *wrap* en X/Y); colisión
   contra el cuerpo (ignorando la cola si no come); avanza cabeza/cola en el
   buffer circular; devuelve `MOVED`/`ATE_FOOT`/`ATE_SPECIAL`/`DIED`.
+- `advance(col, row, dir, &nextCol, &nextRow)` — celda siguiente con *wrap*;
+  único punto del *wrap* (lo usan `step()` y `headPart()`).
 - `turn(dir)` — guarda el giro pendiente si no es `DIR_NONE`, ni el mismo rumbo,
   ni el opuesto. Devuelve `true` si lo aceptó (para `SFX_TURN`).
 - `occupied(cellX, cellY)` — ¿hay segmento en esa celda?
@@ -486,6 +515,8 @@ hace `display.clear()` solo cuando toca (normalmente en su primer frame tras
 - `spawn(const Game&)` — cuenta celdas libres y elige una al azar (la especial
   ocupa 2 de ancho); `_score = storage.difficulty()` (×10 si especial) y arranca
   `_time`. Devuelve `false` si no cabe.
+- `specialTime()` — vida de la comida especial = columnas + filas de la
+  rejilla viva (`Playfield::cols() + Playfield::rows()`).
 - `occupied(x, y)` — normal ocupa 1 celda; especial 2 (x y x+1).
 - `lessTime()` — decrementa la vida de la especial.
 - `printTime(bool)` — dibuja la cuenta atrás en el Header; al llegar a 0 se llama
@@ -494,7 +525,7 @@ hace `display.clear()` solo cuando toca (normalmente en su primer frame tras
 
 ### `src/windows/Menu.cpp`
 
-- `begin(bool showContinue)` — fija la lista visible (5 con Continue, 4 sin él),
+- `begin(bool showContinue)` — fija la lista visible (6 con Continue, 5 sin él),
   reinicia flags, reancla `_blink`, ignora botones hasta soltar, y decide si
   limpia todo (opciones "de página": NEW/CONTINUE/CREDITS) o solo repinta la
   banda (`showOptions()`, para DIFFICULTY/SOUND).
@@ -529,7 +560,7 @@ Todo lo compartido se ajusta en **`Config.h`** (namespace `Config`).
 | Resolución / pantalla | `Config.h` | `Config::Screen::WIDTH`, `HEIGHT`, `ADDRESS` |
 | Tamaño de fuente base | `Config.h` | `Config::Screen::CHAR_W`, `CHAR_H` |
 | Regiones (cabecera/cuerpo/pie) | `Config.h` | `Config::Screen::HEADER_TOP`, `BODY_TOP`, `BODY_H`, `BODY_MIDDLE`, `FOOT_H`, `FOOT_TOP` |
-| Rejilla del tablero | `Config.h` | `Config::Board::CELL`, `SCALE` (derivan `COLS`, `ROWS`, `MAX_LENGTH`) |
+| Rejilla del tablero | `Config.h` | `Config::Board::CELL_MIN`, `CELL_MAX`, `CELL_DEFAULT`, `CELL_STEP`, `MARGIN` (derivan `MAX_LENGTH` y la geometría de `Playfield`) |
 | Banda central de los menús | `Config.h` | `Config::MenuStrip::*` |
 | Pines (botones, buzzer, I2C) | `Config.h` | `Config::Pin::*` |
 | Rango de dificultad | `Config.h` | `Config::Difficulty::MIN_LEVEL`, `MAX_LEVEL`, `DEFAULT_LEVEL` |
@@ -544,7 +575,8 @@ Todo lo compartido se ajusta en **`Config.h`** (namespace `Config`).
 | Sonidos / frecuencias | `src/devices/Sound.h` | tablas `SEQ_*` y `EFFECTS[]` |
 | Comidas para comida especial | `src/windows/game/Game.h` | `Game::FOOD_COUNT` (10) |
 | Conteo 3-2-1 | `src/windows/game/Game.h` | `Game::COUNT`, `PERIOD`, `OFF` |
-| Vida de la comida especial | `src/windows/game/Food.h` | `Food::SPECIAL_TIME` (= `COLS + ROWS`) |
+| Vida de la comida especial | `src/windows/game/Food.cpp` | `Food::specialTime()` (= columnas + filas de `Playfield`) |
+| Escala activa del tablero | `src/devices/Storage.h/.cpp` | `Storage::scale()` / `setScale()` (rango `MIN_CELL`..`MAX_CELL`) |
 | Textos de menú | `src/windows/Menu.h` | `Menu::OPTION[]` |
 | Créditos y títulos | `src/windows/MenuCredits.h` | `CREDITS[]`, `TITLE_*`, `PAUSE_MS` |
 | Leyenda de botones | `src/windows/Legend.h` | `BTN_FUNC[]`, `NEXT` |
@@ -564,7 +596,10 @@ Para cambiar el rango de dificultad:
 
 Para cambiar el tamaño de celda del tablero:
   Archivo: Config.h
-  Constante: Config::Board::CELL
+  Constante: Config::Board::CELL_MIN / CELL_MAX / CELL_DEFAULT
+
+Ojo: la geometría viva la calcula el namespace Playfield
+(src/graphics/Playfield.h/.cpp), no el tablero directamente.
 ```
 
 > Convenio: lo **verdaderamente compartido** va en `Config.h`; lo específico de
@@ -633,8 +668,10 @@ Para cambiar el tamaño de celda del tablero:
   `Config::Pin::OLED_SDA/SCL`). `Display` reenvía a la librería; el
   `display.show()` final vuelca el buffer completo.
 - **Regiones:** Header `0..15`, Body `16..63`, Foot `56..63`.
-- **Coordenadas:** origen arriba-izquierda; x a la derecha, y hacia abajo. Una
-  celda del tablero = `(col*CELL, BODY_TOP + row*CELL)` con `CELL` px por celda.
+- **Coordenadas:** origen arriba-izquierda; x a la derecha, y hacia abajo. La
+  celda `(col,row)` del tablero se dibuja en
+  `(Playfield::originX() + col*cell, Playfield::originY() + row*cell)`, con
+  `cell` px por celda.
 - **Colores:** `true` = encendido (blanco), `false` = apagado.
 - **Sprites:**
   - Serpiente: `Sprite::SPRITES[]`, 4x4 empaquetado en un `uint16_t`;
@@ -643,7 +680,11 @@ Para cambiar el tamaño de celda del tablero:
   - Comida especial: `Special::SPECIAL_FOOD[]` (8x4), `Special::specialPixel(...)`.
   - Logo: `Logo::LOGO[]` (80x48, 1 bit/px, polaridad invertida: 1 = fondo).
 - **Dibujado:** serpiente y comida especial escalan cada bit del sprite a un
-  cuadrado `SCALE`x`SCALE` px. La comida normal se dibuja con el sprite `Sprite::FOOD` (4x4, arte 3x3 centrado en la celda con `SCALE/2`).
+  cuadrado `pixel`x`pixel` px (`pixel = cell/4`). La comida normal se dibuja con
+  el sprite `Sprite::FOOD` (4x4, arte 3x3 centrado en la celda con `pixel/2`).
+- **Escalas:** 4, 8 y 12 px por celda (`Config::Board::CELL_MIN/MAX/STEP`). La
+  rejilla resultante es 31x11, 15x5 o 10x3 celdas, y siempre reserva
+  `Config::Board::MARGIN` px por lado para el perímetro.
 - **Animaciones:** parpadeo (`Blink`), vuelos de texto (`Scroller`, con cortina)
   y el conteo del juego (`Blink` + overlays).
 - **Cómo agregar/modificar un sprite:**
@@ -717,10 +758,15 @@ Notas:
 
 - **Velocidad de la serpiente:** `Game::speedFor()` (`src/windows/game/Game.cpp`).
 - **Dificultad:** rango en `Config::Difficulty`; el nivel vivo en `Storage`.
-- **Tamaño del tablero:** `Config::Board::CELL` (`COLS/ROWS` derivan). Ojo:
-  `MAX_LENGTH` y los sprites asumen la rejilla actual. `SCALE = CELL/4`, así que
-  con `CELL=8` el sprite 4x4 llena la celda (`SCALE=2`) y con `CELL=4` también
-  (`SCALE=1`): el mismo código sirve para ambas escalas.
+- **Tamaño del tablero:** escala jugable en `Storage` (`scale()`), con los
+  límites en `Config::Board::CELL_MIN/MAX/STEP`; la geometría la calcula
+  `Playfield` (`src/graphics/Playfield.h/.cpp`). `MAX_LENGTH` es el tamaño
+  máximo de la rejilla (31x11 = 341 segmentos en la escala fina) y los sprites
+  asumen que `cell` es múltiplo de 4 (`pixel = cell/4`), así que el sprite 4x4
+  llena la celda en cualquier escala.
+- **Escala del tablero:** `src/windows/MenuScale.h/.cpp` (opción "Scale" del
+  menú) + `src/graphics/Playfield.h/.cpp` (geometría) + `Config::Board::*`
+  (límites). Cambiarla reinicia la partida en curso (§3.6).
 - **Controles:** condiciones de cada ventana + enum `Buttons::Button`/`Config::Pin`.
 - **Sprite:** `src/graphics/Sprite.h` (§9).
 - **Agregar comida:** otra instancia `Food` en `Game` y llamarla en
@@ -815,9 +861,14 @@ Regla general: **cada ventana es un módulo**, y el `Engine` solo la orquesta.
 Encontrados durante la revisión del código. **No** se corrigen aquí porque hacerlo
 podría cambiar el comportamiento actual.
 
-- **Sin persistencia:** `Storage` (`_bestScore`, `_soundEnabled`, `_difficulty`)
-  vive solo en RAM; al reiniciar vuelve a los valores por defecto (récord 0,
-  sonido ON, dificultad `DEFAULT_LEVEL`). No hay guardado en flash.
+- **Sin persistencia:** `Storage` (`_bestScore`, `_soundEnabled`, `_difficulty`,
+  `_scale`) vive solo en RAM; al reiniciar vuelve a los valores por defecto
+  (récord 0, sonido ON, dificultad `DEFAULT_LEVEL`, escala `CELL_DEFAULT`). No
+  hay guardado en flash.
+- **Perímetro sin dibujar:** `Config::Board::MARGIN` reserva 1 px alrededor de la
+  rejilla (la serpiente se envuelve, no choca con las paredes), pero ese marco
+  todavía no se dibuja: la reserva existe para poder pintarlo después sin
+  tocar la geometría.
 - **Dificultad no aplicada al juego:** la dificultad real la fija
   `storage.difficulty()` en `Game::begin()`. `MenuDifficulty` guarda su nivel en
   `_difficulty` local y **no** llama `storage.setDifficulty(...)`, así que el

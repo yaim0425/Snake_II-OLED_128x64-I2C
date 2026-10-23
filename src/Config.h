@@ -69,16 +69,21 @@ namespace Config {
     constexpr uint8_t FOOT_TOP = HEIGHT - FOOT_H;
   }
 
-  // Rejilla del tablero de juego (compartida por Snake y Food).
+  // Rejilla del tablero de juego (compartida por Playfield, Snake y Food).
   namespace Board {
     // Valores de referencia
-    constexpr uint8_t CELL  = 8;  // px por celda (8x8) -> SCALE = 2
-    constexpr uint8_t SCALE = CELL / 4;  // "píxel" de dibujo dentro de la celda (2x2)
+    constexpr uint8_t CELL_MIN     = 4;   // px por celda (escala fina)
+    constexpr uint8_t CELL_MAX     = 12;  // px por celda (escala gruesa)
+    constexpr uint8_t CELL_DEFAULT = 8;   // px por celda (por defecto)
+    constexpr uint8_t CELL_STEP    = 4;   // salto entre escalas
 
-    // Tamaño del tablero
-    constexpr uint8_t COLS = Screen::WIDTH / CELL;
-    constexpr uint8_t ROWS = Screen::BODY_H / CELL;
-    constexpr uint8_t MAX_LENGTH = COLS * ROWS;
+    // Margen reservado alrededor de la rejilla (px por lado) para el perímetro.
+    constexpr uint8_t MARGIN = 1;
+
+    // Tamaño máximo del tablero (escala mínima): 31 x 11 celdas.
+    constexpr uint16_t MAX_LENGTH =
+      ((Screen::WIDTH - 2 * MARGIN) / CELL_MIN) * 
+      ((Screen::BODY_H - 2 * MARGIN) / CELL_MIN);
   }
 
   // Banda central compartida por los menús: caja de la opción y zona de valores, diamantes y triangulos.

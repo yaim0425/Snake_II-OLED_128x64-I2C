@@ -65,18 +65,18 @@ bool Food::occupied(int16_t x, int16_t y) const {
 
 void Food::lessTime() {
   if (_type != Type::SPECIAL) return;
-
   if (!_time) return;
-
   _time--;
 }
 
 bool Food::spawn(const Game& game) {
-  uint8_t freeCells = 0;
+  uint16_t freeCells = 0;
   int8_t n = _type == Type::NORMAL ? 0 : 1;
+  const int16_t cols = Playfield::cols();
+  const int16_t rows = Playfield::rows();
 
-  for (int16_t y = 0; y < ROWS; y++)
-    for (int16_t x = 0; x < COLS - n; x++)
+  for (int16_t y = 0; y < rows; y++)
+    for (int16_t x = 0; x < cols - n; x++)
       if (!game.occupied(x, y))
         if (_type == Type::NORMAL || (_type == Type::SPECIAL && !game.occupied(x + 1, y))) freeCells++;
 
@@ -85,12 +85,12 @@ bool Food::spawn(const Game& game) {
     return false;
   }
 
-  uint8_t pick = random(freeCells);
-  uint8_t seen = 0;
+  uint16_t pick = random(freeCells);
+  uint16_t seen = 0;
   bool placed = false;
 
-  for (int16_t y = 0; y < ROWS && !placed; y++)
-    for (int16_t x = 0; x < COLS - n && !placed; x++)
+  for (int16_t y = 0; y < rows && !placed; y++)
+    for (int16_t x = 0; x < cols - n && !placed; x++)
       if (!game.occupied(x, y))
         if (_type == Type::NORMAL || (_type == Type::SPECIAL && !game.occupied(x + 1, y))) {
           if (seen == pick) {
@@ -105,7 +105,7 @@ bool Food::spawn(const Game& game) {
   if (placed) _score = storage.difficulty();
 
   if (placed && _type == Type::SPECIAL) {
-    _time = SPECIAL_TIME;
+    _time = specialTime();
     _score *= 10;
   }
 
@@ -117,42 +117,46 @@ bool Food::spawn(const Game& game) {
 void Food::printTime(bool show) {
   if (_lastTime == _time && !show) return;
 
-  char time[4];
+  char time[4] = "  ";
 
-  if (_time == 0) {
-    clear();
-    time[0] = ' ';
-    time[1] = ' ';
-    time[2] = '\0';
-  } else
-    snprintf(time, sizeof(time), " %u", (unsigned)_time);
+  if (_time == 0) clear();
+  else snprintf(time, sizeof(time), " %u", (unsigned)_time);
+
   int16_t w = strlen(time) * CHAR_W * TEXT_12x16;
   display.drawText(time, WIDTH - w, 1, TEXT_12x16, true, false);
   _lastTime = _time;
 }
 
-uint8_t Food::score() const {
+uint16_t Food::score() const {
   return _score;
+}
+
+uint8_t Food::specialTime() {
+  return Playfield::cols() + Playfield::rows();
 }
 
 void Food::printNormal(bool show) const {
   // El arte de la comida ocupa 3x3 de los 4x4 del sprite: se centra en la celda.
-  int16_t baseX = _x * CELL + SCALE / 2;
-  int16_t baseY = _y * CELL + BODY_TOP + SCALE / 2;
+  const int16_t cellSize = Playfield::cell();
+  const int16_t pixelSize = Playfield::pixel();
+  const int16_t baseX = Playfield::originX() + _x * cellSize + pixelSize / 2;
+  const int16_t baseY = Playfield::originY() + _y * cellSize + pixelSize / 2;
 
   for (uint8_t y = 0; y < SIZE; y++)
     for (uint8_t x = 0; x < SIZE; x++)
       if (Sprite::pixel(Sprite::FOOD, x, y))
-        display.fillRect(baseX + x * SCALE, baseY + y * SCALE, SCALE, SCALE, show);
+        display.fillRect(baseX + x * pixelSize, baseY + y * pixelSize, pixelSize, pixelSize, show);
 }
 
 void Food::printSpecial(bool show) const {
-  int16_t baseX = _x * CELL;
-  int16_t baseY = _y * CELL + BODY_TOP;
+  const int16_t cellSize = Playfield::cell();
+  const int16_t pixelSize = Playfield::pixel();
+  const int16_t baseX = Playfield::originX() + _x * cellSize;
+  const int16_t baseY = Playfield::originY() + _y * cellSize;
 
   for (int8_t y = 0; y < SPECIAL_FOOD_H; y++)
     for (int8_t x = 0; x < SPECIAL_FOOD_W; x++)
-      display.fillRect(baseX + x * SCALE, baseY + y * SCALE, SCALE, SCALE, show && Special::specialPixel(0, x, y));
+      display.fillRect(baseX + x * pixelSize, baseY + y * pixelSize, pixelSize, pixelSize, show && Special::specialPixel(0, x, y));
 }
 
 // ========================================================

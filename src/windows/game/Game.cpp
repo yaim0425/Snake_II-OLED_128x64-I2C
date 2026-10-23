@@ -61,8 +61,7 @@ void Game::update() {
   if (_done) return;
 
   switch (_state) {
-    case State::START:
-      {
+    case State::START: {
         if (buttons.pressed(Buttons::ACTION_RIGHT)) {
           sound.play(Sound::SFX_START, false);
           startPlay();
@@ -79,8 +78,7 @@ void Game::update() {
         break;
       }
 
-    case State::PLAY:
-      {
+    case State::PLAY:{
         if (buttons.pressed(Buttons::MOVE_UP)) {
           if (_snake.turn(Draw::DIR_UP)) sound.play(Sound::SFX_TURN, false);
         } else if (buttons.pressed(Buttons::MOVE_RIGHT)) {
@@ -135,9 +133,8 @@ void Game::print() {
       if (_blinkChanged) {
         if (_blink.isVisible(PERIOD, OFF)) {
           sound.play(Sound::SFX_TICK, false);
-          char number[2];
-          number[0] = (char)('0' + _countdown);
-          number[1] = '\0';
+          char number[3];
+          snprintf(number, sizeof(number), " %u", (unsigned)_countdown);
           drawOverlay(number, false, true);
         } else {
           drawOverlay(" ", false, false);
@@ -295,7 +292,7 @@ void Game::spawnFood(Food& food) {
 }
 
 void Game::printScore() {
-  char score[8];
+  char score[12];
   snprintf(score, sizeof(score), "%u", (unsigned)_score);
   display.drawText(score, 0, 0, TEXT_12x16, true, false);
 }

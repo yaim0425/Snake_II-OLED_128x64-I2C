@@ -12,28 +12,21 @@ MenuSound::MenuSound()
     _selected(true),
     _lastSelected(true),
     _blink(),
-    _clear(true),
-    _onStartX(0),
-    _onEndX(0),
-    _offStartX(0),
-    _offEndX(0) {}
+    _clear(true) {
+
+}
 
 void MenuSound::begin() {
   _clear = true;
   _done = false;
   _selected = storage.soundEnabled();
   _lastSelected = _selected;
-  const char* text;
-  int16_t width;
-  text = "ON";
-  width = strlen(text) * CHAR_W * TEXT_6x8;
-  _onStartX = PAD_RIGHT_X - width / 2;
-  _onEndX = _onStartX + width;
-  text = "OFF";
-  width = strlen(text) * CHAR_W * TEXT_6x8;
-  _offStartX = PAD_LEFT_X - width / 2;
-  _offEndX = _offStartX + width;
-  _blink.start();
+
+  for (uint8_t i = 0; i < COUNT; i++) {
+    const int16_t w = strlen(LABEL[i]) * CHAR_W * TEXT_6x8;
+    _startX[i] = SPACE - w / 2;
+    _endX[i] = _startX[i] + w;
+  }
 }
 
 void MenuSound::update() {
@@ -70,8 +63,8 @@ void MenuSound::firstPrint() {
 
   clear();
   _clear = false;
-  display.drawText("ON", _onStartX, DIAMOND_Y - 3, TEXT_6x8, true, false);
-  display.drawText("OFF", _offStartX, DIAMOND_Y - 3, TEXT_6x8, true, false);
+  for (uint8_t i = 0; i < COUNT; i++)
+    display.drawText(LABEL[i], _startX[i], DIAMOND_Y - 3, TEXT_6x8, true, false);
   nextOption(true);
 }
 
@@ -86,26 +79,21 @@ bool MenuSound::done() const {
 void MenuSound::blinkOption() {
   if (!_blink.changed(PERIOD, OFF)) return;
 
-  bool visible = _blink.isVisible(PERIOD, OFF);
-
-  if (_selected) {
-    Draw::triangle(Draw::DIR_RIGHT, _onStartX - (SIZE + 3), DIAMOND_Y, visible);
-    Draw::triangle(Draw::DIR_LEFT, _onEndX + (SIZE + 1), DIAMOND_Y, visible);
-  } else {
-    Draw::triangle(Draw::DIR_RIGHT, _offStartX - (SIZE + 3), DIAMOND_Y, visible);
-    Draw::triangle(Draw::DIR_LEFT, _offEndX + (SIZE + 0), DIAMOND_Y, visible);
-  }
+  toggleArrows(_selected, _blink.isVisible(PERIOD, OFF));
 }
 
 void MenuSound::nextOption(bool show) {
   if (_lastSelected == _selected && !show) return;
 
-  Draw::triangle(Draw::DIR_RIGHT, _onStartX - (SIZE + 3), DIAMOND_Y, _selected);
-  Draw::triangle(Draw::DIR_LEFT, _onEndX + (SIZE + 1), DIAMOND_Y, _selected);
-  Draw::triangle(Draw::DIR_RIGHT, _offStartX - (SIZE + 3), DIAMOND_Y, !_selected);
-  Draw::triangle(Draw::DIR_LEFT, _offEndX + (SIZE + 0), DIAMOND_Y, !_selected);
+  toggleArrows(_lastSelected, false);
+  toggleArrows(_selected, true);
   _lastSelected = _selected;
   _blink.start();
+}
+
+void MenuSound::toggleArrows(uint8_t option, bool show) {
+  Draw::triangle(Draw::DIR_RIGHT, _startX[option] - (SIZE + 3), DIAMOND_Y, show);
+  Draw::triangle(Draw::DIR_LEFT, _endX[option] + (SIZE + 1), DIAMOND_Y, show);
 }
 
 // ========================================================

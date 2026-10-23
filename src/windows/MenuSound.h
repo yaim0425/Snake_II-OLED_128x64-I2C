@@ -33,26 +33,29 @@ private:
   static constexpr int16_t PAD_RIGHT_X = WIDTH * 0.75;
   static constexpr uint8_t SIZE = Draw::SIZE;
 
+  static constexpr char* LABEL[] = {"ON", "OFF"};
+  static constexpr uint8_t COUNT = sizeof(LABEL) / sizeof(LABEL[0]);
+  static constexpr uint8_t SPACE = WIDTH / (COUNT + 1);
+
   // Valores para el parpadeo
   static constexpr uint32_t PERIOD = Blink::PERIOD;
   static constexpr uint8_t OFF = Blink::OFF;
 
   // Variables comunes de las ventanas
+  int16_t _startX[COUNT];
+  int16_t _endX[COUNT];
+  int8_t _space;
+
   bool _done;
   bool _selected;
   bool _lastSelected;
   Blink _blink;
   bool _clear;
 
-  // Variables locales
-  int16_t _onStartX;
-  int16_t _onEndX;
-  int16_t _offStartX;
-  int16_t _offEndX;
-
   // Funciones comunes de las ventanas
   void blinkOption();
   void nextOption(bool show);
+  void toggleArrows(uint8_t option, bool show);
 };
 
 // ========================================================

@@ -157,7 +157,6 @@ void MenuCredits::startExit() {
 void MenuCredits::startCard() {
   // El roll terminó: la tarjeta final sube como un bloque y se queda centrada.
   _card = true;
-  sound.stop();
   _scroller.begin(Draw::DIR_UP, Scroller::EndMode::STAY);
 
   if (_fromGame) {

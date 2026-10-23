@@ -2,6 +2,7 @@
 #define FOOD_H
 #include <Arduino.h>
 #include "src/Config.h"
+#include "src/graphics/Playfield.h"
 #include "src/graphics/Sprite.h"
 
 class Game;
@@ -15,9 +16,6 @@ public:
   // Constantes
   enum class Type : uint8_t { NORMAL = 0, SPECIAL };
 
-  // Vida útil de la especial, en ticks del tablero.
-  static constexpr uint8_t SPECIAL_TIME = Config::Board::COLS + Config::Board::ROWS;
-
   // Funciones comunes de las ventanas
   Food(Type type);
   void clear();
@@ -28,17 +26,12 @@ public:
   void lessTime();
   bool spawn(const Game& game);
   void printTime(bool show);
-  uint8_t score() const;
+  uint16_t score() const;
 
 private:
   // Constantes de Config
-  static constexpr uint8_t CELL = Config::Board::CELL;
-  static constexpr uint8_t SCALE = Config::Board::SCALE;
-  static constexpr int8_t COLS = Config::Board::COLS;
-  static constexpr int8_t ROWS = Config::Board::ROWS;
   static constexpr uint8_t CHAR_W = Config::Screen::CHAR_W;
   static constexpr int16_t WIDTH = Config::Screen::WIDTH;
-  static constexpr int8_t BODY_TOP = Config::Screen::BODY_TOP;
 
   // Constantes
   static constexpr uint8_t SIZE = Sprite::SIZE;
@@ -53,9 +46,10 @@ private:
   bool _has;
   uint8_t _time;
   uint8_t _lastTime;
-  uint8_t _score;
+  uint16_t _score;
 
   // Funciones locales
+  static uint8_t specialTime();
   void printNormal(bool show) const;
   void printSpecial(bool show) const;
 };

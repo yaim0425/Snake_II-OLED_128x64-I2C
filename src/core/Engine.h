@@ -5,6 +5,7 @@
 #include "src/windows/MenuDifficulty.h"
 #include "src/windows/game/Game.h"
 #include "src/windows/MenuSound.h"
+#include "src/windows/MenuScale.h"
 #include "src/windows/Menu.h"
 #include "src/windows/Legend.h"
 
@@ -32,6 +33,7 @@ private:
     LEGEND,
     MENU,
     MENU_SOUND,
+    MENU_SCALE,
     NEW,
     CONTINUE,
     MENU_DIFFICULTY,
@@ -44,6 +46,7 @@ private:
   Legend _legend;
   Menu _menu;
   MenuSound _menuSound;
+  MenuScale _menuScale;
   MenuCredits _menuCredits;
   MenuDifficulty _menuDifficulty;
   Game _game;

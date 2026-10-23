@@ -61,7 +61,7 @@ private:
   // Variables locales
   State _state;
   bool _win;
-  uint16_t _score;
+  uint32_t _score;
   Ticker _timer;
   int8_t _countdown;
   bool _blinkChanged;

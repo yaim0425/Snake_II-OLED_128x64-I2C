@@ -36,14 +36,11 @@ void Menu::begin(bool showContinue) {
   _selected = !showContinue && _selected == OPT_CONTINUE ? OPT_NEW : _selected;
   _lastSelected = _selected;
 
-  bool clear = false;
-  clear = clear || _selected == OPT_NEW;
-  clear = clear || _selected == OPT_CONTINUE;
-  clear = clear || _selected == OPT_CREDITS;
-  if (clear)
-    _clear = true;
-  else
-    showOptions();
+  _clear = false;
+  _clear = _clear || _selected == OPT_NEW;
+  _clear = _clear || _selected == OPT_CONTINUE;
+  _clear = _clear || _selected == OPT_CREDITS;
+  if (!_clear) showOptions();
 }
 
 void Menu::update() {
@@ -81,7 +78,7 @@ void Menu::firstPrint() {
   showOptions();
   display.fillRect(0, FOOT_TOP - 1, WIDTH, FOOT_H + 1, true);
   const char* label = "Best ";
-  char bestScore[9];
+  char bestScore[12];
   snprintf(bestScore, sizeof(bestScore), "%u", (unsigned)storage.bestScore());
   display.drawText(label, 1, FOOT_TOP, TEXT_6x8, false, true);
   display.drawText(bestScore, 1 + strlen(label) * 6, FOOT_TOP, TEXT_6x8, false, true);

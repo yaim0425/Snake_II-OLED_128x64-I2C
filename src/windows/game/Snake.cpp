@@ -26,22 +26,15 @@ Snake::Result Snake::step(const Food& food, const Food& specialFood) {
   }
 
   const Seg& headSegment = _body[_headIndex];
-  int16_t nextX = headSegment.col;
-  int16_t nextY = headSegment.row;
-
-  switch (stepDir) {
-    case Draw::DIR_UP: nextY = nextY == 0 ? ROWS - 1 : nextY - 1; break;
-    case Draw::DIR_RIGHT: nextX = (nextX + 1) % COLS; break;
-    case Draw::DIR_DOWN: nextY = nextY == ROWS - 1 ? 0 : nextY + 1; break;
-    case Draw::DIR_LEFT: nextX = nextX == 0 ? COLS - 1 : nextX - 1; break;
-    default: break;
-  }
+  int16_t nextX;
+  int16_t nextY;
+  advance(headSegment.col, headSegment.row, stepDir, nextX, nextY);
 
   bool eat = food.occupied(nextX, nextY) || specialFood.occupied(nextX, nextY);
-  uint8_t skip = eat ? 0xFF : _tailIndex;
+  uint16_t skip = eat ? 0xFFFF : _tailIndex;
 
-  for (uint8_t segmentIndex = 0; segmentIndex < _length; segmentIndex++) {
-    uint8_t slotIndex = slot(segmentIndex);
+  for (uint16_t segmentIndex = 0; segmentIndex < _length; segmentIndex++) {
+    uint16_t slotIndex = slot(segmentIndex);
 
     if (slotIndex == skip) continue;
 
@@ -52,7 +45,7 @@ Snake::Result Snake::step(const Food& food, const Food& specialFood) {
   const Seg& oldHead = _body[_headIndex];
   Draw::Direction inDir = oldHead.dir;
   Draw::Direction outDir = stepDir;
-  uint8_t newHeadIndex = (_headIndex + 1) % MAX_LENGTH;
+  uint16_t newHeadIndex = (_headIndex + 1) % MAX_LENGTH;
   _body[newHeadIndex] = { nextX, nextY, stepDir, Sprite::HEAD_RIGHT_CLOSE };
   _headIndex = newHeadIndex;
   Seg& newBody = _body[(_headIndex + MAX_LENGTH - 1) % MAX_LENGTH];
@@ -82,7 +75,7 @@ Snake::Result Snake::step(const Food& food, const Food& specialFood) {
 }
 
 bool Snake::occupied(int16_t cellX, int16_t cellY) const {
-  for (uint8_t segmentIndex = 0; segmentIndex < _length; segmentIndex++) {
+  for (uint16_t segmentIndex = 0; segmentIndex < _length; segmentIndex++) {
     const Seg& currentSegment = _body[slot(segmentIndex)];
     if (currentSegment.col == cellX && currentSegment.row == cellY) return true;
   }
@@ -95,7 +88,7 @@ void Snake::print(const Food& food, const Food& specialFood) {
     _tailDropped = false;
   }
 
-  for (uint8_t i = 0; i < _length; i++) {
+  for (uint16_t i = 0; i < _length; i++) {
     const Seg& seg = _body[slot(i)];
     Sprite::Part part = i == _length - 1 ? headPart(food, specialFood) : seg.part;
     drawSprite(part, seg.col, seg.row, true);
@@ -105,6 +98,9 @@ void Snake::print(const Food& food, const Food& specialFood) {
 // ========================================================
 // Fin — Funciones comunes de las ventanas
 // ========================================================
+
+
+
 
 
 
@@ -140,31 +136,42 @@ bool Snake::turn(Draw::Direction direction) {
   return true;
 }
 
-uint8_t Snake::length() const {
+uint16_t Snake::length() const {
   return _length;
 }
 
 Sprite::Part Snake::headPart(const Food& food, const Food& specialFood) const {
   uint8_t offset = (uint8_t)_dir - 1;
   const Seg& head = _body[_headIndex];
-  int16_t nextX = head.col;
-  int16_t nextY = head.row;
-
-  switch (_dir) {
-    case Draw::DIR_UP: nextY = nextY == 0 ? ROWS - 1 : nextY - 1; break;
-    case Draw::DIR_RIGHT: nextX = (nextX + 1) % COLS; break;
-    case Draw::DIR_DOWN: nextY = nextY == ROWS - 1 ? 0 : nextY + 1; break;
-    case Draw::DIR_LEFT: nextX = nextX == 0 ? COLS - 1 : nextX - 1; break;
-    default: break;
-  }
+  int16_t nextX;
+  int16_t nextY;
+  advance(head.col, head.row, _dir, nextX, nextY);
 
   bool aboutToEat = food.occupied(nextX, nextY) || specialFood.occupied(nextX, nextY);
   uint8_t basePart = aboutToEat ? Sprite::HEAD_UP_OPEN : Sprite::HEAD_UP_CLOSE;
   return (Sprite::Part)(basePart + offset);
 }
 
-uint8_t Snake::slot(uint8_t slotIndex) const {
+uint16_t Snake::slot(uint16_t slotIndex) const {
   return (_tailIndex + slotIndex) % MAX_LENGTH;
+}
+
+void Snake::advance(
+  int16_t col, int16_t row, Draw::Direction dir,
+  int16_t& nextX, int16_t& nextY) const {
+  nextX = col;
+  nextY = row;
+
+  const int16_t cols = Playfield::cols();
+  const int16_t rows = Playfield::rows();
+
+  switch (dir) {
+    case Draw::DIR_UP: nextY = nextY == 0 ? rows - 1 : nextY - 1; break;
+    case Draw::DIR_RIGHT: nextX = nextX == cols - 1 ? 0 : nextX + 1; break;
+    case Draw::DIR_DOWN: nextY = nextY == rows - 1 ? 0 : nextY + 1; break;
+    case Draw::DIR_LEFT: nextX = nextX == 0 ? cols - 1 : nextX - 1; break;
+    default: break;
+  }
 }
 
 Draw::Direction Snake::opposite(Draw::Direction direction) const {
@@ -207,14 +214,16 @@ Sprite::Part Snake::bellyPartFor(Draw::Direction inDir, Draw::Direction outDir) 
 }
 
 void Snake::drawSprite(Sprite::Part part, int16_t col, int16_t row, bool white) {
-  int16_t baseX = col * CELL;
-  int16_t baseY = BODY_TOP + row * CELL;
+  const int16_t cellSize = Playfield::cell();
+  const int16_t pixelSize = Playfield::pixel();
+  const int16_t baseX = Playfield::originX() + col * cellSize;
+  const int16_t baseY = Playfield::originY() + row * cellSize;
 
   for (uint8_t i = 0; i < SIZE; i++)
     for (uint8_t j = 0; j < SIZE; j++)
       display.fillRect(
-        baseX + SCALE * j, baseY + SCALE * i,
-        SCALE, SCALE, white && Sprite::pixel(part, j, i));
+        baseX + pixelSize * j, baseY + pixelSize * i,
+        pixelSize, pixelSize, white && Sprite::pixel(part, j, i));
 }
 
 // ========================================================
